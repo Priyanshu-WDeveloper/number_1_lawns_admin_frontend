@@ -1,143 +1,134 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { PublicRoute, ProtectedRoute, SuperAdminRoute } from '@/components/route-guards';
+import { ROUTES } from '@/constants';
 import Login from '../pages/auth/login';
+import SuperAdminLogin from '../pages/auth/super-admin-login';
 import DashboardPage from '../pages/dashboard/DashboardPage';
+import SuperAdminDashboardPage from '../pages/super-admin/dashboard';
+import SuperAdminAdminsPage from '../pages/super-admin/admins';
+import SuperAdminBillingPage from '../pages/super-admin/billing';
 import CustomerManagementPage from '../pages/customers';
 import CreateCustomerPage from '../pages/customers/create';
 import EmployeeManagementPage from '../pages/employees';
 import CreateEmployeePage from '../pages/employees/create';
 import JobManagementPage from '../pages/jobs';
 import CreateJobPage from '../pages/jobs/create';
-import InvoiceManagementPage from '../pages/invoices';
 
 const AppRoutes: React.FC = () => {
-  // const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const isAuthenticated = true; // For now, assuming all routes are accessible as auth is not fully implemented
-
   return (
     <Routes>
-      {/* Public route for Login */}
+      {/* Public Routes */}
       <Route
-        path="/login"
-        element={<Login />}
-        // element={
-        //   isAuthenticated ? (
-        //     <Navigate to="/dashboard" replace />
-        //   ) : (
-        //     <Login />
-        //   )
-        // }
+        path={ROUTES.LOGIN}
+        element={
+          <PublicRoute redirectTo={ROUTES.DASHBOARD}>
+            <Login />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path={ROUTES.SUPER_ADMIN_LOGIN}
+        element={
+          <PublicRoute redirectTo={ROUTES.SUPER_ADMIN_DASHBOARD}>
+            <SuperAdminLogin />
+          </PublicRoute>
+        }
       />
 
-      {/* Protected route for Dashboard */}
+      {/* Admin Protected Routes */}
       <Route
-        path="/dashboard"
+        path={ROUTES.DASHBOARD}
         element={
-          isAuthenticated ? (
+          <ProtectedRoute redirectTo={ROUTES.LOGIN}>
             <DashboardPage />
-          ) : (
-            <Navigate to="/login" replace />
-          )
+          </ProtectedRoute>
         }
       />
-
-      {/* Protected route for Customer Management */}
       <Route
-        path="/customers"
+        path={ROUTES.CUSTOMERS}
         element={
-          isAuthenticated ? (
+          <ProtectedRoute redirectTo={ROUTES.LOGIN}>
             <CustomerManagementPage />
-          ) : (
-            <Navigate to="/login" replace />
-          )
+          </ProtectedRoute>
         }
       />
-
-      {/* Protected route for Create Customer */}
       <Route
-        path="/customers/create"
+        path={ROUTES.CUSTOMERS_CREATE}
         element={
-          isAuthenticated ? (
+          <ProtectedRoute redirectTo={ROUTES.LOGIN}>
             <CreateCustomerPage />
-          ) : (
-            <Navigate to="/login" replace />
-          )
+          </ProtectedRoute>
         }
       />
-
-      {/* Protected route for Employee Management */}
       <Route
-        path="/employees"
+        path={ROUTES.EMPLOYEES}
         element={
-          isAuthenticated ? (
+          <ProtectedRoute redirectTo={ROUTES.LOGIN}>
             <EmployeeManagementPage />
-          ) : (
-            <Navigate to="/login" replace />
-          )
+          </ProtectedRoute>
         }
       />
-
-      {/* Protected route for Create Employee */}
       <Route
-        path="/employees/create"
+        path={ROUTES.EMPLOYEES_CREATE}
         element={
-          isAuthenticated ? (
+          <ProtectedRoute redirectTo={ROUTES.LOGIN}>
             <CreateEmployeePage />
-          ) : (
-            <Navigate to="/login" replace />
-          )
+          </ProtectedRoute>
         }
       />
-      {/* Protected route for Job Management */}
       <Route
-        path="/jobs"
+        path={ROUTES.JOBS}
         element={
-          isAuthenticated ? (
+          <ProtectedRoute redirectTo={ROUTES.LOGIN}>
             <JobManagementPage />
-          ) : (
-            <Navigate to="/login" replace />
-          )
+          </ProtectedRoute>
         }
       />
-
-      {/* Protected route for Create Job */}
       <Route
-        path="/jobs/create"
+        path={ROUTES.JOBS_CREATE}
         element={
-          isAuthenticated ? (
+          <ProtectedRoute redirectTo={ROUTES.LOGIN}>
             <CreateJobPage />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      />
-      {/* Protected route for Invoice */}
-      <Route
-        path="/invoices"
-        element={
-          isAuthenticated ? (
-            <InvoiceManagementPage />
-          ) : (
-            <Navigate to="/login" replace />
-          )
+          </ProtectedRoute>
         }
       />
 
-      {/* Redirect root to dashboard if authenticated, otherwise to login */}
+      {/* Super Admin Protected Routes */}
+      <Route
+        path={ROUTES.SUPER_ADMIN_DASHBOARD}
+        element={
+          <SuperAdminRoute redirectTo={ROUTES.SUPER_ADMIN_LOGIN}>
+            <SuperAdminDashboardPage />
+          </SuperAdminRoute>
+        }
+      />
+      <Route
+        path={ROUTES.SUPER_ADMIN_ADMINS}
+        element={
+          <SuperAdminRoute redirectTo={ROUTES.SUPER_ADMIN_LOGIN}>
+            <SuperAdminAdminsPage />
+          </SuperAdminRoute>
+        }
+      />
+      <Route
+        path={ROUTES.SUPER_ADMIN_BILLING}
+        element={
+          <SuperAdminRoute redirectTo={ROUTES.SUPER_ADMIN_LOGIN}>
+            <SuperAdminBillingPage />
+          </SuperAdminRoute>
+        }
+      />
+
+      {/* Root and Catch-all */}
       <Route
         path="/"
-        element={<Login />}
-        // element={
-        //   isAuthenticated ? (
-        //     <Navigate to="/dashboard" replace />
-        //   ) : (
-        //     <Navigate to="/login" replace />
-        //   )
-        // }
+        element={<Navigate to={ROUTES.LOGIN} replace />}
       />
-
-      {/* Catch-all route for 404 */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route
+        path="*"
+        element={<Navigate to={ROUTES.LOGIN} replace />}
+      />
     </Routes>
   );
 };
