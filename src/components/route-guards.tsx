@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+// import { Navigate } from 'react-router-dom';
 import { ROUTES } from '@/constants';
 
 interface PublicRouteProps {
@@ -11,12 +11,11 @@ export function PublicRoute({
   children,
   redirectTo = ROUTES.DASHBOARD,
 }: PublicRouteProps) {
-  const isAuthenticated = true;
-
+  // const isAuthenticated = true;
   // if (isAuthenticated) {
   //   return <Navigate to={redirectTo} replace />;
   // }
-
+  void redirectTo;
   return <>{children}</>;
 }
 
@@ -29,12 +28,11 @@ export function ProtectedRoute({
   children,
   redirectTo = ROUTES.LOGIN,
 }: ProtectedRouteProps) {
-  const isAuthenticated = true;
-
+  // const isAuthenticated = true;
   // if (!isAuthenticated) {
   //   return <Navigate to={redirectTo} replace />;
   // }
-
+  void redirectTo;
   return <>{children}</>;
 }
 
@@ -47,11 +45,10 @@ export function SuperAdminRoute({
   children,
   redirectTo = ROUTES.SUPER_ADMIN_LOGIN,
 }: SuperAdminRouteProps) {
-  const isAuthenticated = true;
-
+  // const isAuthenticated = true;
   // if (!isAuthenticated) {
   //   return <Navigate to={redirectTo} replace />;
   // }
-
+  void redirectTo;
   return <>{children}</>;
 }
