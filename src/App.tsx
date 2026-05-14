@@ -12,12 +12,12 @@ const App: React.FC = () => {
         <AppRoutes />
         <Toaster
           position="top-right"
-          toastOptions={{
-            style: {
-              background: '#22c55e',
-              color: '#fff',
-            },
-          }}
+          // toastOptions={{
+          //   style: {
+          //     background: '#22c55e',
+          //     color: '#fff',
+          //   },
+          // }}
         />
       </BrowserRouter>
     </Provider>
