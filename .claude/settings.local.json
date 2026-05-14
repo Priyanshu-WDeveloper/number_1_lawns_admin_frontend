@@ -1,0 +1,10 @@
+{
+  "enabledMcpjsonServers": [
+    "obsidian-integration"
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(pnpm run *)"
+    ]
+  }
+}

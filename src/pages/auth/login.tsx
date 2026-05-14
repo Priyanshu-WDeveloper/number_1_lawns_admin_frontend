@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Leaf, Mail, Lock, Eye, Globe } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
+import { InputWithIcon } from '../../components/forms/input-with-icon';
+import { Button } from '../../components/ui/button';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -121,14 +123,13 @@ const Login: React.FC = () => {
                           Email address
                         </label>
 
-                        <div className="mt-2 relative">
-                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                          <input
+                        <div className="mt-2">
+                          <InputWithIcon
                             type="email"
                             placeholder="example@mail.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full h-14 rounded-xl border border-gray-200 pl-12 pr-4 outline-none focus:ring-2 focus:ring-green-500"
+                            icon={<Mail />}
                             required
                             autoComplete="on"
                           />
@@ -141,30 +142,29 @@ const Login: React.FC = () => {
                           Password
                         </label>
 
-                        <div className="mt-2 relative">
-                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-
-                          <input
+                        <div className="mt-2">
+                          <InputWithIcon
                             type={showPassword ? 'text' : 'password'}
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) =>
                               setPassword(e.target.value)
                             }
-                            className="w-full h-14 rounded-xl border border-gray-200 pl-12 pr-12 outline-none focus:ring-2 focus:ring-green-500"
+                            icon={<Lock />}
+                            trailingIcon={
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setShowPassword(!showPassword)
+                                }
+                                className="focus:outline-none"
+                              >
+                                <Eye className="size-5" />
+                              </button>
+                            }
                             required
                             autoComplete="current-password"
                           />
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowPassword(!showPassword)
-                            }
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
-                          >
-                            <Eye className="w-5 h-5" />
-                          </button>
                         </div>
                       </div>
 
@@ -187,13 +187,13 @@ const Login: React.FC = () => {
                       </div>
 
                       {/* Button */}
-                      <button
+                      <Button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full h-14 rounded-xl bg-green-600 hover:bg-green-700 transition text-white font-semibold text-lg flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full h-14 text-lg"
                       >
                         {isLoading ? 'Logging in...' : 'Login'}
-                      </button>
+                      </Button>
                     </form>
                   </div>
 
