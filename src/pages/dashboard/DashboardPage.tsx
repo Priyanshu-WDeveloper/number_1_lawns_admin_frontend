@@ -45,7 +45,7 @@ const stats = [
     title: 'Total Jobs',
     value: '89',
     icon: Briefcase,
-    url: 'jobs',
+    url: '/jobs',
   },
   {
     title: 'Total Invoices',
