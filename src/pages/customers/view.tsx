@@ -178,7 +178,7 @@ export default function CustomerViewPage() {
                   </div>
 
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                    <DropdownMenuTrigger className="rounded-xl">
                       <Button
                         variant="ghost"
                         size="icon"

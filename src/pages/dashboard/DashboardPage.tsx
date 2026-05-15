@@ -23,7 +23,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { AppLayout } from '../../components/layout/AppLayout'; // Corrected import path
 import { Navbar } from '@/components/layout/Navbar';
 import { useNavigate } from 'react-router-dom';
-import AccountDropdown from '../../components/account-dropdown';
+// import AccountDropdown from '../../components/account-dropdown';
 
 const stats = [
   {

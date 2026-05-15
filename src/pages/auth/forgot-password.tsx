@@ -36,6 +36,8 @@ const ForgotPassword: React.FC = () => {
     setIsLoading(true);
     try {
       // Simulate API call
+      console.log(data);
+
       await new Promise((resolve) => setTimeout(resolve, 1000));
       toast.success('Password reset link sent to your email!');
       navigate('/login');
@@ -84,8 +86,8 @@ const ForgotPassword: React.FC = () => {
                     </h2>
 
                     <p className="mt-5 text-xl text-gray-700 max-w-md leading-9">
-                      Enter your email address and we&apos;ll send you a link to
-                      reset your password.
+                      Enter your email address and we&apos;ll send you
+                      a link to reset your password.
                     </p>
 
                     {/* Divider */}
@@ -105,8 +107,8 @@ const ForgotPassword: React.FC = () => {
                         </div>
 
                         <p className="text-gray-700 leading-7">
-                          Secure password recovery to get you back into your
-                          account.
+                          Secure password recovery to get you back
+                          into your account.
                         </p>
                       </div>
                     </div>
@@ -125,7 +127,9 @@ const ForgotPassword: React.FC = () => {
                       className="flex items-center gap-2 text-green-700 hover:text-green-800 mb-6 transition-colors"
                     >
                       <ArrowLeft className="h-5 w-5" />
-                      <span className="font-medium">Back to Login</span>
+                      <span className="font-medium">
+                        Back to Login
+                      </span>
                     </button>
 
                     <div className="text-center">
