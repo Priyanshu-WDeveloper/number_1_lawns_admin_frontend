@@ -6,11 +6,9 @@ import {
   BarChart3,
   Settings,
   Bell,
-  ChevronDown,
-  // PanelLeftIcon,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+// import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
 import AccountDropdown from '../../components/account-dropdown';
 

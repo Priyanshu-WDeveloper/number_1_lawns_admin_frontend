@@ -1,19 +1,18 @@
 import React from 'react';
 import { SuperAdminLayout } from '@/components/layout/SuperAdminLayout';
 import {
-  Shield,
-  Plus,
-  Search,
-  MoreHorizontal,
+  // Shield,
+  // Plus,
+  // Search,
+  // MoreHorizontal,
   Bell,
   ChevronDown,
-  PanelLeftIcon,
   Eye,
   Pencil,
   LucideTrash2,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+// import { Button } from '@/components/ui/button';
+// import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
 import DataTable, {
@@ -22,7 +21,7 @@ import DataTable, {
 } from '../../components/data-table/DataTable';
 
 interface IAdmins {
-  id: string;
+  id: number;
   adminId: string;
   name: string;
   email: string;
@@ -34,38 +33,41 @@ interface IAdmins {
 const admins: IAdmins[] = [
   {
     id: 1,
+    adminId: 'ADM-001',
     name: 'John Smith',
     email: 'john@no1lawns.com',
-    role: 'Admin',
     status: 'Active',
+    validity: '2026-12-31',
     createdAt: '2024-01-15',
   },
   {
     id: 2,
+    adminId: 'ADM-002',
     name: 'Sarah Johnson',
     email: 'sarah@no1lawns.com',
-    role: 'Admin',
     status: 'Active',
+    validity: '2026-10-20',
     createdAt: '2024-02-20',
   },
   {
     id: 3,
+    adminId: 'ADM-003',
     name: 'Mike Brown',
     email: 'mike@no1lawns.com',
-    role: 'Admin',
     status: 'Inactive',
+    validity: '2025-08-10',
     createdAt: '2023-11-05',
   },
   {
     id: 4,
+    adminId: 'ADM-004',
     name: 'Emily Davis',
     email: 'emily@no1lawns.com',
-    role: 'Admin',
-    status: 'Active',
+    status: 'Expired',
+    validity: '2024-05-01',
     createdAt: '2024-03-10',
   },
 ];
-
 const SuperAdminAdminsPage: React.FC = () => {
   // const { toggleSidebar } = useSidebar();
   const navigate = useNavigate();

@@ -4,7 +4,6 @@ import {
   Bell,
   Briefcase,
   CalendarDays,
-  ChevronDown,
   ClipboardList,
   FileText,
   Users,
@@ -20,7 +19,7 @@ import {
   Area as RechartsArea,
 } from 'recharts';
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+// import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
