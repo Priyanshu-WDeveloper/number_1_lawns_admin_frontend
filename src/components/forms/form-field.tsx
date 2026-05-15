@@ -89,11 +89,6 @@ export function FormField({
       );
 
     case 'select':
-      // Create display map from options
-      const displayMap: Record<string, string> = {};
-      field.options?.forEach(option => {
-        displayMap[option.value] = option.label;
-      });
       return (
         <div className="space-y-2">
           <label className="text-sm font-medium text-[#151515]">
@@ -105,7 +100,6 @@ export function FormField({
           <Select
             value={(value as string) || ''}
             onValueChange={handleChange}
-            displayMap={displayMap}
           >
             <SelectTrigger className="h-12 border-[#e5e5e5] rounded-xl bg-[#fafaf8] focus:bg-white focus:border-[#16610E] focus:ring-[#16610E] transition-all">
               <SelectValue

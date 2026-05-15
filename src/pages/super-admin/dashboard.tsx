@@ -7,11 +7,12 @@ import {
   Settings,
   Bell,
   ChevronDown,
-  PanelLeftIcon,
+  // PanelLeftIcon,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
+import AccountDropdown from '../../components/account-dropdown';
 
 const SuperAdminDashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -31,12 +32,12 @@ const SuperAdminDashboardPage: React.FC = () => {
               </p>
             </div>
             <div className="flex pb-4 items-center gap-2.5">
-              <button
+              {/* <button
                 // onClick={toggleSidebar}
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#ececec] bg-white shadow-sm md:hidden"
               >
                 <PanelLeftIcon className="h-4 w-4 text-[#151515]" />
-              </button>
+              </button> */}
               <button className="relative flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white">
                 <Bell
                   className="h-4 w-4"
@@ -48,7 +49,7 @@ const SuperAdminDashboardPage: React.FC = () => {
                   3
                 </span>
               </button>
-              <div className="flex items-center gap-2 rounded-xl border border-[#ececec] bg-white px-3 py-1.5 shadow-sm">
+              {/* <div className="flex items-center gap-2 rounded-xl border border-[#ececec] bg-white px-3 py-1.5 shadow-sm">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="text-xs bg-green-600 text-white">
                     SA
@@ -58,6 +59,9 @@ const SuperAdminDashboardPage: React.FC = () => {
                   Super Admin
                 </span>
                 <ChevronDown className="h-4 w-4 text-gray-500" />
+              </div> */}
+              <div className="flex items-center justify-end p-6">
+                <AccountDropdown superAccess={true} />
               </div>
             </div>
           </div>

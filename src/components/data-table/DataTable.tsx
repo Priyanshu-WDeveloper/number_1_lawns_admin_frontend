@@ -265,8 +265,9 @@ export default function DataTable<T extends DataTableData>({
           </div>
         </div>
         {/* Table */}
-        <div className="rounded-2xl border ">
-          <table className="w-full min-h-[calc(100vh-400px)] ">
+        <div className="rounded-2xl border min-h-[calc(100vh-400px)]">
+          {/* <table className="w-full min-h-[calc(100vh-400px)] "> */}
+          <table className="w-full">
             <thead className="bg-muted/40">
               <tr className="border-b text-left">
                 {columns.map((column) => (

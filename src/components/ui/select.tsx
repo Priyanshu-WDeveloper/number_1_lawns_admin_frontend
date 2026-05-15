@@ -5,7 +5,7 @@ import { ChevronDownIcon, CheckIcon } from "lucide-react"
 interface SelectContextValue {
   value: string
   displayValue: string
-  onValueChange: (value: string) => void
+  onValueChange: (value: string, displayValue: string) => void
   open: boolean
   setOpen: (open: boolean) => void
 }
@@ -25,20 +25,20 @@ interface SelectProps {
   defaultValue?: string
   onValueChange?: (value: string) => void
   children?: React.ReactNode
-  displayMap?: Record<string, string>
 }
 
-function Select({ value, defaultValue, onValueChange, children, displayMap = {} }: SelectProps) {
+function Select({ value, defaultValue, onValueChange, children }: SelectProps) {
   const [internalValue, setInternalValue] = React.useState(defaultValue || "")
   const [open, setOpen] = React.useState(false)
+  const [displayValue, setDisplayValue] = React.useState("")
 
   const currentValue = value !== undefined ? value : internalValue
-  const displayValue = displayMap[currentValue] || currentValue
 
-  const handleValueChange = (newValue: string) => {
+  const handleValueChange = (newValue: string, newDisplayValue: string) => {
     if (value === undefined) {
       setInternalValue(newValue)
     }
+    setDisplayValue(newDisplayValue)
     onValueChange?.(newValue)
     setOpen(false)
   }
@@ -47,7 +47,7 @@ function Select({ value, defaultValue, onValueChange, children, displayMap = {} 
     <SelectContext.Provider
       value={{
         value: currentValue,
-        displayValue,
+        displayValue: displayValue || currentValue,
         onValueChange: handleValueChange,
         open,
         setOpen: (isOpen: boolean) => {
@@ -150,6 +150,15 @@ function SelectItem({ className, children, value, ...props }: SelectItemProps) {
   const { value: selectedValue, onValueChange } = useSelectContext()
   const isSelected = selectedValue === value
 
+  // Extract text content from children for display value
+  const getDisplayValue = (): string => {
+    if (typeof children === 'string') return children
+    if (Array.isArray(children)) {
+      return children.map(c => typeof c === 'string' ? c : '').join('')
+    }
+    return ''
+  }
+
   return (
     <div
       data-slot="select-item"
@@ -157,7 +166,7 @@ function SelectItem({ className, children, value, ...props }: SelectItemProps) {
         "relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-2.5 pr-8 pl-4 text-sm outline-none select-none transition-colors hover:bg-[#edf8e7] data-[selected]:bg-[#edf8e7] data-[selected]:text-[#16610E]",
         className
       )}
-      onClick={() => onValueChange(value)}
+      onClick={() => onValueChange(value, getDisplayValue())}
       {...props}
     >
       {isSelected && (

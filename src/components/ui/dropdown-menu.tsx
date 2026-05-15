@@ -55,11 +55,11 @@ interface DropdownMenuContentProps extends React.ComponentProps<"div"> {
 
 function DropdownMenuContent({ className, align = "start", sideOffset = 4, children, ...props }: DropdownMenuContentProps) {
   const { open, setOpen } = useDropdownMenuContext()
-  const ref = React.useRef<HTMLDivElement>(null)
+  const contentRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
+      if (contentRef.current && !contentRef.current.contains(event.target as Node)) {
         setOpen(false)
       }
     }
@@ -69,19 +69,62 @@ function DropdownMenuContent({ className, align = "start", sideOffset = 4, child
     }
   }, [open, setOpen])
 
+  // Reset position when closed
+  React.useEffect(() => {
+    if (!open && contentRef.current) {
+      contentRef.current.style.top = ''
+      contentRef.current.style.left = ''
+    }
+  }, [open])
+
+  React.useEffect(() => {
+    if (open && contentRef.current) {
+      const content = contentRef.current
+
+      // Use ResizeObserver to get accurate dimensions after layout
+      const updatePosition = () => {
+        const trigger = content.previousElementSibling as HTMLElement
+        if (trigger && trigger.dataset.slot === "dropdown-menu-trigger") {
+          const triggerRect = trigger.getBoundingClientRect()
+          const contentRect = content.getBoundingClientRect()
+
+          let left = triggerRect.left
+          if (align === "end") {
+            left = triggerRect.right - contentRect.width
+          } else if (align === "center") {
+            left = triggerRect.left + (triggerRect.width - contentRect.width) / 2
+          }
+
+          // Prevent overflow on right edge
+          const maxLeft = window.innerWidth - contentRect.width - 8
+          left = Math.min(Math.max(8, left), maxLeft)
+
+          content.style.top = `${triggerRect.bottom + sideOffset}px`
+          content.style.left = `${left}px`
+        }
+      }
+
+      // Initial position
+      updatePosition()
+
+      // Update position when content dimensions change
+      const resizeObserver = new ResizeObserver(updatePosition)
+      resizeObserver.observe(content)
+
+      return () => resizeObserver.disconnect()
+    }
+  }, [open, align, sideOffset])
+
   if (!open) return null
 
   return (
     <div
-      ref={ref}
+      ref={contentRef}
       data-slot="dropdown-menu-content"
       className={cn(
-        "absolute top-full left-0 z-50 min-w-32 overflow-hidden rounded-lg bg-popover p-1 text-popover-foreground shadow-md mt-1",
-        align === "center" && "left-1/2 -translate-x-1/2",
-        align === "end" && "right-0",
+        "fixed z-50 min-w-32 overflow-hidden rounded-lg bg-popover p-1 text-popover-foreground shadow-md",
         className
       )}
-      style={{ marginTop: sideOffset }}
       {...props}
     >
       {children}

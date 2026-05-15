@@ -8,7 +8,7 @@ import { Toaster } from 'react-hot-toast';
 const App: React.FC = () => {
   return (
     <Provider store={store}>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AppRoutes />
         <Toaster
           position="top-right"

@@ -15,7 +15,7 @@ function Input({
       data-slot="input"
       data-type={type}
       className={cn(
-        'flex h-10 sm:h-11 lg:h-12 w-full rounded-xl border border-[#e5e5e5] bg-[#fafaf8] px-4 py-2 text-sm sm:text-base transition-all outline-none placeholder:text-[#999] focus-visible:ring-2 focus-visible:ring-[#16610E] focus:border-[#16610E] focus:bg-white disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:px-5',
+        'h-10 sm:h-11 lg:h-11 w-full min-w-0 rounded-xl border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40',
         isDate && 'cursor-pointer',
         className,
       )}

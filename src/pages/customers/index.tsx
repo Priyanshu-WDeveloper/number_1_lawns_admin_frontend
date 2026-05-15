@@ -144,7 +144,7 @@ export default function CustomerManagementPage() {
             onClick={() => console.log('Edit customer:', row.id)}
           />
           <ActionButton
-            className="bg-red-600 text-white"
+            className="hover:text-white hover:bg-red-600"
             icon={<LucideTrash2 className="h-3 w-3" />}
             onClick={() =>
               console.log('Deleting access for job ID:', row.id)

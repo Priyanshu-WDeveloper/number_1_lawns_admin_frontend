@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import {
@@ -20,6 +21,15 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { PanelLeftIcon } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 const items = [
   {
@@ -40,20 +50,20 @@ const items = [
 ];
 
 export function SuperAdminSidebar() {
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { toggleSidebar } = useSidebar();
 
   const handleLogout = async () => {
     try {
-      // await logout().unwrap();
-
       // remove auth data manually if needed
       localStorage.removeItem('token');
       localStorage.removeItem('user');
 
       // redirect to login page
       navigate('/login');
+      setShowLogoutDialog(false);
     } catch (error) {
       console.error('Logout failed:', error);
     }
@@ -89,7 +99,7 @@ export function SuperAdminSidebar() {
                 <SidebarMenuButton
                   onClick={() => navigate(item.url)}
                   isActive={location.pathname === item.url}
-                  className="h-14 rounded-2xl text-base text-white hover:bg-[#2a7d20] data-[active=true]:bg-[#2a7d20] data-[active=true]:text-white"
+                  className="h-14 rounded-2xl text-base text-white hover:bg-[#2a7d20] hover:text-white data-[active=true]:bg-[#2a7d20] data-[active=true]:text-white"
                 >
                   <item.icon className="h-5 w-5" />
                   <span>{item.title}</span>
@@ -103,7 +113,7 @@ export function SuperAdminSidebar() {
       <SidebarFooter className="bg-[#0b4308] p-4">
         <button
           className="w-full rounded-2xl bg-white/10 p-4 text-left backdrop-blur transition hover:bg-white/20"
-          onClick={handleLogout}
+          onClick={() => setShowLogoutDialog(true)}
         >
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white">
@@ -122,6 +132,34 @@ export function SuperAdminSidebar() {
           </div>
         </button>
       </SidebarFooter>
+
+      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <DialogContent className="rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Logout</DialogTitle>
+            <DialogDescription className="text-base">
+              Are you sure you want to logout? You will need to login again to
+              access your account.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-between gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowLogoutDialog(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleLogout}
+              className="flex-1 bg-red-500 hover:bg-red-600"
+            >
+              Logout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Sidebar>
   );
 }

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { LogOutIcon } from 'lucide-react';
@@ -20,6 +21,16 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { PanelLeftIcon } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { useAuthStore } from '@/store/authStore';
 
 const items = [
   {
@@ -50,9 +61,17 @@ const items = [
 ];
 
 export function DashboardSidebar() {
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { toggleSidebar } = useSidebar();
+  const { logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+    setShowLogoutDialog(false);
+  };
 
   return (
     <Sidebar className="border-r-0 w-78">
@@ -104,9 +123,7 @@ export function DashboardSidebar() {
       <SidebarFooter className="bg-[#0b4308] p-4">
         <button
           className="w-full rounded-2xl bg-white/10 p-4 text-left backdrop-blur transition hover:bg-white/20"
-          onClick={() => {
-            navigate('/login');
-          }}
+          onClick={() => setShowLogoutDialog(true)}
         >
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white">
@@ -125,6 +142,37 @@ export function DashboardSidebar() {
           </div>
         </button>
       </SidebarFooter>
+
+      <Dialog
+        open={showLogoutDialog}
+        onOpenChange={setShowLogoutDialog}
+      >
+        <DialogContent className="rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Logout</DialogTitle>
+            <DialogDescription className="text-base">
+              Are you sure you want to logout? You will need to login
+              again to access your account.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-between gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowLogoutDialog(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleLogout}
+              className="flex-1 bg-red-500 text-white hover:bg-red-600"
+            >
+              Logout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Sidebar>
   );
 }

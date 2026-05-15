@@ -5,38 +5,59 @@ import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
 import { InputWithIcon } from '../../components/forms/input-with-icon';
 import { Button } from '../../components/ui/button';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import z from 'zod';
+
+const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, { message: 'Email is required' })
+    .email({ message: 'Invalid email address' }),
+  password: z
+    .string()
+    .min(1, { message: 'Password is required' })
+    .min(8, { message: 'Password must be at least 8 characters' })
+    .refine((pwd: string) => !pwd.includes(' '), {
+      message: 'Password cannot contain spaces',
+    }),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 const SuperAdminLogin: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      if (password.length < 8) {
-        return toast.error('Password must be at least 8 characters');
-      }
-
-      if (password.includes(' ')) {
-        return toast.error('Password cannot contain spaces');
-      }
-      await login(email, password);
-      toast.success('Welcome, Super Admin!');
+      await login(data.email, data.password);
+      toast.success('Welcome back!');
       navigate('/super-admin/dashboard');
-    } catch {
-      toast.error('Login failed');
+    } catch (error) {
+      toast.error('Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="max-h-min bg-[#eef5df] flex flex-col px-6 pt-6 pb-3">
+    <div className="max-h-full h-screen bg-[#eef5df] flex flex-col px-6 pt-6 pb-3">
       <div className="flex-1 flex items-center justify-center">
         <div className="w-full h-full max-w-8xl bg-[#f8f8f4] rounded-[28px] shadow-xl overflow-hidden flex flex-col">
           <div className="flex-1 overflow-y-auto">
@@ -106,7 +127,7 @@ const SuperAdminLogin: React.FC = () => {
               </div>
 
               {/* Right Section */}
-              <div className="bg-[#f8f8f4] flex items-center justify-center p-8 lg:px-12 lg:py-6">
+              <div className="bg-[#f8f8f4] flex items-center justify-center p-8 lg:px-12 lg:py-4">
                 <div>
                   <div className="w-full max-w-2xl bg-white rounded-[28px] shadow-lg border border-gray-100 p-8">
                     <div className="text-center">
@@ -115,14 +136,13 @@ const SuperAdminLogin: React.FC = () => {
                       </h2>
 
                       <p className="text-gray-500 mt-3 text-lg">
-                        Enter your credentials to access the control
-                        panel
+                        Enter your credentials to access your account
                       </p>
                     </div>
 
                     {/* Form */}
                     <form
-                      onSubmit={handleSubmit}
+                      onSubmit={handleSubmit(onSubmit)}
                       className="mt-10 space-y-6"
                     >
                       {/* Email */}
@@ -133,14 +153,15 @@ const SuperAdminLogin: React.FC = () => {
 
                         <div className="mt-2">
                           <InputWithIcon
-                            type="email"
-                            placeholder="superadmin@example.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="superadmin@mail.com"
                             icon={<Mail />}
-                            required
-                            autoComplete="on"
+                            {...register('email')}
                           />
+                          {errors.email && (
+                            <p className="mt-1 text-sm text-red-500">
+                              {errors.email.message}
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -154,10 +175,6 @@ const SuperAdminLogin: React.FC = () => {
                           <InputWithIcon
                             type={showPassword ? 'text' : 'password'}
                             placeholder="••••••••"
-                            value={password}
-                            onChange={(e) =>
-                              setPassword(e.target.value)
-                            }
                             icon={<Lock />}
                             trailingIcon={
                               <button
@@ -170,9 +187,14 @@ const SuperAdminLogin: React.FC = () => {
                                 <Eye className="size-5" />
                               </button>
                             }
-                            required
-                            autoComplete="current-password"
+                            autoComplete="off"
+                            {...register('password')}
                           />
+                          {errors.password && (
+                            <p className="mt-1 text-sm text-red-500">
+                              {errors.password.message}
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -200,7 +222,7 @@ const SuperAdminLogin: React.FC = () => {
                         disabled={isLoading}
                         className="w-full h-14 text-lg"
                       >
-                        {isLoading ? 'Authenticating...' : 'Sign In'}
+                        {isLoading ? 'Logging in...' : 'Login'}
                       </Button>
                     </form>
                   </div>
@@ -210,15 +232,15 @@ const SuperAdminLogin: React.FC = () => {
                     <div className="flex flex-wrap items-center justify-center gap-8">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                          <Shield className="w-5 h-5 text-green-700" />
+                          <Leaf className="w-5 h-5 text-green-700" />
                         </div>
 
                         <div>
                           <h4 className="font-semibold text-gray-700">
-                            Secure Access
+                            Eco Friendly
                           </h4>
                           <p className="text-sm text-gray-500">
-                            Protected login
+                            Sustainable solutions
                           </p>
                         </div>
                       </div>
@@ -230,10 +252,10 @@ const SuperAdminLogin: React.FC = () => {
 
                         <div>
                           <h4 className="font-semibold text-gray-700">
-                            Full Control
+                            Grow Together
                           </h4>
                           <p className="text-sm text-gray-500">
-                            Admin management
+                            Community & support
                           </p>
                         </div>
                       </div>
@@ -245,10 +267,10 @@ const SuperAdminLogin: React.FC = () => {
 
                         <div>
                           <h4 className="font-semibold text-gray-700">
-                            System Monitor
+                            Better Future
                           </h4>
                           <p className="text-sm text-gray-500">
-                            Real-time analytics
+                            For a greener planet
                           </p>
                         </div>
                       </div>

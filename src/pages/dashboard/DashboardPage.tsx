@@ -26,6 +26,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 import { AppLayout } from '../../components/layout/AppLayout'; // Corrected import path
 import { useNavigate } from 'react-router-dom';
+import AccountDropdown from '../../components/account-dropdown';
 
 const stats = [
   {
@@ -121,17 +122,20 @@ export default function DashboardPage() {
                 </span>
               </button>
 
-              <div className="flex items-center gap-2 rounded-xl border border-[#ececec] bg-white px-3 py-1.5 shadow-sm">
-                <Avatar className="h-8 w-8">
+              <div className="flex items-center justify-end p-6">
+                <AccountDropdown superAccess={false} />
+              </div>
+              {/* <div className="flex items-center gap-2 rounded-xl border border-[#ececec] bg-white px-3 py-1.5 shadow-sm"> */}
+              {/* <Avatar className="h-8 w-8">
                   <AvatarFallback className="text-xs">
                     A
                   </AvatarFallback>
                 </Avatar>
 
-                <span className="text-sm font-semibold">Admin</span>
-
-                <ChevronDown className="h-4 w-4 text-gray-500" />
-              </div>
+                <span className="text-sm font-semibold">Admin</span> */}
+              {/* <AccountDropdown /> */}
+              {/* <ChevronDown className="h-4 w-4 text-gray-500" /> */}
+              {/* </div> */}
             </div>
           </div>
 

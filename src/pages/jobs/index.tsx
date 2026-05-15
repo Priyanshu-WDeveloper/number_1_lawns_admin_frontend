@@ -134,10 +134,12 @@ export default function JobManagementPage() {
           />
           <ActionButton
             icon={<Pencil className="h-4 w-4" />}
-            onClick={() => console.log('Editing job with ID:', row.id)}
+            onClick={() =>
+              console.log('Editing job with ID:', row.id)
+            }
           />
           <ActionButton
-            className="bg-red-600 text-white"
+            className="hover:text-white hover:bg-red-600"
             icon={<Trash className="h-4 w-4 " />}
             onClick={() =>
               console.log('Deleting access for job ID:', row.id)

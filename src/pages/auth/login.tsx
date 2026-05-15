@@ -1,37 +1,56 @@
 import React, { useState } from 'react';
-import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Leaf, Mail, Lock, Eye, Globe } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
 import { InputWithIcon } from '../../components/forms/input-with-icon';
 import { Button } from '../../components/ui/button';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import z from 'zod';
+
+const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, { message: 'Email is required' })
+    .email({ message: 'Invalid email address' }),
+  password: z
+    .string()
+    .min(1, { message: 'Password is required' })
+    .min(8, { message: 'Password must be at least 8 characters' })
+    .refine((pwd: string) => !pwd.includes(' '), {
+      message: 'Password cannot contain spaces',
+    }),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      if (!email || !password) {
-        return toast.error('Please fill out the form first');
-      }
-      if (password.length < 8 || password.includes(' ')) {
-        return toast.error(
-          'Password must be at least 8 characters and contain no spaces',
-        );
-      }
-      await login(email, password);
+      await login(data.email, data.password);
       toast.success('Welcome back!');
       navigate('/dashboard');
     } catch (error) {
-      toast.error('Login failed');
+      toast.error('Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -107,12 +126,12 @@ const Login: React.FC = () => {
               </div>
 
               {/* Right Section */}
-              <div className="bg-[#f8f8f4] flex items-center justify-center p-8 lg:px-12 lg:py-6">
+              <div className="bg-[#f8f8f4] flex items-center justify-center p-8 lg:px-12 lg:py-4">
                 <div>
                   <div className="w-full max-w-2xl bg-white rounded-[28px] shadow-lg border border-gray-100 p-8">
                     <div className="text-center">
                       <h2 className="text-4xl font-bold text-green-900">
-                        Login to your account
+                        Log in to your Account
                       </h2>
 
                       <p className="text-gray-500 mt-3 text-lg">
@@ -122,7 +141,7 @@ const Login: React.FC = () => {
 
                     {/* Form */}
                     <form
-                      onSubmit={handleSubmit}
+                      onSubmit={handleSubmit(onSubmit)}
                       className="mt-10 space-y-6"
                     >
                       {/* Email */}
@@ -133,14 +152,15 @@ const Login: React.FC = () => {
 
                         <div className="mt-2">
                           <InputWithIcon
-                            // type="email"
-                            placeholder="example@mail.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="superadmin@mail.com"
                             icon={<Mail />}
-                            // autoComplete="off"
-                            name="email"
+                            {...register('email')}
                           />
+                          {errors.email && (
+                            <p className="mt-1 text-sm text-red-500">
+                              {errors.email.message}
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -154,10 +174,6 @@ const Login: React.FC = () => {
                           <InputWithIcon
                             type={showPassword ? 'text' : 'password'}
                             placeholder="••••••••"
-                            value={password}
-                            onChange={(e) =>
-                              setPassword(e.target.value)
-                            }
                             icon={<Lock />}
                             trailingIcon={
                               <button
@@ -171,8 +187,13 @@ const Login: React.FC = () => {
                               </button>
                             }
                             autoComplete="off"
-                            name="password"
+                            {...register('password')}
                           />
+                          {errors.password && (
+                            <p className="mt-1 text-sm text-red-500">
+                              {errors.password.message}
+                            </p>
+                          )}
                         </div>
                       </div>
 
