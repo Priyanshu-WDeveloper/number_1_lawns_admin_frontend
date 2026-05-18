@@ -36,6 +36,17 @@ export const api = createApi({
     // Auth endpoints
     login: builder.mutation({
       query: (credentials) => ({
+        url: '/admins/login',
+        method: 'POST',
+        body: {
+          ...credentials,
+          deviceType: getDeviceType(),
+          deviceToken: getDeviceToken(),
+        },
+      }),
+    }),
+    superLogin: builder.mutation({
+      query: (credentials) => ({
         url: '/superadmins/login',
         method: 'POST',
         body: {
@@ -45,23 +56,23 @@ export const api = createApi({
         },
       }),
     }),
-    logout: builder.mutation({
+    logout: builder.mutation<void, void>({
       query: () => ({
         url: '/auth/logout',
         method: 'POST',
       }),
 
-      async onQueryStarted(_, { queryFulfilled }) {
+      async onQueryStarted(_, { queryFulfilled, dispatch }) {
         try {
           await queryFulfilled;
-
-          // remove token
-          localStorage.removeItem('token');
-
-          // optional: clear other auth data
-          localStorage.removeItem('user');
         } catch (error) {
           console.error('Logout failed', error);
+        } finally {
+          localStorage.removeItem('token');
+          localStorage.removeItem('role');
+          localStorage.removeItem('user');
+
+          dispatch(api.util.resetApiState());
         }
       },
     }),
@@ -240,7 +251,7 @@ export const api = createApi({
     }),
     createAdminUser: builder.mutation({
       query: (admin) => ({
-        url: '/super-admin/admins',
+        url: '/superadmins/add-admin',
         method: 'POST',
         body: admin,
       }),
@@ -278,6 +289,7 @@ export const api = createApi({
 
 export const {
   useLoginMutation,
+  useSuperLoginMutation,
   useLogoutMutation,
 
   useGetCustomersQuery,

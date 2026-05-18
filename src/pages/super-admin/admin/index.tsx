@@ -10,6 +10,9 @@ import {
   Eye,
   Pencil,
   LucideTrash2,
+  MoreVertical,
+  LogIn,
+  UserX,
 } from 'lucide-react';
 // import { Button } from '@/components/ui/button';
 // import { Badge } from '@/components/ui/badge';
@@ -18,9 +21,15 @@ import { useNavigate } from 'react-router-dom';
 import DataTable, {
   ActionButton,
   type ColumnDef,
-} from '../../components/data-table/DataTable';
-import type { IAdmins } from '../../types/admins.types';
-import { useGetAdminUsersQuery } from '../../store/api';
+} from '../../../components/data-table/DataTable';
+import type { IAdmins } from '../../../types/admins.types';
+import { useGetAdminUsersQuery } from '../../../store/api';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../../components/ui/dropdown-menu';
 
 // interface IAdmins {
 //   id: number;
@@ -182,20 +191,39 @@ const SuperAdminAdminsPage: React.FC = () => {
       header: 'Actions',
       cell: (row: IAdmins) => (
         <div className="flex flex-wrap gap-2">
-          <ActionButton
-            icon={<Eye className="h-4 w-4" />}
-            onClick={() => navigate(`/admins/${row._id}`)}
-          />
+          <ActionButton icon={<Eye className="h-4 w-4" />} />
 
           <ActionButton
             icon={<Pencil className="h-4 w-4" />}
-            onClick={() => console.log('Edit admin:', row._id)}
+            onClick={() => navigate(`/super-admin/admin/${row._id}`)}
           />
 
-          <ActionButton
+          {/* <ActionButton
             className="hover:text-white hover:bg-red-600"
             icon={<LucideTrash2 className="h-3 w-3" />}
-            onClick={() => console.log('Deleting admin:', row._id)}
+          /> */}
+          <ActionButton
+            icon={
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <ActionButton
+                    icon={<MoreVertical className="h-4 w-4" />}
+                  />
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Login as Admin
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem className="text-red-500 focus:text-red-500">
+                    <UserX className="mr-2 h-4 w-4" />
+                    Set Inactive
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            }
           />
         </div>
       ),
@@ -249,7 +277,8 @@ const SuperAdminAdminsPage: React.FC = () => {
               filterField="status"
               filterOptions={['Active', 'Inactive', 'Expired']}
               addButtonLabel="Add admin"
-              onAddClick={() => navigate('/admins/create')}
+              // onAddClick={() => navigate('/admins/create')}
+              onAddClick={() => navigate(`/super-admin/admin/create`)}
             />
           </div>
         </div>

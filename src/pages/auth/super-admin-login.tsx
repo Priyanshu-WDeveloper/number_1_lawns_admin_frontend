@@ -15,7 +15,7 @@ import { Button } from '../../components/ui/button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import z from 'zod';
-import { useLoginMutation } from '../../store/api';
+import { useSuperLoginMutation } from '../../store/api';
 
 const loginSchema = z.object({
   email: z
@@ -37,7 +37,7 @@ const SuperAdminLogin: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   // const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const [login, { isLoading }] = useLoginMutation();
+  const [superLogin, { isLoading }] = useSuperLoginMutation();
 
   const {
     register,
@@ -53,8 +53,8 @@ const SuperAdminLogin: React.FC = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const res = await login(data).unwrap();
-      localStorage.setItem('token', res.token);
+      const res = await superLogin(data).unwrap();
+
       console.log(
         '\n===================== 🟢 res =====================',
       );
@@ -63,7 +63,9 @@ const SuperAdminLogin: React.FC = () => {
         '=================================================\n',
       );
       if (res.user) {
-        toast.success('Welcome back!');
+        toast.success('Welcome back Super Admin!');
+        localStorage.setItem('token', res.token);
+        localStorage.setItem('role', res.user.role.toString());
         navigate('/super-admin/dashboard');
       }
     } catch (error) {

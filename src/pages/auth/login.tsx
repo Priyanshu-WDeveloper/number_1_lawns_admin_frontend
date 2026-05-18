@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Leaf, Mail, Lock, Eye, Globe, EyeOff } from 'lucide-react';
-import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
 import { InputWithIcon } from '../../components/forms/input-with-icon';
 import { Button } from '../../components/ui/button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import z from 'zod';
+import { useLoginMutation } from '../../store/api';
 
 const loginSchema = z.object({
   email: z
@@ -27,9 +27,8 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuthStore();
   const navigate = useNavigate();
+  const [login, { isLoading }] = useLoginMutation();
 
   const {
     register,
@@ -44,15 +43,18 @@ const Login: React.FC = () => {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    setIsLoading(true);
     try {
-      await login(data.email, data.password);
-      toast.success('Welcome back!');
-      navigate('/dashboard');
+      const res = await login(data).unwrap();
+
+      if (res.user) {
+        toast.success('Welcome back Admin!');
+        localStorage.setItem('token', res.token);
+        localStorage.setItem('role', res.user.role.toString());
+        navigate('/dashboard');
+      }
     } catch (error) {
+      console.error(error);
       toast.error('Login failed. Please check your credentials.');
-    } finally {
-      setIsLoading(false);
     }
   };
 

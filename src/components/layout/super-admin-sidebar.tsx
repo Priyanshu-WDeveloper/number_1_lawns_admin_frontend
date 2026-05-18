@@ -22,6 +22,10 @@ import {
 } from '@/components/ui/sidebar';
 import { PanelLeftIcon } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+// import { useLogoutMutation } from '../../store/api';
+import toast from 'react-hot-toast';
+import { ROUTES } from '../../constants';
+import { localLogout } from '../../lib/auth';
 
 const items = [
   {
@@ -46,18 +50,26 @@ export function SuperAdminSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toggleSidebar } = useSidebar();
+  // const [logout] = useLogoutMutation();
+
+  // const handleLogout = () => {
+  //   logout();
+  //   navigate('/login');
+  //   setShowLogoutDialog(false);
+  // };
 
   const handleLogout = async () => {
     try {
-      // remove auth data manually if needed
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-
-      // redirect to login page
-      navigate('/login');
+      // await logout().unwrap();
+      localLogout();
+      toast.success('Logged out');
       setShowLogoutDialog(false);
+
+      navigate(ROUTES.SUPER_ADMIN_LOGIN, {
+        replace: true,
+      });
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error(error);
     }
   };
 

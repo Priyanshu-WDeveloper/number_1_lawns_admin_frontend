@@ -22,6 +22,8 @@ export const ROUTES = {
   // Super Admin routes
   SUPER_ADMIN_DASHBOARD: '/super-admin/dashboard',
   SUPER_ADMIN_ADMINS: '/super-admin/admins',
+  ADMIN_CREATE: '/super-admin/admin/create',
+  ADMIN_VIEW: '/super-admin/admin/:id',
   SUPER_ADMIN_BILLING: '/super-admin/billing',
   SUPER_ADMIN_NOTIFICATIONS: '/super-admin/notifications',
 
@@ -58,6 +60,11 @@ export const API_ENDPOINTS = {
   ADMIN_USERS: '/api/super-admin/admins',
   ADMIN_USER_BY_ID: (id: string) => `/api/super-admin/admins/${id}`,
   BILLING: '/api/super-admin/billing',
+} as const;
+
+export const ROLES = {
+  SUPER_ADMIN: 1,
+  ADMIN: 2,
 } as const;
 
 // UI Constants

@@ -89,7 +89,9 @@ interface DataTableProps<T extends DataTableData> {
 //   );
 // }
 
-interface ActionButtonProps {
+interface ActionButtonProps extends React.ComponentProps<
+  typeof Button
+> {
   icon: React.ReactNode;
   onClick?: () => void;
   variant?: 'outline' | 'default';

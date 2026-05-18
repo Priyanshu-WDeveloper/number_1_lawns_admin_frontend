@@ -1,21 +1,28 @@
 import React from 'react';
-// import { Navigate } from 'react-router-dom';
-import { ROUTES } from '@/constants';
+import { Navigate } from 'react-router-dom';
+import { ROLES, ROUTES } from '@/constants';
+import { getUserRole, isAuthenticated } from '../lib/auth';
 
 interface PublicRouteProps {
   children: React.ReactNode;
   redirectTo?: string;
 }
 
-export function PublicRoute({
-  children,
-  redirectTo = ROUTES.DASHBOARD,
-}: PublicRouteProps) {
-  // const isAuthenticated = true;
-  // if (isAuthenticated) {
-  //   return <Navigate to={redirectTo} replace />;
-  // }
-  void redirectTo;
+export function PublicRoute({ children }: PublicRouteProps) {
+  const authenticated = isAuthenticated();
+
+  const role = getUserRole();
+
+  if (authenticated) {
+    if (role === ROLES.SUPER_ADMIN) {
+      return <Navigate to={ROUTES.SUPER_ADMIN_DASHBOARD} replace />;
+    }
+
+    if (role === ROLES.ADMIN) {
+      return <Navigate to={ROUTES.DASHBOARD} replace />;
+    }
+  }
+
   return <>{children}</>;
 }
 
@@ -24,31 +31,38 @@ interface ProtectedRouteProps {
   redirectTo?: string;
 }
 
-export function ProtectedRoute({
-  children,
-  redirectTo = ROUTES.LOGIN,
-}: ProtectedRouteProps) {
-  // const isAuthenticated = true;
-  // if (!isAuthenticated) {
-  //   return <Navigate to={redirectTo} replace />;
-  // }
-  void redirectTo;
+export function ProtectedRoute({ children }: ProtectedRouteProps) {
+  const authenticated = isAuthenticated();
+
+  const role = getUserRole();
+
+  if (!authenticated) {
+    return <Navigate to={ROUTES.LOGIN} replace />;
+  }
+
+  if (role !== ROLES.ADMIN) {
+    return <Navigate to={ROUTES.SUPER_ADMIN_DASHBOARD} replace />;
+  }
+
   return <>{children}</>;
 }
-
 interface SuperAdminRouteProps {
   children: React.ReactNode;
   redirectTo?: string;
 }
 
-export function SuperAdminRoute({
-  children,
-  redirectTo = ROUTES.SUPER_ADMIN_LOGIN,
-}: SuperAdminRouteProps) {
-  // const isAuthenticated = true;
-  // if (!isAuthenticated) {
-  //   return <Navigate to={redirectTo} replace />;
-  // }
-  void redirectTo;
+export function SuperAdminRoute({ children }: SuperAdminRouteProps) {
+  const authenticated = isAuthenticated();
+
+  const role = getUserRole();
+
+  if (!authenticated) {
+    return <Navigate to={ROUTES.SUPER_ADMIN_LOGIN} replace />;
+  }
+
+  if (role !== ROLES.SUPER_ADMIN) {
+    return <Navigate to={ROUTES.DASHBOARD} replace />;
+  }
+
   return <>{children}</>;
 }

@@ -22,7 +22,10 @@ import {
 } from '@/components/ui/sidebar';
 import { PanelLeftIcon } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { useAuthStore } from '@/store/authStore';
+import toast from 'react-hot-toast';
+// import { useLogoutMutation } from '../../store/api';
+import { ROUTES } from '../../constants';
+import { localLogout } from '../../lib/auth';
 
 const items = [
   {
@@ -57,12 +60,27 @@ export function DashboardSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toggleSidebar } = useSidebar();
-  const { logout } = useAuthStore();
+  // const [logout] = useLogoutMutation();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-    setShowLogoutDialog(false);
+  // const handleLogout = () => {
+  //   logout();
+  //   navigate('/login');
+  //   setShowLogoutDialog(false);
+  // };
+
+  const handleLogout = async () => {
+    try {
+      // await logout().unwrap();
+      localLogout();
+      toast.success('Logged out');
+      setShowLogoutDialog(false);
+
+      navigate(ROUTES.LOGIN, {
+        replace: true,
+      });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (

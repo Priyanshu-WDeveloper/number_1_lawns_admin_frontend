@@ -18,6 +18,12 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { useAuthStore } from '@/store/authStore';
+// import { useLogoutMutation } from '../store/api';
+import toast from 'react-hot-toast';
+import { ConfirmDialog } from './ui/confirm-dialog';
+import { useState } from 'react';
+import { ROUTES } from '../constants';
+import { localLogout } from '../lib/auth';
 
 export default function AccountDropdown({
   superAccess = false,
@@ -26,6 +32,32 @@ export default function AccountDropdown({
 }) {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  // const [logout] = useLogoutMutation();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+
+  // const handleLogout = () => {
+  //   logout();
+  //   navigate('/login');
+  //   setShowLogoutDialog(false);
+  // };
+
+  const handleLogout = async () => {
+    try {
+      // await logout().unwrap();
+      localLogout();
+      toast.success('Logged out');
+      setShowLogoutDialog(false);
+
+      navigate(
+        superAccess ? ROUTES.SUPER_ADMIN_LOGIN : ROUTES.LOGIN,
+        {
+          replace: true,
+        },
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const getInitials = (name: string) => {
     return name
@@ -110,12 +142,20 @@ export default function AccountDropdown({
         {/* <Separator /> */}
 
         <DropdownMenuItem
-          onClick={() => navigate('/login')}
+          onClick={() => setShowLogoutDialog(true)}
           className="flex cursor-pointer items-center gap-3 px-4 py-3 text-sm text-red-500 focus:text-red-500"
         >
           <LogOut className="h-4 w-4" />
           Sign out
         </DropdownMenuItem>
+        <ConfirmDialog
+          open={showLogoutDialog}
+          onOpenChange={setShowLogoutDialog}
+          title="Logout"
+          description="Are you sure you want to logout? You will need to login again to access your account."
+          confirmText="Logout"
+          onConfirm={handleLogout}
+        />
       </DropdownMenuContent>
     </DropdownMenu>
   );

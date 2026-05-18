@@ -11,7 +11,6 @@ import SuperAdminLogin from '../pages/auth/super-admin-login';
 import ForgotPassword from '../pages/auth/forgot-password';
 import DashboardPage from '../pages/dashboard/DashboardPage';
 import SuperAdminDashboardPage from '../pages/super-admin/dashboard';
-import SuperAdminAdminsPage from '../pages/super-admin/admins';
 import SuperAdminBillingPage from '../pages/super-admin/billing';
 import CustomerManagementPage from '../pages/customers';
 import CreateCustomerPage from '../pages/customers/create';
@@ -24,6 +23,9 @@ import CreateJobPage from '../pages/jobs/create';
 import JobViewPage from '../pages/jobs/view';
 import NotificationsPage from '../pages/notification';
 import InvoiceManagementPage from '../pages/invoices';
+import SuperAdminAdminsPage from '../pages/super-admin/admin';
+import AdminCreatePage from '../pages/super-admin/admin/create';
+import AdminViewPage from '../pages/super-admin/admin/view';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -166,6 +168,22 @@ const AppRoutes: React.FC = () => {
         element={
           <SuperAdminRoute redirectTo={ROUTES.SUPER_ADMIN_LOGIN}>
             <SuperAdminAdminsPage />
+          </SuperAdminRoute>
+        }
+      />
+      <Route
+        path={ROUTES.ADMIN_CREATE}
+        element={
+          <SuperAdminRoute redirectTo={ROUTES.SUPER_ADMIN_LOGIN}>
+            <AdminCreatePage />
+          </SuperAdminRoute>
+        }
+      />
+      <Route
+        path={ROUTES.ADMIN_VIEW}
+        element={
+          <SuperAdminRoute redirectTo={ROUTES.SUPER_ADMIN_LOGIN}>
+            <AdminViewPage />
           </SuperAdminRoute>
         }
       />
