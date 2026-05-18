@@ -86,7 +86,7 @@ export default function CreateEmployeePage() {
     handleSubmit,
     trigger,
     watch,
-    setValue,
+    // setValue,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(employeeSchema),
@@ -176,12 +176,12 @@ export default function CreateEmployeePage() {
     navigate('/employees');
   };
 
-  const handlePhoneChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const value = e.target.value.replace(/[^\d\s\-\+\(\)]/g, '');
-    setValue('phone', value, { shouldValidate: true });
-  };
+  // const handlePhoneChange = (
+  //   e: React.ChangeEvent<HTMLInputElement>,
+  // ) => {
+  //   const value = e.target.value.replace(/[^\d\s\-\+\(\)]/g, '');
+  //   setValue('phone', value, { shouldValidate: true });
+  // };
 
   const renderStepContent = () => {
     switch (currentStep) {

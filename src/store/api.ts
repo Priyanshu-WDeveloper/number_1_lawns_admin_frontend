@@ -3,8 +3,11 @@ import {
   fetchBaseQuery,
 } from '@reduxjs/toolkit/query/react';
 import { getDeviceToken, getDeviceType } from '../lib/device';
-import type { GetAdminsParams } from '../types/api.types';
-import type { IAdmins } from '../types/admins.types';
+import type {
+  GetAdminsParams,
+  GetAdminsResponse,
+} from '../types/api.types';
+// import type { IAdmins } from '../types/admins.types';
 
 export const api = createApi({
   reducerPath: 'api',
@@ -209,7 +212,9 @@ export const api = createApi({
     }),
 
     // Super Admin - Admin Users endpoints
-    getAdminUsers: builder.query<IAdmins[], GetAdminsParams>({
+    // IAdmins[],
+    //
+    getAdminUsers: builder.query<GetAdminsResponse, GetAdminsParams>({
       query: ({ page = 1, limit = 10, search, status, sort }) => ({
         url: 'superadmins/admins',
 

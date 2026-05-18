@@ -143,7 +143,7 @@ const SuperAdminAdminsPage: React.FC = () => {
   //     ),
   //   },
   // ];
-  const { data, isLoading, error } = useGetAdminUsersQuery({
+  const { data } = useGetAdminUsersQuery({
     page: 1,
     limit: 10,
   });
@@ -238,8 +238,8 @@ const SuperAdminAdminsPage: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            <DataTable<IAdmins>
+            {/* <DataTable<IAdmins> */} /TODO: Fix this
+            <DataTable
               data={data?.admins || []}
               columns={adminsColumns}
               title="Admins"
