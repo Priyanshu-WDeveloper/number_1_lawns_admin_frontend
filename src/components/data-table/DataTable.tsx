@@ -1,11 +1,9 @@
 import * as React from 'react';
 import {
   Search,
-  Filter,
   Plus,
   ChevronLeft,
   ChevronRight,
-  Calendar,
   ChevronsUpDown,
 } from 'lucide-react';
 
@@ -127,8 +125,6 @@ export function PaginationButton({
   );
 }
 
-const PAGE_SIZES = [10, 25, 50, 100] as const;
-
 const getVisiblePages = (
   current: number,
   total: number,
@@ -155,7 +151,7 @@ export default function DataTable<T extends DataTableData>({
   loading = false,
   pagination,
   onPageChange,
-  onLimitChange,
+  onLimitChange: _onLimitChange,
 }: DataTableProps<T>) {
   const [search, setSearch] = React.useState('');
   const [filterValue, setFilterValue] = React.useState<string>('All');

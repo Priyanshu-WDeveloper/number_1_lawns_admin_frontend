@@ -236,7 +236,6 @@ export const api = createApi({
       }),
 
       providesTags: ['Admins'],
-      refetchOnMountOrArgChange: true,
     }),
     getAdminUserById: builder.query({
       query: (id) => `/superadmins/edit-admin/${id}`,
