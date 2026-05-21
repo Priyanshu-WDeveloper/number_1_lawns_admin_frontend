@@ -90,13 +90,16 @@ const SuperAdminAdminsPage = () => {
     setSort,
   } = useDataTableState({ defaultLimit: 8 });
 
-  const { data, isLoading } = useGetAdminUsersQuery({
-    page,
-    limit,
-    search: debouncedSearch || undefined,
-    status: statusFilter === 'All' ? undefined : statusFilter,
-    sort: mapSortToApi(sort),
-  });
+  const { data, isLoading } = useGetAdminUsersQuery(
+    {
+      page,
+      limit,
+      search: debouncedSearch || undefined,
+      status: statusFilter === 'All' ? undefined : statusFilter,
+      sort: mapSortToApi(sort),
+    },
+    { refetchOnMountOrArgChange: true },
+  );
 
   const handleStatusChange = async (
     id: string,

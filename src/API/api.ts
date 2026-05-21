@@ -16,8 +16,10 @@ import type {
   NotificationsResponse,
   ListQueryParams,
   UpdateEmployeePayload,
-  CreateEmployeePayload,
 } from '../types/api.types';
+import type {
+  CreateEmployeePayload,
+} from '../types/employees.types';
 import { setAuth, clearAuth } from '../store/auth-slice';
 import { API_ROUTES } from '../constants';
 import type {
