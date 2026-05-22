@@ -34,7 +34,6 @@ import { StatusBadge } from '@/components/data-table/status-badge';
 import { STATUS_CONFIG } from '@/constants/status-config';
 import type { IEmployee } from '@/types';
 import toast from 'react-hot-toast';
-import { format } from 'date-fns';
 import { useState } from 'react';
 import { EmployeeValidityDialog } from '@/components/admin/employee-validity-dialog';
 
@@ -84,14 +83,6 @@ export default function EmployeeManagementPage() {
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to update status'));
     }
-  };
-
-  const validityConfig: Record<
-    string,
-    { color: string; label: string }
-  > = {
-    valid: { color: '#22c55e', label: 'Valid' },
-    notSet: { color: '#6b7280', label: 'Not set' },
   };
 
   const employeeColumns: ColumnDef<IEmployee>[] = [

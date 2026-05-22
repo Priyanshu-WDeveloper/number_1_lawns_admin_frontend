@@ -197,6 +197,7 @@ export default function JobViewPage() {
   );
 
   const resolvedJob = job ?? passedJob;
+  if (!resolvedJob) return null;
 
   const handleConfirmCancel = async () => {
     if (!id) return;
@@ -298,17 +299,18 @@ export default function JobViewPage() {
                   <div>
                     <h1 className="text-2xl font-bold text-[#151515]">
                       Job{' '}
-                      {`${resolvedJob.customerId ? resolvedJob.customerId : resolvedJob._id.slice(-6)}`}
+                      {/* {`${resolvedJob.customerId ? resolvedJob.customerId : (resolvedJob._id ?? '').slice(-6)}`} */}
+                      #{(resolvedJob._id ?? '').slice(-6)}
                     </h1>
                     <p className="text-[#777] text-sm">
-                      Job ID: {resolvedJob._id}
+                      Job ID: {resolvedJob._id ?? ''}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="text-right">
                     <StatusBadge
-                      status={resolvedJob.status}
+                      status={resolvedJob.status ?? ''}
                       config={STATUS_CONFIG.job}
                     />
                     <div className="mt-2">
@@ -341,7 +343,7 @@ export default function JobViewPage() {
                           navigate(
                             ROUTES.JOBS_EDIT.replace(
                               ':id',
-                              resolvedJob._id,
+                              resolvedJob._id ?? '',
                             ),
                           )
                         }
@@ -703,7 +705,9 @@ export default function JobViewPage() {
                   <div className="flex items-center gap-3">
                     <CreditCard className="h-4 w-4 text-[#777] shrink-0" />
                     <div>
-                      <p className="text-sm text-[#777]">Payment Type</p>
+                      <p className="text-sm text-[#777]">
+                        Payment Type
+                      </p>
                       <p className="text-[#151515] font-medium">
                         {resolvedJob.paymentType
                           ? resolvedJob.paymentType
@@ -732,7 +736,9 @@ export default function JobViewPage() {
                   <div className="flex items-center gap-3">
                     <Clock className="h-4 w-4 text-[#777] shrink-0" />
                     <div>
-                      <p className="text-sm text-[#777]">Created At</p>
+                      <p className="text-sm text-[#777]">
+                        Created At
+                      </p>
                       <p className="text-[#151515] font-medium">
                         {formatDate(resolvedJob.createdAt)}
                       </p>
@@ -741,7 +747,9 @@ export default function JobViewPage() {
                   <div className="flex items-center gap-3">
                     <Clock className="h-4 w-4 text-[#777] shrink-0" />
                     <div>
-                      <p className="text-sm text-[#777]">Last Updated</p>
+                      <p className="text-sm text-[#777]">
+                        Last Updated
+                      </p>
                       <p className="text-[#151515] font-medium">
                         {formatDate(resolvedJob.updatedAt)}
                       </p>

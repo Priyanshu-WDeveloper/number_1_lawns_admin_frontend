@@ -1,3 +1,29 @@
+export type { ICustomer } from './customers.types';
+export type { IEmployee } from './employees.types';
+
+export interface IAdminUser {
+  _id: string;
+  adminId: number;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  email: string;
+  status: string;
+  profileImage: string;
+  countryCode: string;
+  phoneNumber: string;
+  role: number;
+  city: string;
+  address: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  location?: { type: 'Point'; coordinates: [number, number] };
+  createdAt: string;
+  updatedAt: string;
+  validity?: string;
+}
+
 export interface IJob {
   _id?: string;
   __v?: number;
@@ -45,6 +71,12 @@ export interface IJob {
     coordinates: [number, number];
   };
   jobType: string;
+  status?: string;
+  price?: number;
+  frequency?: { value: number; unit: string };
+  description?: string;
+  notes?: string;
+  receiptUrl?: string;
   jobDate?: string;
   date: string;
   active?: boolean;

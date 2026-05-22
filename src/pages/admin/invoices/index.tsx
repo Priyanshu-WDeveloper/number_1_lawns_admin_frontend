@@ -112,7 +112,7 @@ export default function InvoiceManagementPage() {
       header: 'Total',
       cell: (row: IInvoice) => (
         <span className="font-medium text-[#151515]">
-          ${row.totalAmount.toFixed(2)}
+          ${(row.totalAmount ?? 0).toFixed(2)}
         </span>
       ),
     },
@@ -122,12 +122,12 @@ export default function InvoiceManagementPage() {
       cell: (row: IInvoice) => (
         <span
           className={
-            row.receivedAmount < row.totalAmount
+            (row.receivedAmount ?? 0) < (row.totalAmount ?? 0)
               ? 'text-red-500'
               : 'text-green-600'
           }
         >
-          ${row.receivedAmount.toFixed(2)}
+          ${(row.receivedAmount ?? 0).toFixed(2)}
         </span>
       ),
     },
@@ -143,7 +143,7 @@ export default function InvoiceManagementPage() {
       header: 'Status',
       cell: (row: IInvoice) => (
         <StatusBadge
-          status={row.status}
+          status={row.status ?? 'pending'}
           config={STATUS_CONFIG.invoice}
         />
       ),
@@ -157,14 +157,14 @@ export default function InvoiceManagementPage() {
             icon={<Eye className="h-3.5 w-3.5" />}
             className="h-8 w-8 rounded-full border border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#374151] shadow-none"
             onClick={() =>
-              navigate(ROUTES.INVOICES_VIEW.replace(':id', row._id))
+              navigate(ROUTES.INVOICES_VIEW.replace(':id', row._id ?? ''))
             }
           />
           <ActionButton
             icon={<Pencil className="h-3.5 w-3.5" />}
             className="h-8 w-8 rounded-full border border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#374151] shadow-none"
             onClick={() =>
-              navigate(ROUTES.INVOICES_EDIT.replace(':id', row._id))
+              navigate(ROUTES.INVOICES_EDIT.replace(':id', row._id ?? ''))
             }
           />
           <DropdownMenu>
@@ -178,7 +178,7 @@ export default function InvoiceManagementPage() {
               <DropdownMenuItem
                 className="text-red-500 focus:text-red-500"
                 onClick={() =>
-                  console.log('Delete invoice:', row._id)
+                  console.log('Delete invoice:', row._id ?? '')
                 }
               >
                 Delete Invoice

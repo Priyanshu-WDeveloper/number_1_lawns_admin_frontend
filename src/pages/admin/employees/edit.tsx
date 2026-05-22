@@ -254,14 +254,14 @@ export default function EditEmployeePage() {
         for (const doc of docsToUpload) {
           formData.append('files', doc.file!);
         }
-        const res = await uploadDocument(formData).unwrap();
-        attachments = res.urls.map((url, i) => ({
+        const uploadRes = await uploadDocument(formData).unwrap();
+        attachments = uploadRes.urls.map((url, i) => ({
           key: docsToUpload[i].name,
           value: url,
         }));
       }
 
-      const res = await updateEmployee({
+      await updateEmployee({
         id,
         firstName: data.firstName,
         lastName: data.lastName,

@@ -211,7 +211,7 @@ export default function JobManagementPage() {
       accessorKey: 'status',
       header: 'Status',
       cell: (row: IJob) => (
-        <StatusBadge status={row.status} config={STATUS_CONFIG.job} />
+        <StatusBadge status={row.status ?? ''} config={STATUS_CONFIG.job} />
       ),
     },
     {
@@ -223,14 +223,14 @@ export default function JobManagementPage() {
             icon={<Eye className="h-3.5 w-3.5" />}
             className="h-8 w-8 rounded-full border border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#374151] shadow-none"
             onClick={() =>
-              navigate(ROUTES.JOBS_VIEW.replace(':id', row._id))
+              navigate(ROUTES.JOBS_VIEW.replace(':id', row._id ?? ''))
             }
           />
-          <ActionButton
-            icon={<Pencil className="h-3.5 w-3.5" />}
-            className="h-8 w-8 rounded-full border border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#374151] shadow-none"
-            onClick={() =>
-              navigate(ROUTES.JOBS_EDIT.replace(':id', row._id))
+            <ActionButton
+              icon={<Pencil className="h-3.5 w-3.5" />}
+              className="h-8 w-8 rounded-full border border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#374151] shadow-none"
+              onClick={() =>
+                navigate(ROUTES.JOBS_EDIT.replace(':id', row._id ?? ''))
             }
           />
           <DropdownMenu>
@@ -243,11 +243,11 @@ export default function JobManagementPage() {
             <DropdownMenuContent align="end">
               {row.status === 'pending' && (
                 <>
-                  <DropdownMenuItem onClick={() => handleComplete(row._id)}>
+                  <DropdownMenuItem onClick={() => handleComplete(row._id ?? '')}>
                     <Check className="mr-2 h-4 w-4 text-green-600" />
                     <span>Complete</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleCancel(row._id)}>
+                  <DropdownMenuItem onClick={() => handleCancel(row._id ?? '')}>
                     <Ban className="mr-2 h-4 w-4 text-red-500" />
                     <span>Cancel</span>
                   </DropdownMenuItem>
@@ -255,7 +255,7 @@ export default function JobManagementPage() {
               )}
               <DropdownMenuItem
                 className="text-red-500 focus:text-red-500"
-                onClick={() => handleDelete(row._id)}
+                onClick={() => handleDelete(row._id ?? '')}
               >
                 <X className="mr-2 h-4 w-4" />
                 Delete Job

@@ -107,6 +107,7 @@ export interface CreateEmployeePayload {
   longitude?: number;
   profileImage?: string;
   documents?: Array<{ name: string; file: File | null }>;
+  attachments?: Array<{ key: string; value: string }>;
 }
 
 export interface UpdateEmployeePayload extends Partial<CreateEmployeePayload> {

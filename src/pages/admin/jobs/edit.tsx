@@ -10,7 +10,6 @@ import {
   CreditCard,
   DollarSign,
   ArrowLeft,
-  FileText,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -31,7 +30,6 @@ import {
 import { LocationModeToggle } from '@/components/forms/location-mode-toggle';
 import { MockMapPicker } from '@/components/forms/mock-map-picker';
 import { ManualCoordinates } from '@/components/forms/manual-coordinates';
-import { Check } from 'lucide-react';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { useGetJobByIdQuery, useGetCustomersQuery, useGetEmployeesQuery, useUpdateJobMutation } from '@/API/api';
 import Loader from '@/components/loader';
@@ -86,168 +84,6 @@ const steps = [
     icon: <Calendar className="h-4 w-4" />,
   },
 ];
-
-function ReviewCard({
-  formData,
-  customerName,
-  employeeName,
-}: {
-  formData: EditJobFormData;
-  customerName: string;
-  employeeName: string;
-}) {
-  return (
-    <div className="rounded-xl border border-dashed border-[#e5e5e5] bg-[#fafaf8] p-6">
-      <div className="text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#edf8e7]">
-          <Check className="h-6 w-6 text-[#16610E]" />
-        </div>
-        <h5 className="mb-2 text-lg font-semibold text-[#151515]">
-          Review Job Information
-        </h5>
-      </div>
-
-      <div className="mt-6">
-        <div className="flex items-center gap-3 border-b border-[#e5e5e5] py-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[#777]">
-            <Users className="h-4 w-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-[#777]">Customer</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-medium text-[#151515]">
-              {customerName}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 border-b border-[#e5e5e5] py-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[#777]">
-            <Users className="h-4 w-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-[#777]">Employee</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-medium text-[#151515]">
-              {employeeName}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 border-b border-[#e5e5e5] py-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[#777]">
-            <Calendar className="h-4 w-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-[#777]">Job Type</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-medium text-[#151515]">
-              {formData.jobType
-                ? formData.jobType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-                : 'Not provided'}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 border-b border-[#e5e5e5] py-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[#777]">
-            <Calendar className="h-4 w-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-[#777]">Job Date</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-medium text-[#151515]">
-              {formData.jobDate || 'Not provided'}
-            </p>
-          </div>
-        </div>
-        {formData.frequencyValue && formData.frequencyUnit && (
-          <div className="flex items-center gap-3 border-b border-[#e5e5e5] py-2">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[#777]">
-              <Calendar className="h-4 w-4" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-[#777]">Frequency</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm font-medium text-[#151515]">
-                Every {formData.frequencyValue} {formData.frequencyUnit}{formData.frequencyValue && formData.frequencyValue > 1 ? 's' : ''}
-              </p>
-            </div>
-          </div>
-        )}
-        <div className="flex items-center gap-3 border-b border-[#e5e5e5] py-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[#777]">
-            <MapPin className="h-4 w-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-[#777]">Address</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-medium text-[#151515]">
-              {formData.jobAddress || 'Not provided'}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 border-b border-[#e5e5e5] py-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[#777]">
-            <DollarSign className="h-4 w-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-[#777]">Payment Type</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-medium text-[#151515]">
-              {formData.paymentType
-                ? formData.paymentType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-                : 'Not provided'}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 border-b border-[#e5e5e5] py-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[#777]">
-            <DollarSign className="h-4 w-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-[#777]">Price</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-medium text-[#151515]">
-              {formData.price ? `$${formData.price.toFixed(2)}` : 'Not provided'}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 border-b border-[#e5e5e5] py-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[#777]">
-            <FileText className="h-4 w-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-[#777]">Description</p>
-          </div>
-          <div className="text-right max-w-[200px]">
-            <p className="text-sm font-medium text-[#151515] truncate">
-              {formData.description || 'Not provided'}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 py-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center text-[#777]">
-            <FileText className="h-4 w-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-[#777]">Notes</p>
-          </div>
-          <div className="text-right max-w-[200px]">
-            <p className="text-sm font-medium text-[#151515] truncate">
-              {formData.notes || 'Not provided'}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function EditJobPage() {
   const { id } = useParams();

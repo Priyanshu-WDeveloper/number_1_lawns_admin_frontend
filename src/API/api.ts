@@ -573,6 +573,7 @@ export const {
   useToggleEmployeeStatusMutation,
   useSetEmployeeValidityMutation,
   useDeleteEmployeeValidityMutation,
+  useUploadDocumentMutation,
 
   useGetJobsQuery,
   useGetJobByIdQuery,
