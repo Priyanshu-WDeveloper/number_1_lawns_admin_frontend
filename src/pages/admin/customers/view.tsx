@@ -133,7 +133,7 @@ export default function CustomerViewPage() {
                       {customer.fullName}
                     </h1>
                     <p className="text-[#777] text-sm">
-                      Customer ID: {customer._id}
+                      Customer ID: {customer.customerId}
                     </p>
                   </div>
                 </div>

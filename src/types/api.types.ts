@@ -38,6 +38,10 @@ export interface CustomerMutationResponse {
   message: string;
   customer: ICustomer;
 }
+export interface EmployeeMutationResponse {
+  message: string;
+  employee: IEmployee;
+}
 export interface JobsResponse {
   jobs: IJob[];
   total: number;
@@ -52,11 +56,11 @@ export interface JobMutationResponse {
 }
 
 export interface InvoicesResponse {
+  message: string;
   invoices: IInvoice[];
   total: number;
   page: number;
   limit: number;
-  totalPages: number;
 }
 
 export interface Notification {
@@ -102,7 +106,6 @@ export interface CreateEmployeePayload {
   state: string;
   postalCode: string;
   country: string;
-  location?: { type: 'Point'; coordinates: [number, number] };
   latitude?: number;
   longitude?: number;
   profileImage?: string;

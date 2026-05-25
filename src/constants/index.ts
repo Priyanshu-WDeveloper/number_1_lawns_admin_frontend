@@ -7,6 +7,7 @@ export const ROUTES = {
 
   // Admin routes
   DASHBOARD: '/dashboard',
+  PROFILE: '/profile',
   CUSTOMERS: '/customers',
   CUSTOMERS_CREATE: '/customers/create',
   CUSTOMERS_VIEW: '/customers/:id',
@@ -20,13 +21,12 @@ export const ROUTES = {
   JOBS_VIEW: '/jobs/:id',
   JOBS_EDIT: '/jobs/edit/:id',
   INVOICES: '/invoices',
-  INVOICES_CREATE: '/invoices/create',
-  INVOICES_VIEW: '/invoices/:id',
-  INVOICES_EDIT: '/invoices/edit/:id',
+  INVOICES_VIEW: '/invoices/:jobId',
   NOTIFICATIONS: '/notifications',
 
   // Super Admin routes
   SUPER_ADMIN_DASHBOARD: '/super-admin/dashboard',
+  SUPER_ADMIN_PROFILE: '/super-admin/profile',
   SUPER_ADMIN_ADMINS: '/super-admin/admins',
   ADMIN_CREATE: '/super-admin/admin/create',
   ADMIN_VIEW: '/super-admin/admin/:id',
@@ -83,10 +83,8 @@ export const API_ROUTES = {
   },
   INVOICES: {
     LIST: '/invoices',
-    DETAILS: (id: string) => `/invoices/${id}`,
-    CREATE: '/invoices',
-    UPDATE: (id: string) => `/invoices/${id}`,
-    DELETE: (id: string) => `/invoices/${id}`,
+    VIEW_BY_JOB: (jobId: string) => `/invoices/${jobId}/view`,
+    DOWNLOAD: (jobId: string) => `/invoices/${jobId}/download`,
   },
   NOTIFICATIONS: {
     LIST: '/notifications',
@@ -98,6 +96,7 @@ export const API_ROUTES = {
   ADMINS: {
     LIST: '/admins',
     DETAILS: (id: string) => `/admins/${id}`,
+    SELF: '/admins/details',
   },
   SUPER_ADMINS: {
     ADMINS: {

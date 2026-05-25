@@ -1,8 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Plus, X, Upload, FileText, File } from 'lucide-react';
+import { Plus, X, Upload, FileText } from 'lucide-react';
 
 import { formatFileSize } from '@/lib/file-utils';
-import { DocumentPreviewModal } from './document-preview-modal';
 
 export interface NamedDoc {
   name: string;
@@ -38,57 +36,11 @@ export function NamedDocumentUpload({
   onNameChange,
   onFileChange,
 }: NamedDocumentUploadProps) {
-  const [previewUrls, setPreviewUrls] = useState<Map<number, string>>(new Map());
-  const [previewDoc, setPreviewDoc] = useState<{ file: File; index: number } | null>(null);
+  const extension = (doc: NamedDoc) => doc.file ? getFileExtension(doc.file.name) : '';
 
-  useEffect(() => {
-    return () => {
-      previewUrls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [previewUrls]);
-
-  const handleFileChange = (index: number, file: File | null) => {
-    const existingUrl = previewUrls.get(index);
-    if (existingUrl) {
-      URL.revokeObjectURL(existingUrl);
-    }
-
-    if (file && isImageFile(file)) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrls((prev) => {
-        const next = new Map(prev);
-        next.set(index, url);
-        return next;
-      });
-    } else {
-      setPreviewUrls((prev) => {
-        const next = new Map(prev);
-        next.delete(index);
-        return next;
-      });
-    }
-
-    onFileChange(index, file);
-  };
-
-  const handleRemove = (index: number) => {
-    const existingUrl = previewUrls.get(index);
-    if (existingUrl) {
-      URL.revokeObjectURL(existingUrl);
-    }
-    setPreviewUrls((prev) => {
-      const next = new Map(prev);
-      next.delete(index);
-      return next;
-    });
-    onRemove(index);
-  };
-
-  const handlePreviewClick = (index: number) => {
-    const doc = documents[index];
-    if (doc.file) {
-      setPreviewDoc({ file: doc.file, index });
-    }
+  const extColor = (doc: NamedDoc) => {
+    const ext = extension(doc);
+    return EXTENSION_COLORS[ext] ?? { bg: 'bg-gray-50', text: 'text-gray-600', icon: 'text-gray-500' };
   };
 
   return (
@@ -99,38 +51,26 @@ export function NamedDocumentUpload({
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {documents.map((doc, index) => {
-          const previewUrl = previewUrls.get(index);
+          const ext = extension(doc);
+          const colors = extColor(doc);
           const isImage = doc.file && isImageFile(doc.file);
-          const ext = doc.file ? getFileExtension(doc.file.name) : '';
-          const extColor = EXTENSION_COLORS[ext] ?? { bg: 'bg-gray-50', text: 'text-gray-600', icon: 'text-gray-500' };
 
           return (
             <div
               key={index}
               className="flex items-start gap-3 rounded-xl border border-[#e5e5e5] bg-[#fafaf8] p-3"
             >
-              {/* Preview thumbnail */}
-              <button
-                type="button"
-                onClick={() => handlePreviewClick(index)}
-                className="flex h-24 w-24 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-[#e5e5e5] bg-white transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#16610E]"
-              >
-                {isImage && previewUrl ? (
+              <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[#e5e5e5] bg-white">
+                {doc.file && isImage ? (
                   <img
-                    src={previewUrl}
+                    src={URL.createObjectURL(doc.file)}
                     alt={doc.name || 'Document preview'}
                     className="h-full w-full object-cover"
                   />
                 ) : doc.file ? (
-                  <div className={`flex flex-col items-center gap-1 ${extColor.bg} h-full w-full justify-center`}>
-                    {ext === 'PDF' ? (
-                      <FileText className={`h-8 w-8 ${extColor.icon}`} />
-                    ) : ext === 'DOC' || ext === 'DOCX' ? (
-                      <FileText className={`h-8 w-8 ${extColor.icon}`} />
-                    ) : (
-                      <File className={`h-8 w-8 ${extColor.icon}`} />
-                    )}
-                    <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${extColor.bg} ${extColor.text}`}>
+                  <div className={`flex flex-col items-center gap-1 ${colors.bg} h-full w-full justify-center`}>
+                    <FileText className={`h-8 w-8 ${colors.icon}`} />
+                    <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${colors.bg} ${colors.text}`}>
                       {ext || 'FILE'}
                     </span>
                   </div>
@@ -140,9 +80,8 @@ export function NamedDocumentUpload({
                     <span className="text-[10px]">No file</span>
                   </div>
                 )}
-              </button>
+              </div>
 
-              {/* File info */}
               <div className="flex min-w-0 flex-1 flex-col gap-2">
                 <input
                   type="text"
@@ -160,7 +99,7 @@ export function NamedDocumentUpload({
                       className="hidden"
                       accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
                       onChange={(e) =>
-                        handleFileChange(index, e.target.files?.[0] ?? null)
+                        onFileChange(index, e.target.files?.[0] ?? null)
                       }
                     />
                   </label>
@@ -171,28 +110,10 @@ export function NamedDocumentUpload({
                     </div>
                   )}
                 </div>
-                {doc.file && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handlePreviewClick(index)}
-                      className="rounded-lg border border-[#e5e5e5] bg-white px-3 py-1.5 text-xs font-medium text-[#16610E] hover:bg-[#f0fdf4]"
-                    >
-                      Preview
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleRemove(index)}
-                      className="rounded-lg border border-[#e5e5e5] bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )}
               </div>
               <button
                 type="button"
-                onClick={() => handleRemove(index)}
+                onClick={() => onRemove(index)}
                 className="mt-1 shrink-0 rounded-full p-1 transition-colors hover:bg-red-100"
               >
                 <X className="h-4 w-4 text-[#777] hover:text-red-500" />
@@ -210,12 +131,6 @@ export function NamedDocumentUpload({
         <Plus className="h-4 w-4" />
         Add Document
       </button>
-
-      <DocumentPreviewModal
-        file={previewDoc?.file ?? null}
-        isOpen={previewDoc !== null}
-        onClose={() => setPreviewDoc(null)}
-      />
     </div>
   );
 }

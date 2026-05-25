@@ -7,6 +7,7 @@ import { getToken } from '@/lib/auth';
 import type {
   CustomersResponse,
   CustomerMutationResponse,
+  EmployeeMutationResponse,
   GetAdminsParams,
   GetAdminsResponse,
   GetCustomersParams,
@@ -18,9 +19,7 @@ import type {
   ListQueryParams,
   UpdateEmployeePayload,
 } from '@/types/api.types';
-import type {
-  CreateEmployeePayload,
-} from '@/types/employees.types';
+import type { CreateEmployeePayload } from '@/types/employees.types';
 import { setAuth, clearAuth } from '@/store/auth-slice';
 import { API_ROUTES } from '@/constants';
 import type {
@@ -29,6 +28,7 @@ import type {
   IJob,
   IInvoice,
   IAdminUser,
+  IAdminStats,
 } from '@/types';
 
 export const api = createApi({
@@ -199,36 +199,28 @@ export const api = createApi({
           status,
         },
       }),
-
-      invalidatesTags: ['Customers'],
+      invalidatesTags: (_result, _error, { id }) => [
+        'Customers',
+        { type: 'Customers', id },
+      ],
     }),
 
     // Employee endpoints
     getEmployees: builder.query<EmployeesResponse, ListQueryParams>({
-      query: (params) => ({
+      query: ({ page = 1, limit = 10, search, status, sort }) => ({
         url: API_ROUTES.EMPLOYEES.LIST,
-        params,
+        params: { page, limit, search, status, sort },
       }),
       providesTags: ['Employees'],
     }),
-
     getEmployeeById: builder.query<IEmployee, string>({
-      query: (id) => API_ROUTES.EMPLOYEES.DETAILS(id),
+      query: (id: string) => API_ROUTES.EMPLOYEES.DETAILS(id),
       providesTags: (_result, _error, id) => [
         { type: 'Employees', id },
       ],
     }),
-
-    uploadDocument: builder.mutation<{ urls: string[] }, FormData>({
-      query: (formData) => ({
-        url: API_ROUTES.EMPLOYEES.UPLOAD,
-        method: 'POST',
-        body: formData,
-      }),
-    }),
-
     createEmployee: builder.mutation<
-      IEmployee,
+      EmployeeMutationResponse,
       CreateEmployeePayload
     >({
       query: (employee) => ({
@@ -238,15 +230,14 @@ export const api = createApi({
       }),
       invalidatesTags: ['Employees'],
     }),
-
     updateEmployee: builder.mutation<
-      IEmployee,
+      EmployeeMutationResponse,
       UpdateEmployeePayload
     >({
-      query: ({ id, ...employee }) => ({
-        url: API_ROUTES.EMPLOYEES.UPDATE(id),
+      query: ({ id, ...body }) => ({
+        url: API_ROUTES.EMPLOYEES.UPDATE(id!),
         method: 'PUT',
-        body: employee,
+        body,
       }),
       invalidatesTags: (_result, _error, { id }) => [
         'Employees',
@@ -260,60 +251,56 @@ export const api = createApi({
       }),
       invalidatesTags: ['Employees'],
     }),
-
     toggleEmployeeStatus: builder.mutation({
       query: ({ id, status }) => ({
         url: API_ROUTES.EMPLOYEES.STATUS(id),
-
         method: 'PATCH',
-
-        body: {
-          status,
-        },
-      }),
-
-      invalidatesTags: ['Employees'],
-    }),
-
-    setEmployeeValidity: builder.mutation<
-      IEmployee,
-      { id: string; validity: string | null }
-    >({
-      query: ({ id, ...data }) => ({
-        url: API_ROUTES.EMPLOYEES.SET_VALIDITY(id),
-        method: 'PATCH',
-        body: data,
+        body: { status },
       }),
       invalidatesTags: (_result, _error, { id }) => [
         'Employees',
         { type: 'Employees', id },
       ],
     }),
-
-    deleteEmployeeValidity: builder.mutation<
-      IEmployee,
-      { id: string }
-    >({
-      query: ({ id }) => ({
+    setEmployeeValidity: builder.mutation({
+      query: ({ id, ...body }) => ({
+        url: API_ROUTES.EMPLOYEES.SET_VALIDITY(id),
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [
+        'Employees',
+        { type: 'Employees', id },
+      ],
+    }),
+    deleteEmployeeValidity: builder.mutation<void, string>({
+      query: (id) => ({
         url: API_ROUTES.EMPLOYEES.REMOVE_VALIDITY(id),
         method: 'DELETE',
       }),
-      invalidatesTags: (_result, _error, { id }) => [
+      invalidatesTags: (_result, _error, id) => [
         'Employees',
         { type: 'Employees', id },
       ],
+    }),
+    uploadDocument: builder.mutation({
+      query: (body) => ({
+        url: API_ROUTES.EMPLOYEES.UPLOAD,
+        method: 'POST',
+        body,
+      }),
     }),
 
     // Job endpoints
     getJobs: builder.query<JobsResponse, ListQueryParams>({
-      query: (params) => ({
+      query: ({ page = 1, limit = 10, search, status, sort }) => ({
         url: API_ROUTES.JOBS.LIST,
-        params,
+        params: { page, limit, search, status, sort },
       }),
       providesTags: ['Jobs'],
     }),
     getJobById: builder.query<IJob, string>({
-      query: (id) => API_ROUTES.JOBS.DETAILS(id),
+      query: (id: string) => API_ROUTES.JOBS.DETAILS(id),
       providesTags: (_result, _error, id) => [{ type: 'Jobs', id }],
     }),
     createJob: builder.mutation<JobMutationResponse, Partial<IJob>>({
@@ -345,7 +332,7 @@ export const api = createApi({
       }),
       invalidatesTags: ['Jobs'],
     }),
-    cancelJob: builder.mutation<JobMutationResponse, { jobId: string }>({
+    cancelJob: builder.mutation<void, { jobId: string }>({
       query: ({ jobId }) => ({
         url: API_ROUTES.JOBS.CANCEL,
         method: 'POST',
@@ -356,7 +343,10 @@ export const api = createApi({
         { type: 'Jobs', id: jobId },
       ],
     }),
-    completeJob: builder.mutation<JobMutationResponse, { jobId: string; receivePrice?: number }>({
+    completeJob: builder.mutation<
+      void,
+      { jobId: string; receivePrice?: number }
+    >({
       query: ({ jobId, receivePrice }) => ({
         url: API_ROUTES.JOBS.COMPLETE,
         method: 'POST',
@@ -368,62 +358,50 @@ export const api = createApi({
       ],
     }),
     assignJobEmployee: builder.mutation<
-      JobMutationResponse,
-      { jobId: string; employeeId: string }
+      void,
+      { id: string; employee: string }
     >({
-      query: ({ jobId, employeeId }) => ({
+      query: ({ id, employee }) => ({
         url: API_ROUTES.JOBS.ASSIGN_EMPLOYEE,
-        method: 'POST',
-        body: { jobId, employeeId },
+        method: 'PATCH',
+        body: { jobId: id, employee },
       }),
-      invalidatesTags: (_result, _error, { jobId }) => [
+      invalidatesTags: (_result, _error, { id }) => [
         'Jobs',
-        { type: 'Jobs', id: jobId },
+        { type: 'Jobs', id },
       ],
     }),
-    getJobReceipt: builder.query<{ receiptUrl: string }, string>({
+    getJobReceipt: builder.query<unknown, string>({
       query: (id) => API_ROUTES.JOBS.RECEIPT(id),
+    }),
+    createJobReceipt: builder.mutation<unknown, string>({
+      query: (jobId) => ({
+        url: API_ROUTES.JOBS.RECEIPT(jobId),
+        method: 'GET',
+      }),
+      invalidatesTags: ['Invoices', 'Jobs'],
     }),
 
     // Invoice endpoints
-    getInvoices: builder.query<InvoicesResponse, void>({
-      query: () => API_ROUTES.INVOICES.LIST,
+    getInvoices: builder.query<InvoicesResponse, ListQueryParams>({
+      query: ({ page = 1, limit = 10, search, status, sort }) => ({
+        url: API_ROUTES.INVOICES.LIST,
+        params: { page, limit, search, status, sort },
+      }),
       providesTags: ['Invoices'],
     }),
-    getInvoiceById: builder.query<IInvoice, string>({
-      query: (id) => API_ROUTES.INVOICES.DETAILS(id),
-      providesTags: (_result, _error, id) => [
-        { type: 'Invoices', id },
+    getInvoiceByJobId: builder.query<IInvoice, string>({
+      query: (jobId: string) =>
+        API_ROUTES.INVOICES.VIEW_BY_JOB(jobId),
+      providesTags: (_result, _error, jobId) => [
+        { type: 'Invoices', jobId },
       ],
     }),
-    createInvoice: builder.mutation<IInvoice, Partial<IInvoice>>({
-      query: (invoice) => ({
-        url: API_ROUTES.INVOICES.CREATE,
-        method: 'POST',
-        body: invoice,
+    downloadInvoice: builder.query<Blob, string>({
+      query: (jobId: string) => ({
+        url: API_ROUTES.INVOICES.DOWNLOAD(jobId),
+        responseHandler: (response: Response) => response.blob(),
       }),
-      invalidatesTags: ['Invoices'],
-    }),
-    updateInvoice: builder.mutation<
-      IInvoice,
-      { id: string } & Partial<IInvoice>
-    >({
-      query: ({ id, ...invoice }) => ({
-        url: API_ROUTES.INVOICES.UPDATE(id),
-        method: 'PATCH',
-        body: invoice,
-      }),
-      invalidatesTags: (_result, _error, { id }) => [
-        'Invoices',
-        { type: 'Invoices', id },
-      ],
-    }),
-    deleteInvoice: builder.mutation<void, string>({
-      query: (id) => ({
-        url: API_ROUTES.INVOICES.DELETE(id),
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['Invoices'],
     }),
 
     // Notification endpoints
@@ -541,6 +519,15 @@ export const api = createApi({
       invalidatesTags: ['Admins'],
     }),
 
+    // Admin self-service endpoints
+    getAdminDetails: builder.query<
+      { admin: IAdminUser; stats: IAdminStats },
+      void
+    >({
+      query: () => API_ROUTES.ADMINS.SELF,
+      providesTags: ['Admins'],
+    }),
+
     // Super Admin - Billing endpoints
     getBillingStats: builder.query<Record<string, unknown>, void>({
       query: () => API_ROUTES.SUPER_ADMINS.BILLING.STATS,
@@ -584,12 +571,12 @@ export const {
   useCompleteJobMutation,
   useAssignJobEmployeeMutation,
   useGetJobReceiptQuery,
+  useCreateJobReceiptMutation,
 
   useGetInvoicesQuery,
-  useGetInvoiceByIdQuery,
-  useCreateInvoiceMutation,
-  useUpdateInvoiceMutation,
-  useDeleteInvoiceMutation,
+  useGetInvoiceByJobIdQuery,
+  useDownloadInvoiceQuery,
+  useLazyDownloadInvoiceQuery,
 
   useGetNotificationsQuery,
   useMarkNotificationReadMutation,
@@ -604,6 +591,8 @@ export const {
   useDeleteAdminUserMutation,
   useSetAdminValidityMutation,
   useDeleteAdminValidityMutation,
+
+  useGetAdminDetailsQuery,
 
   useGetBillingStatsQuery,
   useGetBillingInvoicesQuery,

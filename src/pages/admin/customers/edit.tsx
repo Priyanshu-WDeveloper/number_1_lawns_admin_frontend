@@ -25,43 +25,59 @@ import { AdminReviewCard } from '@/components/admin/admin-review-card';
 import Loader from '@/components/loader';
 import type { ICustomer } from '@/types';
 import { validatePhone } from '@/lib/phone-validation';
+import { validateAddress, getCountryIsoFromPhoneCode } from '@/lib/address-validation';
 
-const editCustomerSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  email: z
-    .string()
-    .min(1, 'Email is required')
-    .email('Invalid email address'),
-  phoneNumber: z
-    .string()
-    .min(1, 'Phone number is required')
-    .regex(/^\d+$/, 'Phone number must be numeric'),
-  countryCode: z.string().min(1, 'Country code is required'),
-  address: z.string().min(1, 'Address is required'),
-  city: z.string().min(1, 'City is required'),
-  state: z.string().min(1, 'State is required'),
-  postalCode: z
-    .string()
-    .min(1, 'Postal code is required')
-    .min(3)
-    .max(10)
-    .regex(/^\d+$/, 'Invalid postal code'),
-  country: z.string().min(1, 'Country is required'),
-  location: z.string(),
-  latitude: z.number(),
-  longitude: z.number(),
-  locationMode: z.enum(['map', 'manual']),
-}).superRefine((data, ctx) => {
-  const result = validatePhone(data.phoneNumber, data.countryCode);
-  if (!result.valid && result.error) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: result.error,
-      path: ['phoneNumber'],
-    });
-  }
-});
+const editCustomerSchema = z
+  .object({
+    firstName: z.string().min(1, 'First name is required'),
+    lastName: z.string().min(1, 'Last name is required'),
+    email: z
+      .string()
+      .min(1, 'Email is required')
+      .email('Invalid email address'),
+    phoneNumber: z
+      .string()
+      .min(1, 'Phone number is required')
+      .regex(/^\d+$/, 'Phone number must be numeric'),
+    countryCode: z.string().min(1, 'Country code is required'),
+    address: z.string().min(1, 'Address is required'),
+    city: z.string().min(1, 'City is required'),
+    state: z.string().min(1, 'State is required'),
+    postalCode: z
+      .string()
+      .min(1, 'Postal code is required')
+      .min(3)
+      .max(10)
+      .regex(/^\d+$/, 'Invalid postal code'),
+    country: z.string().min(1, 'Country is required'),
+    countryIso: z.string(),
+    location: z.string(),
+    latitude: z.number(),
+    longitude: z.number(),
+    locationMode: z.enum(['map', 'manual']),
+  })
+  .superRefine((data, ctx) => {
+    const phoneResult = validatePhone(data.phoneNumber, data.countryCode);
+    if (!phoneResult.valid && phoneResult.error) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: phoneResult.error,
+        path: ['phoneNumber'],
+      });
+    }
+
+    const iso = data.countryIso || getCountryIsoFromPhoneCode(data.countryCode) || '';
+    if (iso && data.country) {
+      const addrResult = validateAddress(iso, data.state, data.city, data.postalCode);
+      if (!addrResult.valid && addrResult.error && addrResult.path) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: addrResult.error,
+          path: [addrResult.path as any],
+        });
+      }
+    }
+  });
 
 type EditCustomerFormData = z.infer<typeof editCustomerSchema>;
 
@@ -138,6 +154,7 @@ export default function CustomerEditPage() {
           state: customer.state,
           postalCode: customer.postalCode,
           country: customer.country,
+          countryIso: (customer as any).countryIso || '',
           location: customer.location?.coordinates
             ? `${customer.location.coordinates[1]}, ${customer.location.coordinates[0]}`
             : '',
@@ -304,7 +321,7 @@ export default function CustomerEditPage() {
             isSubmitting={isUpdating}
             isLastStep={currentStep === steps.length}
             isFirstStep={currentStep === 1}
-            submitLabel="Edit Customer"
+            submitLabel="Save Changes"
             allowStepNavigation
             formRef={formRef}
           >

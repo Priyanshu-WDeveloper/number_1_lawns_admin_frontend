@@ -34,7 +34,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { LocationModeToggle } from '@/components/forms/location-mode-toggle';
 import { GoogleMapPicker } from '@/components/google-maps/picker';
 import { ManualCoordinates } from '@/components/forms/manual-coordinates';
+import { PhoneInput } from '@/components/forms/phone-input';
+import { AddressInputs } from '@/components/forms/address-inputs';
 import { validatePhone } from '@/lib/phone-validation';
+import { validateAddress, getCountryIsoFromPhoneCode } from '@/lib/address-validation';
 
 const createEmployeeSchema = z
   .object({
@@ -59,19 +62,32 @@ const createEmployeeSchema = z
       .max(10)
       .regex(/^\d+$/, 'Invalid postal code'),
     country: z.string().min(1, 'Country is required'),
+    countryIso: z.string(),
     profileImage: z.string().min(1, 'Profile image is required'),
     latitude: z.number(),
     longitude: z.number(),
     locationMode: z.enum(['map', 'manual']),
   })
   .superRefine((data, ctx) => {
-    const result = validatePhone(data.phoneNumber, data.countryCode);
-    if (!result.valid && result.error) {
+    const phoneResult = validatePhone(data.phoneNumber, data.countryCode);
+    if (!phoneResult.valid && phoneResult.error) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: result.error,
+        message: phoneResult.error,
         path: ['phoneNumber'],
       });
+    }
+
+    const iso = data.countryIso || getCountryIsoFromPhoneCode(data.countryCode) || '';
+    if (iso && data.country) {
+      const addrResult = validateAddress(iso, data.state, data.city, data.postalCode);
+      if (!addrResult.valid && addrResult.error && addrResult.path) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: addrResult.error,
+          path: [addrResult.path as any],
+        });
+      }
     }
   });
 
@@ -112,6 +128,7 @@ export default function CreateEmployeePage() {
     useCreateEmployeeMutation();
   const [uploadDocument] = useUploadDocumentMutation();
   const profileInputRef = useRef<HTMLInputElement>(null);
+  const profileImageFileRef = useRef<File | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   const {
@@ -129,9 +146,10 @@ export default function CreateEmployeePage() {
       lastName: '',
       email: '',
       phoneNumber: '',
-      countryCode: '+91',
-      address: '',
-      city: '',
+    countryCode: '+64',
+    countryIso: 'NZ',
+    address: '',
+    city: '',
       state: '',
       postalCode: '',
       country: '',
@@ -148,6 +166,7 @@ export default function CreateEmployeePage() {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
+        profileImageFileRef.current = file;
         const reader = new FileReader();
         reader.onloadend = () => {
           setValue('profileImage', reader.result as string, {
@@ -160,6 +179,10 @@ export default function CreateEmployeePage() {
     [setValue],
   );
 
+  const onFormError = () => {
+    toast.error('Please fix all field errors before submitting');
+  };
+
   const handleNext = async () => {
     let fieldsToValidate: (keyof CreateEmployeeFormData)[] = [];
 
@@ -169,6 +192,8 @@ export default function CreateEmployeePage() {
         'lastName',
         'email',
         'phoneNumber',
+        'countryCode',
+        'profileImage',
       ];
     }
 
@@ -179,8 +204,7 @@ export default function CreateEmployeePage() {
         'state',
         'postalCode',
         'country',
-        'latitude',
-        'longitude',
+        'countryIso',
       ];
     }
 
@@ -199,20 +223,42 @@ export default function CreateEmployeePage() {
 
   const onSubmit = async (data: CreateEmployeeFormData) => {
     try {
+      let profileImageUrl = data.profileImage;
       let attachments: Array<{ key: string; value: string }> | undefined;
+
+      const uploads: Promise<any>[] = [];
+
+      if (profileImageFileRef.current) {
+        const fd = new FormData();
+        fd.append('file', profileImageFileRef.current);
+        uploads.push(
+          uploadDocument(fd)
+            .unwrap()
+            .then((res: any) => {
+              profileImageUrl = res.file.url;
+            }),
+        );
+      }
 
       const docsToUpload = documents.filter((d) => d.file && d.name);
       if (docsToUpload.length > 0) {
-        const formData = new FormData();
+        const results: Array<{ key: string; value: string }> = [];
         for (const doc of docsToUpload) {
-          formData.append('files', doc.file!);
+          const fd = new FormData();
+          fd.append('file', doc.file!);
+          const name = doc.name;
+          uploads.push(
+            uploadDocument(fd)
+              .unwrap()
+              .then((res: any) => {
+                results.push({ key: name, value: res.file.url });
+              }),
+          );
         }
-        const res = await uploadDocument(formData).unwrap();
-        attachments = res.urls.map((url, i) => ({
-          key: docsToUpload[i].name,
-          value: url,
-        }));
+        uploads.push(Promise.resolve().then(() => { attachments = results; }));
       }
+
+      await Promise.all(uploads);
 
       await createEmployee({
         firstName: data.firstName,
@@ -225,7 +271,7 @@ export default function CreateEmployeePage() {
         state: data.state,
         postalCode: data.postalCode,
         country: data.country,
-        profileImage: data.profileImage,
+        profileImage: profileImageUrl,
         latitude: data.latitude,
         longitude: data.longitude,
         attachments,
@@ -289,6 +335,7 @@ export default function CreateEmployeePage() {
                         setValue('profileImage', '', {
                           shouldValidate: true,
                         });
+                        profileImageFileRef.current = null;
                         if (profileInputRef.current) {
                           profileInputRef.current.value = '';
                         }
@@ -396,16 +443,21 @@ export default function CreateEmployeePage() {
                     Phone Number
                     <span className="text-[#16610E]"> *</span>
                   </label>
-                  <input
-                    placeholder="Enter phone number"
-                    {...register('phoneNumber')}
-                    className="w-full h-12 rounded-xl border border-[#e5e5e5] bg-[#fafaf8] px-3 text-sm outline-none focus:border-[#16610E] focus:ring-1 focus:ring-[#16610E]/20"
+                  <PhoneInput
+                    value={formValues.phoneNumber}
+                    onChange={(val) =>
+                      setValue('phoneNumber', val, {
+                        shouldValidate: true,
+                      })
+                    }
+                    countryCode={formValues.countryCode}
+                    onCountryCodeChange={(code) =>
+                      setValue('countryCode', code, {
+                        shouldValidate: true,
+                      })
+                    }
+                    error={errors.phoneNumber?.message}
                   />
-                  {errors.phoneNumber && (
-                    <p className="text-sm text-red-500">
-                      {errors.phoneNumber.message}
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
@@ -462,75 +514,35 @@ export default function CreateEmployeePage() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#151515]">
-                    City
-                    <span className="text-[#16610E]"> *</span>
-                  </label>
-                  <input
-                    placeholder="Enter city"
-                    {...register('city')}
-                    className="w-full h-12 rounded-xl border border-[#e5e5e5] bg-[#fafaf8] px-3 text-sm outline-none focus:border-[#16610E] focus:ring-1 focus:ring-[#16610E]/20"
-                  />
-                  {errors.city && (
-                    <p className="text-sm text-red-500">
-                      {errors.city.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#151515]">
-                    State
-                    <span className="text-[#16610E]"> *</span>
-                  </label>
-                  <input
-                    placeholder="Enter state"
-                    {...register('state')}
-                    className="w-full h-12 rounded-xl border border-[#e5e5e5] bg-[#fafaf8] px-3 text-sm outline-none focus:border-[#16610E] focus:ring-1 focus:ring-[#16610E]/20"
-                  />
-                  {errors.state && (
-                    <p className="text-sm text-red-500">
-                      {errors.state.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#151515]">
-                    Postal Code
-                    <span className="text-[#16610E]"> *</span>
-                  </label>
-                  <input
-                    placeholder="Enter postal code"
-                    {...register('postalCode')}
-                    className="w-full h-12 rounded-xl border border-[#e5e5e5] bg-[#fafaf8] px-3 text-sm outline-none focus:border-[#16610E] focus:ring-1 focus:ring-[#16610E]/20"
-                  />
-                  {errors.postalCode && (
-                    <p className="text-sm text-red-500">
-                      {errors.postalCode.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#151515]">
-                    Country
-                    <span className="text-[#16610E]"> *</span>
-                  </label>
-                  <input
-                    placeholder="Enter country"
-                    {...register('country')}
-                    className="w-full h-12 rounded-xl border border-[#e5e5e5] bg-[#fafaf8] px-3 text-sm outline-none focus:border-[#16610E] focus:ring-1 focus:ring-[#16610E]/20"
-                  />
-                  {errors.country && (
-                    <p className="text-sm text-red-500">
-                      {errors.country.message}
-                    </p>
-                  )}
-                </div>
-              </div>
+              <AddressInputs
+                countryIso={formValues.countryIso || ''}
+                country={formValues.country}
+                state={formValues.state}
+                city={formValues.city}
+                postalCode={formValues.postalCode}
+                onCountryChange={(name, iso) => {
+                  setValue('country', name, { shouldValidate: true });
+                  setValue('countryIso', iso, { shouldValidate: true });
+                  setValue('state', '', { shouldValidate: true });
+                  setValue('city', '', { shouldValidate: true });
+                }}
+                onStateChange={(name, _iso) => {
+                  setValue('state', name, { shouldValidate: true });
+                  setValue('city', '', { shouldValidate: true });
+                }}
+                onCityChange={(name) =>
+                  setValue('city', name, { shouldValidate: true })
+                }
+                onPostalCodeChange={(val) =>
+                  setValue('postalCode', val, { shouldValidate: true })
+                }
+                errors={{
+                  country: errors.country?.message,
+                  state: errors.state?.message,
+                  city: errors.city?.message,
+                  postalCode: errors.postalCode?.message,
+                }}
+              />
             </div>
           </div>
         </div>
@@ -552,7 +564,7 @@ export default function CreateEmployeePage() {
     }
 
     return (
-      <form ref={formRef} onSubmit={handleSubmit(onSubmit)}>
+      <form ref={formRef} onSubmit={handleSubmit(onSubmit, onFormError)}>
         <AdminReviewCard
           firstName={formValues.firstName}
           lastName={formValues.lastName}
@@ -565,6 +577,8 @@ export default function CreateEmployeePage() {
           postalCode={formValues.postalCode}
           country={formValues.country}
           profileImage={formValues.profileImage}
+          latitude={formValues.latitude}
+          longitude={formValues.longitude}
           documents={documents}
         />
       </form>
@@ -595,7 +609,7 @@ export default function CreateEmployeePage() {
             onStepClick={setCurrentStep}
             onPrevious={handlePrevious}
             onNext={handleNext}
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={handleSubmit(onSubmit, onFormError)}
             isSubmitting={isCreating}
             isLastStep={currentStep === steps.length}
             isFirstStep={currentStep === 1}

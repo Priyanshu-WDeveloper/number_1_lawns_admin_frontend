@@ -12,6 +12,8 @@ const Login = React.lazy(() => import('../pages/auth/login'));
 const SuperAdminLogin = React.lazy(() => import('../pages/auth/super-admin-login'));
 const ForgotPassword = React.lazy(() => import('../pages/auth/forgot-password'));
 const DashboardPage = React.lazy(() => import('../pages/admin/dashboard'));
+const AdminProfilePage = React.lazy(() => import('../pages/admin/profile'));
+const SuperAdminProfilePage = React.lazy(() => import('../pages/super-admin/profile'));
 const SuperAdminDashboardPage = React.lazy(() => import('../pages/super-admin/dashboard'));
 const SuperAdminBillingPage = React.lazy(() => import('../pages/super-admin/billing'));
 const CustomerManagementPage = React.lazy(() => import('../pages/admin/customers'));
@@ -28,9 +30,7 @@ const JobViewPage = React.lazy(() => import('../pages/admin/jobs/view'));
 const JobEditPage = React.lazy(() => import('../pages/admin/jobs/edit'));
 const NotificationsPage = React.lazy(() => import('../pages/notification'));
 const InvoiceManagementPage = React.lazy(() => import('../pages/admin/invoices'));
-const CreateInvoicePage = React.lazy(() => import('../pages/admin/invoices/create'));
 const InvoiceViewPage = React.lazy(() => import('../pages/admin/invoices/view'));
-const InvoiceEditPage = React.lazy(() => import('../pages/admin/invoices/edit'));
 const SuperAdminAdminsPage = React.lazy(() => import('../pages/super-admin/admin'));
 const AdminCreatePage = React.lazy(() => import('../pages/super-admin/admin/create'));
 const AdminViewPage = React.lazy(() => import('../pages/super-admin/admin/view'));
@@ -73,6 +73,14 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.PROFILE}
+          element={
+            <ProtectedRoute>
+              <AdminProfilePage />
             </ProtectedRoute>
           }
         />
@@ -181,26 +189,10 @@ const AppRoutes = () => {
           }
         />
         <Route
-          path={ROUTES.INVOICES_CREATE}
-          element={
-            <ProtectedRoute>
-              <CreateInvoicePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path={ROUTES.INVOICES_VIEW}
           element={
             <ProtectedRoute>
               <InvoiceViewPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.INVOICES_EDIT}
-          element={
-            <ProtectedRoute>
-              <InvoiceEditPage />
             </ProtectedRoute>
           }
         />
@@ -219,6 +211,14 @@ const AppRoutes = () => {
           element={
             <SuperAdminRoute>
               <SuperAdminDashboardPage />
+            </SuperAdminRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SUPER_ADMIN_PROFILE}
+          element={
+            <SuperAdminRoute>
+              <SuperAdminProfilePage />
             </SuperAdminRoute>
           }
         />

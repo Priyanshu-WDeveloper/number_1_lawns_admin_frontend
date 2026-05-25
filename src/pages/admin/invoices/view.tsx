@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { FileText, DollarSign, User, Calendar } from 'lucide-react';
+import { Download, FileText, DollarSign, User, Calendar } from 'lucide-react';
 
 import { AppLayout } from '@/components/layout/app-layout';
 import { ROUTES } from '@/constants';
@@ -7,49 +7,38 @@ import { StatusBadge } from '@/components/data-table/status-badge';
 import { DetailRow } from '@/components/admin/detail-row';
 import { SectionCard } from '@/components/admin/section-card';
 import { ViewPageHeader } from '@/components/admin/view-page-header';
+import { Button } from '@/components/ui/button';
 import { STATUS_CONFIG } from '@/constants/status-config';
-
-interface InvoiceData {
-  _id: string;
-  invoiceNumber: string;
-  customer: string;
-  jobId: string;
-  totalAmount: number;
-  receivedAmount: number;
-  balance: number;
-  date: string;
-  paymentType: string;
-  status: 'paid' | 'pending' | 'overdue';
-  notes: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-const mockInvoice: InvoiceData = {
-  _id: 'INV-001',
-  invoiceNumber: '41321',
-  customer: 'Jason',
-  jobId: 'JOB-001',
-  totalAmount: 60.0,
-  receivedAmount: 60.0,
-  balance: 0,
-  date: '2026-05-05',
-  paymentType: 'Bank Transfer',
-  status: 'paid',
-  notes: 'Garden cleanup service completed.',
-  createdBy: 'Admin',
-  createdAt: '2026-05-05T10:00:00Z',
-  updatedAt: '2026-05-05T14:30:00Z',
-};
+import { useGetInvoiceByJobIdQuery, useLazyDownloadInvoiceQuery } from '@/API/api';
 
 export default function InvoiceViewPage() {
-  const { id } = useParams();
+  const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
 
-  const invoice = mockInvoice;
+  const { data: invoice, isLoading } = useGetInvoiceByJobIdQuery(jobId!, {
+    skip: !jobId,
+  });
+  const [downloadInvoice] = useLazyDownloadInvoiceQuery();
 
-  const formatDate = (dateString: string) => {
+  const handleDownload = async () => {
+    if (!jobId) return;
+    try {
+      const result = await downloadInvoice(jobId);
+      if (result.data) {
+        const url = window.URL.createObjectURL(result.data);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `invoice-${jobId}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Download failed:', error);
+    }
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '—';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -60,6 +49,35 @@ export default function InvoiceViewPage() {
     });
   };
 
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex h-full items-center justify-center">
+          <p className="text-[#6b7280]">Loading invoice...</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!invoice) {
+    return (
+      <AppLayout>
+        <div className="flex h-full flex-col">
+          <div className="flex-1 w-full overflow-y-auto px-4 py-5">
+            <ViewPageHeader
+              title="Invoice Not Found"
+              subtitle="Invoice Details"
+              onBack={() => navigate(ROUTES.INVOICES)}
+            />
+            <p className="mt-4 text-[#6b7280]">
+              The requested invoice could not be found.
+            </p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="flex h-full flex-col">
@@ -69,17 +87,22 @@ export default function InvoiceViewPage() {
               title={`Invoice #${invoice.invoiceNumber}`}
               subtitle="Invoice Details"
               onBack={() => navigate(ROUTES.INVOICES)}
-              onEdit={() =>
-                navigate(ROUTES.INVOICES_EDIT.replace(':id', id!))
-              }
-              deleteLabel="Delete Invoice"
             />
 
-            <div className="mb-4">
+            <div className="mb-4 flex items-center gap-3">
               <StatusBadge
-                status={invoice.status}
+                status={invoice.status ?? 'pending'}
                 config={STATUS_CONFIG.invoice}
               />
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={handleDownload}
+              >
+                <Download className="h-4 w-4" />
+                Download
+              </Button>
             </div>
 
             <div className="space-y-6">
@@ -90,12 +113,12 @@ export default function InvoiceViewPage() {
                 <DetailRow
                   icon={<User className="h-4 w-4" />}
                   label="Customer"
-                  value={invoice.customer}
+                  value={invoice.customer || '—'}
                 />
                 <DetailRow
                   icon={<FileText className="h-4 w-4" />}
                   label="Job"
-                  value={invoice.jobId}
+                  value={invoice.jobId || '—'}
                   isLast
                 />
               </SectionCard>
@@ -109,24 +132,24 @@ export default function InvoiceViewPage() {
                 <DetailRow
                   icon={<DollarSign className="h-4 w-4" />}
                   label="Total Amount"
-                  value={`$${invoice.totalAmount.toFixed(2)}`}
+                  value={`$${(invoice.totalAmount ?? 0).toFixed(2)}`}
                 />
                 <DetailRow
                   icon={<DollarSign className="h-4 w-4" />}
                   label="Received"
-                  value={`$${invoice.receivedAmount.toFixed(2)}`}
+                  value={`$${(invoice.receivedAmount ?? 0).toFixed(2)}`}
                   valueClassName="text-sm font-medium text-green-600"
                 />
                 <DetailRow
                   icon={<DollarSign className="h-4 w-4" />}
                   label="Balance"
-                  value={`$${invoice.balance.toFixed(2)}`}
-                  valueClassName={`text-sm font-medium ${invoice.balance > 0 ? 'text-red-500' : 'text-green-600'}`}
+                  value={`$${(invoice.balance ?? invoice.totalAmount ?? 0).toFixed(2)}`}
+                  valueClassName={`text-sm font-medium ${(invoice.balance ?? invoice.totalAmount ?? 0) > 0 ? 'text-red-500' : 'text-green-600'}`}
                 />
                 <DetailRow
                   icon={<DollarSign className="h-4 w-4" />}
                   label="Payment Type"
-                  value={invoice.paymentType}
+                  value={invoice.paymentType || '—'}
                   isLast
                 />
               </SectionCard>
@@ -138,7 +161,7 @@ export default function InvoiceViewPage() {
                 <DetailRow
                   icon={<Calendar className="h-4 w-4" />}
                   label="Invoice Date"
-                  value={invoice.date}
+                  value={invoice.date || '—'}
                 />
                 <DetailRow
                   icon={<FileText className="h-4 w-4" />}
@@ -155,7 +178,7 @@ export default function InvoiceViewPage() {
                 <DetailRow
                   icon={<Calendar className="h-4 w-4" />}
                   label="Created By"
-                  value={invoice.createdBy}
+                  value={invoice.createdBy || '—'}
                 />
                 <DetailRow
                   icon={<Calendar className="h-4 w-4" />}

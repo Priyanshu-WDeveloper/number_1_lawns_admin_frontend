@@ -11,6 +11,10 @@ export interface IAdmins {
   status: 'active' | 'inactive' | 'expired';
 
   profileImage: string;
+  companyName: string;
+  gstNumber: string;
+  bankAccountNumber: string;
+  invoiceLogo?: string;
 
   countryCode: string;
   phoneNumber: string;

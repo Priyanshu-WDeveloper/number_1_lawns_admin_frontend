@@ -5,6 +5,7 @@ import { mapSortToApi } from '@/lib/map-sort-to-api';
 interface UseDataTableQueryParamsOptions<TParams extends Record<string, unknown>> {
   defaultLimit?: number;
   debounceMs?: number;
+  defaultStatus?: string;
   mapStatusToApi?: (
     statusValue: string,
   ) => TParams['status'] extends string | undefined
@@ -30,9 +31,9 @@ interface UseDataTableQueryParamsReturn<TParams> {
 export function useDataTableQueryParams<TParams extends Record<string, unknown>>(
   options: UseDataTableQueryParamsOptions<TParams> = {},
 ): UseDataTableQueryParamsReturn<TParams> {
-  const { defaultLimit, debounceMs, mapStatusToApi } = options;
+  const { defaultLimit, debounceMs, mapStatusToApi, defaultStatus } = options;
 
-  const state = useDataTableState({ defaultLimit, debounceMs });
+  const state = useDataTableState({ defaultLimit, debounceMs, defaultStatus });
 
   const queryParams = useMemo(() => {
     const params = {

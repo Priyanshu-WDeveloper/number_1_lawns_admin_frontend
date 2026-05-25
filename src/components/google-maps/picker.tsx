@@ -37,13 +37,10 @@ export function GoogleMapPicker({
     googleMapsApiKey: apiKey || '',
   });
 
-  const center = useCallback(
-    () => ({
-      lat: latitude || 20.5937,
-      lng: longitude || 78.9629,
-    }),
-    [latitude, longitude],
-  );
+  const initialCenter = useRef<{ lat: number; lng: number }>({
+    lat: latitude || 20.5937,
+    lng: longitude || 78.9629,
+  });
 
   const handleSearch = useCallback(() => {
     if (!searchQuery.trim() || !mapRef.current) return;
@@ -146,8 +143,8 @@ export function GoogleMapPicker({
       <div className="relative h-56 rounded-xl overflow-hidden border border-[#e5e5e5]">
         <GoogleMap
           mapContainerStyle={containerStyle}
-          center={center()}
-          zoom={latitude && longitude ? 12 : 5}
+          center={initialCenter.current}
+          zoom={12}
           options={{
             disableDefaultUI: true,
             zoomControl: true,

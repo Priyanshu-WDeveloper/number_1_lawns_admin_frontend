@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   useParams,
   useNavigate,
@@ -13,6 +14,9 @@ import {
   Pencil,
   PowerOff,
   Power,
+  ExternalLink,
+  FileText,
+  Download,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -28,6 +32,12 @@ import {
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { ROUTES } from '@/constants';
 
 import type { IEmployee } from '@/types';
@@ -58,6 +68,15 @@ export default function EmployeeViewPage() {
   const getInitials = (name: string) => {
     return name.charAt(0).toUpperCase();
   };
+
+  const [selectedDoc, setSelectedDoc] = useState<{
+    key: string;
+    value: string;
+  } | null>(null);
+
+  const isImageUrl = (url: string) =>
+    /\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(url);
+  const isPdfUrl = (url: string) => /\.pdf(\?.*)?$/i.test(url);
 
   // const handleDelete = async () => {
   //   if (!employee) return;
@@ -116,7 +135,7 @@ export default function EmployeeViewPage() {
             <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec] mb-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <Avatar className="h-16 w-16 bg-[#16610E] text-white">
+                  <Avatar className="h-16 w-16  text-white">
                     {employee.profileImage ? (
                       <img
                         src={employee.profileImage}
@@ -147,23 +166,6 @@ export default function EmployeeViewPage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="text-right">
-                    <div>
-                      <span
-                        className={`text-lg font-semibold ${
-                          employee.balance < 0
-                            ? 'text-red-500'
-                            : 'text-green-600'
-                        }`}
-                      >
-                        {employee.balance < 0 ? '-' : ''}$
-                        {Math.abs(employee.balance).toFixed(2)}
-                      </span>
-
-                      <p className="text-xs text-[#777]">Balance</p>
-                    </div>
-                  </div>
-
                   <DropdownMenu>
                     <DropdownMenuTrigger className="rounded-xl">
                       <Button
@@ -357,10 +359,104 @@ export default function EmployeeViewPage() {
                         {employee.country || '-'}
                       </p>
                     </div>
+                    <div>
+                      <p className="text-sm text-[#777]">Latitude</p>
+                      <p className="text-[#151515] font-medium">
+                        {employee.location?.coordinates?.[1] ?? '-'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-[#777]">Longitude</p>
+                      <p className="text-[#151515] font-medium">
+                        {employee.location?.coordinates?.[0] ?? '-'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+
+              {employee.attachments && employee.attachments.length > 0 && (
+                <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec] md:col-span-2">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="h-8 w-8 rounded-lg bg-[#edf8e7] flex items-center justify-center">
+                      <FileText className="h-4 w-4 text-[#16610E]" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-[#151515]">
+                      Documents
+                    </h3>
+                  </div>
+                  <div className="space-y-3">
+                    {employee.attachments.map((doc, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => setSelectedDoc(doc)}
+                        className="w-full flex items-center justify-between p-3 rounded-lg bg-[#fafafa] hover:bg-[#edf8e7] transition-colors group text-left"
+                      >
+                        <span className="text-sm font-medium text-[#151515]">
+                          {doc.key}
+                        </span>
+                        <ExternalLink className="h-4 w-4 text-[#777] group-hover:text-[#16610E] transition-colors shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <Dialog
+                open={!!selectedDoc}
+                onOpenChange={(open) => {
+                  if (!open) setSelectedDoc(null);
+                }}
+              >
+                <DialogContent className="sm:max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle className="truncate">
+                      {selectedDoc?.key}
+                    </DialogTitle>
+                  </DialogHeader>
+                  {selectedDoc && (
+                    <div className="py-2">
+                      {isImageUrl(selectedDoc.value) ? (
+                        <div className="flex items-center justify-center">
+                          <img
+                            src={selectedDoc.value}
+                            alt={selectedDoc.key}
+                            className="max-h-[65vh] w-full object-contain rounded-lg"
+                          />
+                        </div>
+                      ) : isPdfUrl(selectedDoc.value) ? (
+                        <iframe
+                          src={selectedDoc.value}
+                          className="w-full h-[65vh] rounded-lg border border-[#e5e5e5]"
+                          title={selectedDoc.key}
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-[40vh] text-center">
+                          <FileText className="h-16 w-16 text-[#777] mb-4" />
+                          <p className="text-lg font-medium text-[#151515] mb-2">
+                            Preview not available
+                          </p>
+                          <p className="text-sm text-[#777] mb-6">
+                            This file type cannot be previewed
+                          </p>
+                          <a
+                            href={selectedDoc.value}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#16610E] text-white hover:bg-[#0f4a09]"
+                          >
+                            <Download className="h-4 w-4" />
+                            Download to view
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
+
           </div>
         </div>
       </div>

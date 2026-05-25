@@ -37,10 +37,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { PhoneInput } from '@/components/forms/phone-input';
+import { Country } from 'country-state-city';
+import { AddressInputs } from '@/components/forms/address-inputs';
 import { LocationModeToggle } from '@/components/forms/location-mode-toggle';
 import { GoogleMapPicker } from '@/components/google-maps/picker';
 import { ManualCoordinates } from '@/components/forms/manual-coordinates';
 import { validatePhone } from '@/lib/phone-validation';
+import {
+  validateAddress,
+  getCountryIsoFromPhoneCode,
+} from '@/lib/address-validation';
 
 const updateEmployeeSchema = z
   .object({
@@ -65,19 +71,43 @@ const updateEmployeeSchema = z
       .max(10)
       .regex(/^\d+$/, 'Invalid postal code'),
     country: z.string().min(1, 'Country is required'),
+    countryIso: z.string(),
     profileImage: z.string().min(1, 'Profile image is required'),
     latitude: z.number(),
     longitude: z.number(),
     locationMode: z.enum(['map', 'manual']),
   })
   .superRefine((data, ctx) => {
-    const result = validatePhone(data.phoneNumber, data.countryCode);
-    if (!result.valid && result.error) {
+    const phoneResult = validatePhone(
+      data.phoneNumber,
+      data.countryCode,
+    );
+    if (!phoneResult.valid && phoneResult.error) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: result.error,
+        message: phoneResult.error,
         path: ['phoneNumber'],
       });
+    }
+
+    const iso =
+      data.countryIso ||
+      getCountryIsoFromPhoneCode(data.countryCode) ||
+      '';
+    if (iso && data.country) {
+      const addrResult = validateAddress(
+        iso,
+        data.state,
+        data.city,
+        data.postalCode,
+      );
+      if (!addrResult.valid && addrResult.error && addrResult.path) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: addrResult.error,
+          path: [addrResult.path as any],
+        });
+      }
     }
   });
 
@@ -122,6 +152,7 @@ export default function EditEmployeePage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [documents, setDocuments] = useState<NamedDoc[]>([]);
   const profileInputRef = useRef<HTMLInputElement>(null);
+  const profileImageFileRef = useRef<File | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   const {
@@ -139,12 +170,13 @@ export default function EditEmployeePage() {
       lastName: '',
       email: '',
       phoneNumber: '',
-      countryCode: '+91',
+      countryCode: '+64',
       address: '',
       city: '',
       state: '',
       postalCode: '',
       country: '',
+      countryIso: '',
       profileImage: '',
       latitude: 5.8485,
       longitude: 14.7633,
@@ -161,15 +193,23 @@ export default function EditEmployeePage() {
       setValue('lastName', emp.lastName ?? '');
       setValue('email', emp.email ?? '');
       setValue('phoneNumber', emp.phoneNumber ?? '');
-      setValue('countryCode', emp.countryCode ?? '+91');
+      setValue('countryCode', emp.countryCode ?? '+64');
       setValue('address', emp.address ?? '');
       setValue('city', emp.city ?? '');
       setValue('state', emp.state ?? '');
       setValue('postalCode', emp.postalCode ?? '');
       setValue('country', emp.country ?? '');
+      if (emp.country) {
+        const match = Country.getAllCountries().find(
+          (c: any) =>
+            c.name.toLowerCase() === emp.country.toLowerCase(),
+        );
+        if (match) setValue('countryIso', match.isoCode);
+      }
       setValue('profileImage', emp.profileImage ?? '');
-      setValue('latitude', emp.latitude ?? 5.8485);
-      setValue('longitude', emp.longitude ?? 14.7633);
+      const coords1 = emp.location?.coordinates;
+      setValue('latitude', coords1 ? coords1[1] : 5.8485);
+      setValue('longitude', coords1 ? coords1[0] : 14.7633);
       setValue('locationMode', emp.locationMode ?? 'map');
     } else if (employeeData) {
       const emp = employeeData;
@@ -177,15 +217,23 @@ export default function EditEmployeePage() {
       setValue('lastName', emp.lastName ?? '');
       setValue('email', emp.email ?? '');
       setValue('phoneNumber', emp.phoneNumber ?? '');
-      setValue('countryCode', emp.countryCode ?? '+91');
+      setValue('countryCode', emp.countryCode ?? '+64');
       setValue('address', emp.address ?? '');
       setValue('city', emp.city ?? '');
       setValue('state', emp.state ?? '');
       setValue('postalCode', emp.postalCode ?? '');
       setValue('country', emp.country ?? '');
+      if (emp.country) {
+        const match = Country.getAllCountries().find(
+          (c: any) =>
+            c.name.toLowerCase() === emp.country.toLowerCase(),
+        );
+        if (match) setValue('countryIso', match.isoCode);
+      }
       setValue('profileImage', emp.profileImage ?? '');
-      setValue('latitude', emp.latitude ?? 5.8485);
-      setValue('longitude', emp.longitude ?? 14.7633);
+      const coords2 = emp.location?.coordinates;
+      setValue('latitude', coords2 ? coords2[1] : 5.8485);
+      setValue('longitude', coords2 ? coords2[0] : 14.7633);
       setValue('locationMode', emp.locationMode ?? 'map');
     }
   }, [employeeData, location.state, setValue]);
@@ -194,6 +242,7 @@ export default function EditEmployeePage() {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
+        profileImageFileRef.current = file;
         const reader = new FileReader();
         reader.onloadend = () => {
           setValue('profileImage', reader.result as string, {
@@ -225,6 +274,7 @@ export default function EditEmployeePage() {
         'state',
         'postalCode',
         'country',
+        'countryIso',
         'latitude',
         'longitude',
       ];
@@ -244,24 +294,49 @@ export default function EditEmployeePage() {
   };
 
   const onSubmit = async (data: UpdateEmployeeFormData) => {
-    if (!id) return;
+    if (!id || id === 'undefined' || id.length < 10) return;
+    console.log('onSubmit lat/lng:', data.latitude, data.longitude);
     try {
-      let attachments: Array<{ key: string; value: string }> | undefined;
+      let profileImageUrl = data.profileImage;
+      let attachments:
+        | Array<{ key: string; value: string }>
+        | undefined;
+
+      const uploads: Promise<any>[] = [];
+
+      if (profileImageFileRef.current) {
+        const fd = new FormData();
+        fd.append('file', profileImageFileRef.current);
+        uploads.push(
+          uploadDocument(fd)
+            .unwrap()
+            .then((res: any) => {
+              profileImageUrl = res.file.url;
+            }),
+        );
+      }
 
       const docsToUpload = documents.filter((d) => d.file && d.name);
       if (docsToUpload.length > 0) {
-        const formData = new FormData();
+        const results: Array<{ key: string; value: string }> = [];
         for (const doc of docsToUpload) {
-          formData.append('files', doc.file!);
+          const fd = new FormData();
+          fd.append('file', doc.file!);
+          const name = doc.name;
+          uploads.push(
+            uploadDocument(fd)
+              .unwrap()
+              .then((res: any) => {
+                results.push({ key: name, value: res.file.url });
+              }),
+          );
         }
-        const uploadRes = await uploadDocument(formData).unwrap();
-        attachments = uploadRes.urls.map((url, i) => ({
-          key: docsToUpload[i].name,
-          value: url,
-        }));
+        uploads.push(Promise.resolve().then(() => { attachments = results; }));
       }
 
-      await updateEmployee({
+      await Promise.all(uploads);
+
+      const payload = {
         id,
         firstName: data.firstName,
         lastName: data.lastName,
@@ -273,14 +348,16 @@ export default function EditEmployeePage() {
         state: data.state,
         postalCode: data.postalCode,
         country: data.country,
-        profileImage: data.profileImage,
+        profileImage: profileImageUrl,
         latitude: data.latitude,
         longitude: data.longitude,
         attachments,
-      }).unwrap();
+      };
+      await updateEmployee(payload).unwrap();
       toast.success('Employee updated successfully');
       navigate(ROUTES.EMPLOYEES);
     } catch (error: any) {
+      console.error(error);
       toast.error(
         getErrorMessage(error, 'Failed to update employee'),
       );
@@ -337,6 +414,7 @@ export default function EditEmployeePage() {
                         setValue('profileImage', '', {
                           shouldValidate: true,
                         });
+                        profileImageFileRef.current = null;
                         if (profileInputRef.current) {
                           profileInputRef.current.value = '';
                         }
@@ -515,75 +593,39 @@ export default function EditEmployeePage() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#151515]">
-                    City
-                    <span className="text-[#16610E]"> *</span>
-                  </label>
-                  <input
-                    placeholder="Enter city"
-                    {...register('city')}
-                    className="w-full h-12 rounded-xl border border-[#e5e5e5] bg-[#fafaf8] px-3 text-sm outline-none focus:border-[#16610E] focus:ring-1 focus:ring-[#16610E]/20"
-                  />
-                  {errors.city && (
-                    <p className="text-sm text-red-500">
-                      {errors.city.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#151515]">
-                    State
-                    <span className="text-[#16610E]"> *</span>
-                  </label>
-                  <input
-                    placeholder="Enter state"
-                    {...register('state')}
-                    className="w-full h-12 rounded-xl border border-[#e5e5e5] bg-[#fafaf8] px-3 text-sm outline-none focus:border-[#16610E] focus:ring-1 focus:ring-[#16610E]/20"
-                  />
-                  {errors.state && (
-                    <p className="text-sm text-red-500">
-                      {errors.state.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#151515]">
-                    Postal Code
-                    <span className="text-[#16610E]"> *</span>
-                  </label>
-                  <input
-                    placeholder="Enter postal code"
-                    {...register('postalCode')}
-                    className="w-full h-12 rounded-xl border border-[#e5e5e5] bg-[#fafaf8] px-3 text-sm outline-none focus:border-[#16610E] focus:ring-1 focus:ring-[#16610E]/20"
-                  />
-                  {errors.postalCode && (
-                    <p className="text-sm text-red-500">
-                      {errors.postalCode.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#151515]">
-                    Country
-                    <span className="text-[#16610E]"> *</span>
-                  </label>
-                  <input
-                    placeholder="Enter country"
-                    {...register('country')}
-                    className="w-full h-12 rounded-xl border border-[#e5e5e5] bg-[#fafaf8] px-3 text-sm outline-none focus:border-[#16610E] focus:ring-1 focus:ring-[#16610E]/20"
-                  />
-                  {errors.country && (
-                    <p className="text-sm text-red-500">
-                      {errors.country.message}
-                    </p>
-                  )}
-                </div>
-              </div>
+              <AddressInputs
+                countryIso={formValues.countryIso || ''}
+                country={formValues.country}
+                state={formValues.state}
+                city={formValues.city}
+                postalCode={formValues.postalCode}
+                onCountryChange={(name, iso) => {
+                  setValue('country', name, { shouldValidate: true });
+                  setValue('countryIso', iso, {
+                    shouldValidate: true,
+                  });
+                  setValue('state', '', { shouldValidate: true });
+                  setValue('city', '', { shouldValidate: true });
+                }}
+                onStateChange={(name, _iso) => {
+                  setValue('state', name, { shouldValidate: true });
+                  setValue('city', '', { shouldValidate: true });
+                }}
+                onCityChange={(name) =>
+                  setValue('city', name, { shouldValidate: true })
+                }
+                onPostalCodeChange={(val) =>
+                  setValue('postalCode', val, {
+                    shouldValidate: true,
+                  })
+                }
+                errors={{
+                  country: errors.country?.message,
+                  state: errors.state?.message,
+                  city: errors.city?.message,
+                  postalCode: errors.postalCode?.message,
+                }}
+              />
             </div>
           </div>
         </div>
@@ -618,6 +660,8 @@ export default function EditEmployeePage() {
           postalCode={formValues.postalCode}
           country={formValues.country}
           profileImage={formValues.profileImage}
+          latitude={formValues.latitude}
+          longitude={formValues.longitude}
           documents={documents}
         />
       </form>
@@ -667,7 +711,7 @@ export default function EditEmployeePage() {
             isSubmitting={isUpdating}
             isLastStep={currentStep === steps.length}
             isFirstStep={currentStep === 1}
-            submitLabel="Edit Employee"
+            submitLabel="Save Changes"
             allowStepNavigation
             formRef={formRef}
           >

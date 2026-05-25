@@ -118,7 +118,10 @@ export default function AccountDropdown({
 
         {/* Menu Items */}
         <div className="py-1">
-          <DropdownMenuItem className="flex cursor-pointer items-center gap-3 px-4 py-3 text-sm">
+          <DropdownMenuItem
+            onClick={() => navigate(superAccess ? ROUTES.SUPER_ADMIN_PROFILE : ROUTES.PROFILE)}
+            className="flex cursor-pointer items-center gap-3 px-4 py-3 text-sm"
+          >
             <User className="h-4 w-4 text-slate-700" />
             Profile
           </DropdownMenuItem>

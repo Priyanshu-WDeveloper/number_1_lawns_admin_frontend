@@ -69,6 +69,14 @@ export default function CustomerManagementPage() {
 
   const customerColumns: ColumnDef<ICustomer>[] = [
     {
+      accessorKey: 'customerId',
+      header: 'Customer Id',
+      sortable: true,
+      cell: (row: ICustomer) => (
+        <span className="text-[#6b7280]">{row.customerId}</span>
+      ),
+    },
+    {
       accessorKey: 'fullName',
       header: 'Name',
       sortable: true,

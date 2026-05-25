@@ -17,6 +17,7 @@ import { AdminFormStep } from '@/components/admin/admin-form-step';
 import { AdminReviewCard } from '@/components/admin/admin-review-card';
 import { Button } from '@/components/ui/button';
 import { validatePhone } from '@/lib/phone-validation';
+import { validateAddress, getCountryIsoFromPhoneCode } from '@/lib/address-validation';
 
 const createCustomerSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -40,18 +41,31 @@ const createCustomerSchema = z.object({
     .max(10)
     .regex(/^\d+$/, 'Invalid postal code'),
   country: z.string().min(1, 'Country is required'),
+  countryIso: z.string(),
   location: z.string(),
   latitude: z.number(),
   longitude: z.number(),
   locationMode: z.enum(['map', 'manual']),
 }).superRefine((data, ctx) => {
-  const result = validatePhone(data.phoneNumber, data.countryCode);
-  if (!result.valid && result.error) {
+  const phoneResult = validatePhone(data.phoneNumber, data.countryCode);
+  if (!phoneResult.valid && phoneResult.error) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: result.error,
+      message: phoneResult.error,
       path: ['phoneNumber'],
     });
+  }
+
+  const iso = data.countryIso || getCountryIsoFromPhoneCode(data.countryCode) || '';
+  if (iso && data.country) {
+    const addrResult = validateAddress(iso, data.state, data.city, data.postalCode);
+    if (!addrResult.valid && addrResult.error && addrResult.path) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: addrResult.error,
+        path: [addrResult.path as any],
+      });
+    }
   }
 });
 
@@ -68,6 +82,7 @@ const initialFormData: CreateCustomerFormData = {
   state: '',
   postalCode: '',
   country: '',
+  countryIso: 'NZ',
   location: '',
   latitude: 40.7128,
   longitude: -74.006,

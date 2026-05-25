@@ -65,7 +65,7 @@ export function SearchableSelect({
             aria-expanded={open}
             disabled={disabled}
             className={cn(
-              "h-12 w-full justify-between rounded-xl border-[#e5e5e5] bg-[#fafaf8] px-4 text-sm font-normal hover:bg-[#fafaf8]",
+              "h-12 w-full justify-between rounded-xl border-[#e5e5e5] bg-[#fafaf8] px-4 text-sm font-normal hover:bg-[#fafaf8] focus-visible:ring-2 focus-visible:ring-[#16610E] focus-visible:ring-offset-2",
               !selectedItem && "text-[#9ca3af]",
               error && "border-red-500",
             )}

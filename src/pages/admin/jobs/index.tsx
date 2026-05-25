@@ -1,10 +1,17 @@
-import { Ellipsis, Eye, Pencil, X, Check, Ban } from 'lucide-react';
+import { useState } from 'react';
+import {
+  Ellipsis,
+  Eye,
+  Pencil,
+  Check,
+  Ban,
+  Calendar,
+  User,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import type { ColumnDef } from '@/components/data-table/data-table';
-import DataTable, {
-  ActionButton,
-} from '@/components/data-table/data-table';
+import DataTable from '@/components/data-table/data-table';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Navbar } from '@/components/layout/navbar';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +20,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -20,58 +28,43 @@ import {
   useCancelJobMutation,
   useCompleteJobMutation,
   useDeleteJobMutation,
+  useCreateJobReceiptMutation,
 } from '@/API/api';
 import { StatusBadge } from '@/components/data-table/status-badge';
 import { STATUS_CONFIG } from '@/constants/status-config';
 import { formatDate } from '@/lib/format-date';
 import { getErrorMessage } from '@/lib/get-error-message';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { CompleteJobDialog } from '@/components/admin/complete-job-dialog';
 import { useDataTableQueryParams } from '@/hooks/use-data-table-query-params';
 import type { IJob } from '@/types';
 import type { ListQueryParams } from '@/types/api.types';
 
-function getCustomerName(customer: IJob['customerId']): string {
-  if (typeof customer === 'object' && customer) {
-    return customer.fullName || `${customer.firstName} ${customer.lastName}`;
-  }
-  return (customer as string) || '-';
-}
 
-function getCustomerProfileImage(customer: IJob['customerId']): string {
-  if (typeof customer === 'object' && customer) {
-    return customer.profileImage || '';
-  }
-  return '';
-}
-
-function getEmployeeName(employee: IJob['employeeId']): string {
-  if (typeof employee === 'object' && employee) {
-    return employee.fullName || `${employee.firstName} ${employee.lastName}`;
-  }
-  return (employee as string) || '-';
-}
-
-function getEmployeeCode(employee: IJob['employeeId']): string {
-  if (typeof employee === 'object' && employee && employee.employeeId) {
-    return employee.employeeId;
-  }
-  return (typeof employee === 'string' ? employee : '') || '-';
-}
-
-function getEmployeeProfileImage(employee: IJob['employeeId']): string {
-  if (typeof employee === 'object' && employee) {
-    return employee.profileImage || '';
-  }
-  return '';
-}
 
 export default function JobManagementPage() {
   const navigate = useNavigate();
 
-  const { setPage, setLimit, search, setSearch, statusFilter, setStatusFilter, sort, setSort, queryParams } =
-    useDataTableQueryParams<ListQueryParams>({
-      defaultLimit: 10,
-      mapStatusToApi: (status) => status.toLowerCase().replace(' ', '-') as 'pending' | 'in-progress' | 'completed' | 'cancelled',
-    });
+  const {
+    setPage,
+    setLimit,
+    search,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
+    sort,
+    setSort,
+    queryParams,
+  } = useDataTableQueryParams<ListQueryParams>({
+    defaultLimit: 10,
+    defaultStatus: 'Pending',
+    mapStatusToApi: (status) =>
+      status.toLowerCase().replace(' ', '-') as
+        | 'pending'
+        | 'in-progress'
+        | 'completed'
+        | 'cancelled',
+  });
 
   const { data: apiData, isLoading } = useGetJobsQuery(queryParams, {
     refetchOnMountOrArgChange: true,
@@ -81,9 +74,19 @@ export default function JobManagementPage() {
   const [completeJob] = useCompleteJobMutation();
   const [deleteJob] = useDeleteJobMutation();
 
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'complete' | 'cancel' | 'delete';
+    jobId: string;
+  } | null>(null);
+
   const jobs = apiData?.jobs ?? [];
   const pagination = apiData
-    ? { page: apiData.page, limit: apiData.limit, total: apiData.total, totalPages: apiData.totalPages }
+    ? {
+        page: apiData.page,
+        limit: apiData.limit,
+        total: apiData.total,
+        totalPages: apiData.totalPages,
+      }
     : undefined;
 
   const handleCancel = async (id: string) => {
@@ -95,10 +98,17 @@ export default function JobManagementPage() {
     }
   };
 
-  const handleComplete = async (id: string) => {
+  const [createJobReceipt] = useCreateJobReceiptMutation();
+
+  const handleComplete = async (
+    id: string,
+    receivePrice?: number,
+  ) => {
     try {
-      await completeJob({ jobId: id }).unwrap();
+      await completeJob({ jobId: id, receivePrice }).unwrap();
+      await createJobReceipt(id).unwrap();
       toast.success('Job completed successfully');
+      setConfirmAction(null);
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to complete job'));
     }
@@ -114,76 +124,78 @@ export default function JobManagementPage() {
   };
 
   const jobColumns: ColumnDef<IJob>[] = [
-    {
-      accessorKey: 'customerId',
-      header: 'Customer',
-      cell: (row: IJob) => {
-        const image = getCustomerProfileImage(row.customerId);
-        const name = getCustomerName(row.customerId);
-        const initial = name ? name.charAt(0).toUpperCase() : '?';
-        const hue = name ? (name.charCodeAt(0) * 137.5) % 360 : 0;
+    // {
+    //   accessorKey: 'customerId',
+    //   header: 'Customer',
+    //   cell: (row: IJob) => {
+    //     const image = getCustomerProfileImage(row.customerId);
+    //     const name = getCustomerName(row.customerId);
+    //     const initial = name ? name.charAt(0).toUpperCase() : '?';
+    //     const hue = name ? (name.charCodeAt(0) * 137.5) % 360 : 0;
 
-        return (
-          <div className="flex items-center gap-3">
-            {image ? (
-              <img
-                src={image}
-                alt={name}
-                className="h-7 w-7 rounded-full object-cover"
-              />
-            ) : (
-              <div
-                className="h-7 w-7 flex items-center justify-center rounded-full text-xs font-semibold"
-                style={{
-                  backgroundColor: `hsl(${hue}, 60%, 90%)`,
-                  color: `hsl(${hue}, 60%, 35%)`,
-                }}
-              >
-                {initial}
-              </div>
-            )}
-            <span className="font-medium text-[#151515]">{name}</span>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'employeeId',
-      header: 'Employee',
-      cell: (row: IJob) => {
-        const image = getEmployeeProfileImage(row.employeeId);
-        const name = getEmployeeName(row.employeeId);
-        const code = getEmployeeCode(row.employeeId);
-        const initial = name ? name.charAt(0).toUpperCase() : '?';
-        const hue = name ? (name.charCodeAt(0) * 137.5) % 360 : 0;
+    //     return (
+    //       <div className="flex items-center gap-3">
+    //         {image ? (
+    //           <img
+    //             src={image}
+    //             alt={name}
+    //             className="h-7 w-7 rounded-full object-cover"
+    //           />
+    //         ) : (
+    //           <div
+    //             className="h-7 w-7 flex items-center justify-center rounded-full text-xs font-semibold"
+    //             style={{
+    //               backgroundColor: `hsl(${hue}, 60%, 90%)`,
+    //               color: `hsl(${hue}, 60%, 35%)`,
+    //             }}
+    //           >
+    //             {initial}
+    //           </div>
+    //         )}
+    //         <span className="font-medium text-[#151515]">{name}</span>
+    //       </div>
+    //     );
+    //   },
+    // },
+    // {
+    //   accessorKey: 'employeeId',
+    //   header: 'Employee',
+    //   cell: (row: IJob) => {
+    //     const image = getEmployeeProfileImage(row.employeeId);
+    //     const name = getEmployeeName(row.employeeId);
+    //     const code = getEmployeeCode(row.employeeId);
+    //     const initial = name ? name.charAt(0).toUpperCase() : '?';
+    //     const hue = name ? (name.charCodeAt(0) * 137.5) % 360 : 0;
 
-        return (
-          <div className="flex items-center gap-3">
-            {image ? (
-              <img
-                src={image}
-                alt={name}
-                className="h-7 w-7 rounded-full object-cover"
-              />
-            ) : (
-              <div
-                className="h-7 w-7 flex items-center justify-center rounded-full text-xs font-semibold"
-                style={{
-                  backgroundColor: `hsl(${hue}, 60%, 90%)`,
-                  color: `hsl(${hue}, 60%, 35%)`,
-                }}
-              >
-                {initial}
-              </div>
-            )}
-            <div>
-              <span className="font-medium text-[#151515]">{name}</span>
-              <p className="text-xs text-[#6b7280]">{code}</p>
-            </div>
-          </div>
-        );
-      },
-    },
+    //     return (
+    //       <div className="flex items-center gap-3">
+    //         {image ? (
+    //           <img
+    //             src={image}
+    //             alt={name}
+    //             className="h-7 w-7 rounded-full object-cover"
+    //           />
+    //         ) : (
+    //           <div
+    //             className="h-7 w-7 flex items-center justify-center rounded-full text-xs font-semibold"
+    //             style={{
+    //               backgroundColor: `hsl(${hue}, 60%, 90%)`,
+    //               color: `hsl(${hue}, 60%, 35%)`,
+    //             }}
+    //           >
+    //             {initial}
+    //           </div>
+    //         )}
+    //         <div>
+    //           <span className="font-medium text-[#151515]">
+    //             {name}
+    //           </span>
+    //           <p className="text-xs text-[#6b7280]">{code}</p>
+    //         </div>
+    //       </div>
+    //     );
+    //   },
+    // },
     {
       accessorKey: 'address',
       header: 'Address',
@@ -192,74 +204,138 @@ export default function JobManagementPage() {
       ),
     },
     {
-      accessorKey: 'jobType',
-      header: 'Job Type',
+      accessorKey: 'date',
+      header: 'Date',
       cell: (row: IJob) => (
         <span className="text-[#6b7280]">
-          {row.jobType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+          {formatDate(row.jobDate || '')}
         </span>
       ),
     },
     {
-      accessorKey: 'date',
-      header: 'Date',
+      accessorKey: 'paymentType',
+      header: 'Payment Type',
       cell: (row: IJob) => (
-        <span className="text-[#6b7280]">{formatDate(row.date || row.jobDate || '')}</span>
+        <span className="text-[#6b7280]">{row.paymentType}</span>
       ),
     },
+
     {
       accessorKey: 'status',
       header: 'Status',
       cell: (row: IJob) => (
-        <StatusBadge status={row.status ?? ''} config={STATUS_CONFIG.job} />
+        <StatusBadge
+          status={row.status ?? ''}
+          config={STATUS_CONFIG.job}
+        />
       ),
     },
+
+    {
+      accessorKey: 'jobType',
+      header: 'Job Type',
+      cell: (row: IJob) => (
+        <span className="text-[#6b7280]">
+          {row.jobType
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, (c) => c.toUpperCase())}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'assignedTo',
+      header: 'Assigned To',
+      cell: (row: IJob) => (
+        <span className="text-[#6b7280]">
+          {typeof row.adminId === 'object' && row.adminId
+            ? `${row.adminId.firstName} ${row.adminId.lastName}`
+            : row.adminId || '-'}
+        </span>
+      ),
+    },
+
     {
       accessorKey: 'actions',
       header: 'Actions',
       cell: (row: IJob) => (
-        <div className="flex items-center gap-1">
-          <ActionButton
-            icon={<Eye className="h-3.5 w-3.5" />}
-            className="h-8 w-8 rounded-full border border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#374151] shadow-none"
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
             onClick={() =>
               navigate(ROUTES.JOBS_VIEW.replace(':id', row._id ?? ''))
             }
-          />
-            <ActionButton
-              icon={<Pencil className="h-3.5 w-3.5" />}
-              className="h-8 w-8 rounded-full border border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#374151] shadow-none"
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-sm font-medium bg-[#f5f5f5] text-[#374151] hover:bg-[#e5e5e5] transition-colors"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            View
+          </button>
+          {row.status === 'pending' && (
+            <button
+              type="button"
               onClick={() =>
-                navigate(ROUTES.JOBS_EDIT.replace(':id', row._id ?? ''))
-            }
-          />
+                setConfirmAction({
+                  type: 'complete',
+                  jobId: row._id ?? '',
+                })
+              }
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+            >
+              <Check className="h-3.5 w-3.5" />
+              Complete
+            </button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <ActionButton
-                icon={<Ellipsis className="h-3.5 w-3.5" />}
-                className="h-8 w-8 rounded-full border border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#374151] shadow-none"
-              />
+              <button
+                type="button"
+                className="inline-flex items-center justify-center h-8 w-8 rounded-md text-[#6b7280] hover:bg-[#f5f5f5] transition-colors"
+              >
+                <Ellipsis className="h-4 w-4" />
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() =>
+                  navigate(
+                    ROUTES.JOBS_EDIT.replace(':id', row._id ?? ''),
+                  )
+                }
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                <span>Edit</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  toast.success('Reschedule coming soon')
+                }
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                <span>Reschedule</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  toast.success('Assign employee coming soon')
+                }
+              >
+                <User className="mr-2 h-4 w-4" />
+                <span>Assign Employee</span>
+              </DropdownMenuItem>
               {row.status === 'pending' && (
                 <>
-                  <DropdownMenuItem onClick={() => handleComplete(row._id ?? '')}>
-                    <Check className="mr-2 h-4 w-4 text-green-600" />
-                    <span>Complete</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleCancel(row._id ?? '')}>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() =>
+                      setConfirmAction({
+                        type: 'cancel',
+                        jobId: row._id ?? '',
+                      })
+                    }
+                  >
                     <Ban className="mr-2 h-4 w-4 text-red-500" />
-                    <span>Cancel</span>
+                    <span>Cancel Job</span>
                   </DropdownMenuItem>
                 </>
               )}
-              <DropdownMenuItem
-                className="text-red-500 focus:text-red-500"
-                onClick={() => handleDelete(row._id ?? '')}
-              >
-                <X className="mr-2 h-4 w-4" />
-                Delete Job
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -288,12 +364,7 @@ export default function JobManagementPage() {
                 searchValue={search}
                 onSearchChange={setSearch}
                 filterField="status"
-                filterOptions={[
-                  'Pending',
-                  'In Progress',
-                  'Completed',
-                  'Cancelled',
-                ]}
+                filterOptions={['Pending', 'Completed', 'Cancelled']}
                 filterValue={statusFilter}
                 onFilterChange={setStatusFilter}
                 serverSideFiltering
@@ -313,6 +384,43 @@ export default function JobManagementPage() {
           </div>
         </div>
       </div>
+
+      <CompleteJobDialog
+        open={confirmAction?.type === 'complete'}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+        onConfirm={async (receivePrice) => {
+          if (confirmAction)
+            await handleComplete(confirmAction.jobId, receivePrice);
+        }}
+      />
+      <ConfirmDialog
+        open={confirmAction?.type === 'cancel'}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+        title="Cancel Job"
+        description="Are you sure you want to cancel this job? This action cannot be undone."
+        confirmText="Cancel Job"
+        onConfirm={async () => {
+          if (confirmAction) await handleCancel(confirmAction.jobId);
+          setConfirmAction(null);
+        }}
+      />
+      <ConfirmDialog
+        open={confirmAction?.type === 'delete'}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+        title="Delete Job"
+        description="Are you sure you want to delete this job? This action cannot be undone."
+        confirmText="Delete"
+        onConfirm={async () => {
+          if (confirmAction) await handleDelete(confirmAction.jobId);
+          setConfirmAction(null);
+        }}
+      />
     </AppLayout>
   );
 }

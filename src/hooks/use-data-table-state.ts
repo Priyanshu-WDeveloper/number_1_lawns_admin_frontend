@@ -4,6 +4,7 @@ import { useDebounce } from './use-debounce';
 interface UseDataTableStateOptions {
   defaultLimit?: number;
   debounceMs?: number;
+  defaultStatus?: string;
 }
 
 interface UseDataTableStateReturn {
@@ -28,7 +29,7 @@ export function useDataTableState(
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(defaultLimit);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('All');
+  const [statusFilter, setStatusFilter] = useState<string>(options.defaultStatus ?? 'All');
   const [sort, setSort] = useState<string>('createdAt');
 
   const debouncedSearch = useDebounce(search, debounceMs);

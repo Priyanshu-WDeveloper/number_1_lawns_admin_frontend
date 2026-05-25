@@ -9,14 +9,12 @@ import {
   User,
   MapPin,
   CreditCard,
-  Clock,
   RefreshCw,
   DollarSign,
   Ban,
   Check,
   FileDown,
   Pencil,
-  Trash2,
   Mail,
   Phone,
   MoreVertical,
@@ -39,8 +37,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/constants';
@@ -49,11 +45,11 @@ import { StatusBadge } from '@/components/data-table/status-badge';
 import Loader from '@/components/loader';
 import { STATUS_CONFIG } from '@/constants/status-config';
 import { SearchableSelect } from '@/components/ui/searchable-select';
+import { CompleteJobDialog } from '@/components/admin/complete-job-dialog';
 import {
   useGetJobByIdQuery,
   useCancelJobMutation,
   useCompleteJobMutation,
-  useCreateInvoiceMutation,
   useGetJobReceiptQuery,
   useAssignJobEmployeeMutation,
   useGetEmployeesQuery,
@@ -70,15 +66,6 @@ function getCustomerName(customer: IJob['customerId']): string {
     );
   }
   return (customer as string) || '-';
-}
-
-function getCustomerProfileImage(
-  customer: IJob['customerId'],
-): string {
-  if (typeof customer === 'object' && customer) {
-    return customer.profileImage || '';
-  }
-  return '';
 }
 
 function getCustomerEmail(customer: IJob['customerId']): string {
@@ -124,36 +111,6 @@ function getEmployeeCode(employee: IJob['employeeId']): string {
   return (typeof employee === 'string' ? employee : '') || '-';
 }
 
-function getEmployeeProfileImage(
-  employee: IJob['employeeId'],
-): string {
-  if (typeof employee === 'object' && employee) {
-    return employee.profileImage || '';
-  }
-  return '';
-}
-
-function getAdminName(admin: NonNullable<IJob['adminId']>): string {
-  if (typeof admin === 'object' && admin) {
-    return `${admin.firstName} ${admin.lastName}` || '-';
-  }
-  return '-';
-}
-
-function getAdminEmail(admin: NonNullable<IJob['adminId']>): string {
-  if (typeof admin === 'object' && admin) return admin.email;
-  return '-';
-}
-
-function getAdminProfileImage(
-  admin: NonNullable<IJob['adminId']>,
-): string {
-  if (typeof admin === 'object' && admin) {
-    return admin.profileImage || '';
-  }
-  return '';
-}
-
 export default function JobViewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -170,7 +127,6 @@ export default function JobViewPage() {
 
   const [cancelJob] = useCancelJobMutation();
   const [completeJob] = useCompleteJobMutation();
-  const [createInvoice] = useCreateInvoiceMutation();
   const { data: receiptData } = useGetJobReceiptQuery(id ?? '', {
     skip: !id,
   });
@@ -183,7 +139,6 @@ export default function JobViewPage() {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
-  const [receivePrice, setReceivePrice] = useState('');
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   const employeeOptions = useMemo(
@@ -210,42 +165,12 @@ export default function JobViewPage() {
     }
   };
 
-  const handleConfirmComplete = async () => {
-    if (!id) return;
-    try {
-      await completeJob({
-        jobId: id,
-        receivePrice: receivePrice ? Number(receivePrice) : undefined,
-      }).unwrap();
-      const customerName =
-        typeof resolvedJob.customerId === 'object'
-          ? resolvedJob.customerId.fullName
-          : resolvedJob.customerId || '';
-      await createInvoice({
-        jobId: id,
-        customer: customerName,
-        totalAmount: Number(
-          receivePrice || resolvedJob.paymentAmount || 0,
-        ),
-        receivedAmount: Number(receivePrice || 0),
-        date: new Date().toISOString().split('T')[0],
-        status: 'paid',
-        paymentType: resolvedJob.paymentType || undefined,
-      }).unwrap();
-      toast.success('Job completed successfully');
-      setCompleteDialogOpen(false);
-      setReceivePrice('');
-    } catch (err) {
-      toast.error(getErrorMessage(err, 'Failed to complete job'));
-    }
-  };
-
   const handleAssignEmployee = async () => {
     if (!id || !selectedEmployee) return;
     try {
       await assignJobEmployee({
-        jobId: id,
-        employeeId: selectedEmployee,
+        id,
+        employee: selectedEmployee,
       }).unwrap();
       toast.success('Employee assigned successfully');
       setAssignDialogOpen(false);
@@ -296,23 +221,19 @@ export default function JobViewPage() {
                   <div className="h-14 w-14 rounded-xl bg-[#16610E]/10 flex items-center justify-center">
                     <RefreshCw className="h-6 w-6 text-[#16610E]" />
                   </div>
-                  <div>
+                  <div className="flex items-center gap-3">
                     <h1 className="text-2xl font-bold text-[#151515]">
-                      Job{' '}
-                      {/* {`${resolvedJob.customerId ? resolvedJob.customerId : (resolvedJob._id ?? '').slice(-6)}`} */}
-                      #{(resolvedJob._id ?? '').slice(-6)}
+                      Job
                     </h1>
-                    <p className="text-[#777] text-sm">
-                      Job ID: {resolvedJob._id ?? ''}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="text-right">
+
                     <StatusBadge
                       status={resolvedJob.status ?? ''}
                       config={STATUS_CONFIG.job}
                     />
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="text-right">
                     <div className="mt-2">
                       <span className="text-lg font-semibold text-[#16610E]">
                         {resolvedJob.price != null &&
@@ -373,11 +294,6 @@ export default function JobViewPage() {
                           </DropdownMenuItem>
                         </>
                       )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="cursor-pointer text-red-500 focus:text-red-500">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete Job
-                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -407,7 +323,8 @@ export default function JobViewPage() {
                   </>
                 )}
                 {(resolvedJob.receiptUrl ||
-                  receiptData?.receiptUrl) && (
+                  (receiptData as { receiptUrl?: string } | undefined)
+                    ?.receiptUrl) && (
                   <Button
                     size="sm"
                     variant="outline"
@@ -415,7 +332,9 @@ export default function JobViewPage() {
                     onClick={() =>
                       window.open(
                         resolvedJob.receiptUrl ||
-                          receiptData!.receiptUrl,
+                          (receiptData as { receiptUrl?: string })
+                            .receiptUrl ||
+                          '',
                         '_blank',
                       )
                     }
@@ -441,27 +360,7 @@ export default function JobViewPage() {
                 </div>
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10 bg-[#16610E] text-white">
-                      {getCustomerProfileImage(
-                        resolvedJob.customerId,
-                      ) ? (
-                        <img
-                          src={getCustomerProfileImage(
-                            resolvedJob.customerId,
-                          )}
-                          alt={getCustomerName(
-                            resolvedJob.customerId,
-                          )}
-                          className="h-full w-full rounded-full object-cover"
-                        />
-                      ) : (
-                        <AvatarFallback className="text-sm font-bold">
-                          {getCustomerName(resolvedJob.customerId)
-                            .charAt(0)
-                            .toUpperCase()}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
+                    <User className="h-4 w-4 text-[#777] shrink-0" />
                     <div>
                       <p className="text-sm text-[#777]">Name</p>
                       <p className="text-[#151515] font-medium">
@@ -504,27 +403,7 @@ export default function JobViewPage() {
                 resolvedJob.employeeId ? (
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 bg-[#16610E] text-white">
-                        {getEmployeeProfileImage(
-                          resolvedJob.employeeId,
-                        ) ? (
-                          <img
-                            src={getEmployeeProfileImage(
-                              resolvedJob.employeeId,
-                            )}
-                            alt={getEmployeeName(
-                              resolvedJob.employeeId,
-                            )}
-                            className="h-full w-full rounded-full object-cover"
-                          />
-                        ) : (
-                          <AvatarFallback className="text-sm font-bold">
-                            {getEmployeeName(resolvedJob.employeeId)
-                              .charAt(0)
-                              .toUpperCase()}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
+                      <User className="h-4 w-4 text-[#777] shrink-0" />
                       <div>
                         <p className="text-[#151515] font-medium">
                           {getEmployeeName(resolvedJob.employeeId)}
@@ -595,50 +474,8 @@ export default function JobViewPage() {
                 )}
               </div>
 
-              {/* Admin Card */}
-              {resolvedJob.adminId &&
-                typeof resolvedJob.adminId === 'object' && (
-                  <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec] md:col-span-2">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="h-8 w-8 rounded-lg bg-[#edf8e7] flex items-center justify-center">
-                        <User className="h-4 w-4 text-[#16610E]" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-[#151515]">
-                        Admin Details
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-10 w-10 bg-[#16610E] text-white">
-                        {getAdminProfileImage(resolvedJob.adminId) ? (
-                          <img
-                            src={getAdminProfileImage(
-                              resolvedJob.adminId,
-                            )}
-                            alt={getAdminName(resolvedJob.adminId)}
-                            className="h-full w-full rounded-full object-cover"
-                          />
-                        ) : (
-                          <AvatarFallback className="text-sm font-bold">
-                            {getAdminName(resolvedJob.adminId)
-                              .charAt(0)
-                              .toUpperCase()}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                      <div>
-                        <p className="text-[#151515] font-medium">
-                          {getAdminName(resolvedJob.adminId)}
-                        </p>
-                        <p className="text-sm text-[#777]">
-                          {getAdminEmail(resolvedJob.adminId)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
               {/* Schedule Card */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec] md:col-span-2">
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec]">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="h-8 w-8 rounded-lg bg-[#edf8e7] flex items-center justify-center">
                     <Calendar className="h-4 w-4 text-[#16610E]" />
@@ -680,7 +517,7 @@ export default function JobViewPage() {
               </div>
 
               {/* Payment Card */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec] md:col-span-2">
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec]">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="h-8 w-8 rounded-lg bg-[#edf8e7] flex items-center justify-center">
                     <DollarSign className="h-4 w-4 text-[#16610E]" />
@@ -722,83 +559,53 @@ export default function JobViewPage() {
                 </div>
               </div>
 
-              {/* Timestamps Card */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec] md:col-span-2">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="h-8 w-8 rounded-lg bg-[#edf8e7] flex items-center justify-center">
-                    <Clock className="h-4 w-4 text-[#16610E]" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-[#151515]">
-                    Timestamps
-                  </h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                  <div className="flex items-center gap-3">
-                    <Clock className="h-4 w-4 text-[#777] shrink-0" />
-                    <div>
-                      <p className="text-sm text-[#777]">
-                        Created At
-                      </p>
-                      <p className="text-[#151515] font-medium">
-                        {formatDate(resolvedJob.createdAt)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Clock className="h-4 w-4 text-[#777] shrink-0" />
-                    <div>
-                      <p className="text-sm text-[#777]">
-                        Last Updated
-                      </p>
-                      <p className="text-[#151515] font-medium">
-                        {formatDate(resolvedJob.updatedAt)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {/* Description Card */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec] md:col-span-2">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="h-8 w-8 rounded-lg bg-[#edf8e7] flex items-center justify-center">
-                    <FileText className="h-4 w-4 text-[#16610E]" />
+              {resolvedJob.description && (
+                <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec] md:col-span-2">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="h-8 w-8 rounded-lg bg-[#edf8e7] flex items-center justify-center">
+                      <FileText className="h-4 w-4 text-[#16610E]" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-[#151515]">
+                      Description
+                    </h3>
                   </div>
-                  <h3 className="text-lg font-semibold text-[#151515]">
-                    Description
-                  </h3>
-                </div>
-                <div className="flex items-start gap-3">
-                  <FileText className="h-4 w-4 text-[#777] shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-[#777]">Description</p>
-                    <p className="text-[#151515] font-medium">
-                      {resolvedJob.description || 'Not provided'}
-                    </p>
+                  <div className="flex items-start gap-3">
+                    <FileText className="h-4 w-4 text-[#777] shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-[#777]">
+                        Description
+                      </p>
+                      <p className="text-[#151515] font-medium">
+                        {resolvedJob.description}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Notes Card */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec] md:col-span-2">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="h-8 w-8 rounded-lg bg-[#edf8e7] flex items-center justify-center">
-                    <FileText className="h-4 w-4 text-[#16610E]" />
+              {resolvedJob.notes && (
+                <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec] md:col-span-2">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="h-8 w-8 rounded-lg bg-[#edf8e7] flex items-center justify-center">
+                      <FileText className="h-4 w-4 text-[#16610E]" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-[#151515]">
+                      Notes
+                    </h3>
                   </div>
-                  <h3 className="text-lg font-semibold text-[#151515]">
-                    Notes
-                  </h3>
-                </div>
-                <div className="flex items-start gap-3">
-                  <FileText className="h-4 w-4 text-[#777] shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-[#777]">Notes</p>
-                    <p className="text-[#151515] font-medium">
-                      {resolvedJob.notes || 'Not provided'}
-                    </p>
+                  <div className="flex items-start gap-3">
+                    <FileText className="h-4 w-4 text-[#777] shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-[#777]">Notes</p>
+                      <p className="text-[#151515] font-medium">
+                        {resolvedJob.notes}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Job Location Card (spans 2 cols) */}
               <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec] md:col-span-2">
@@ -878,51 +685,16 @@ export default function JobViewPage() {
         </div>
       </div>
 
-      <Dialog
+      <CompleteJobDialog
         open={completeDialogOpen}
         onOpenChange={setCompleteDialogOpen}
-      >
-        <DialogContent className="rounded-2xl sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Complete Job</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <p className="text-sm text-[#777]">
-              Enter the amount received from the customer (optional).
-            </p>
-            <div>
-              <label className="block text-sm font-medium text-[#151515] mb-1">
-                Received Amount ($)
-              </label>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value={receivePrice}
-                onChange={(e) => setReceivePrice(e.target.value)}
-              />
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setCompleteDialogOpen(false);
-                  setReceivePrice('');
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="bg-green-600 hover:bg-green-700 text-white"
-                onClick={handleConfirmComplete}
-              >
-                Mark Complete
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+        onConfirm={async (receivePrice) => {
+          if (!id) return;
+          await completeJob({ jobId: id, receivePrice }).unwrap();
+          toast.success('Job completed successfully');
+          setCompleteDialogOpen(false);
+        }}
+      />
 
       <Dialog
         open={cancelDialogOpen}

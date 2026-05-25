@@ -10,6 +10,11 @@ export interface IAdminUser {
   email: string;
   status: string;
   profileImage: string;
+  balance?: number;
+  companyName: string;
+  gstNumber: string;
+  bankAccountNumber: string;
+  invoiceLogo?: string;
   countryCode: string;
   phoneNumber: string;
   role: number;
@@ -22,6 +27,13 @@ export interface IAdminUser {
   createdAt: string;
   updatedAt: string;
   validity?: string;
+}
+
+export interface IAdminStats {
+  totalCustomers: number;
+  activeCustomers: number;
+  inactiveCustomers: number;
+  totalBalance: number;
 }
 
 export interface IJob {

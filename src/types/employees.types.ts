@@ -16,8 +16,10 @@ export interface IEmployee {
   state: string;
   postalCode: string;
   country: string;
-  latitude: number;
-  longitude: number;
+  location?: {
+    type: 'Point';
+    coordinates: [number, number];
+  };
   locationMode?: 'map' | 'manual';
   balance: number;
   parentAdmin: string;
@@ -27,6 +29,7 @@ export interface IEmployee {
   createdAt: string;
   updatedAt: string;
   validity?: string;
+  attachments?: Array<{ key: string; value: string }>;
 }
 export interface EmployeeRow {
   _id: string;
@@ -59,9 +62,6 @@ export interface CreateEmployeePayload {
   latitude: number;
   longitude: number;
   attachments?: Array<{ key: string; value: string }>;
-  //   balance: number;
-  //   parentAdmin: string;
-  //   active: boolean;
 }
 export interface UpdateEmployeePayload extends Partial<CreateEmployeePayload> {
   id: string;

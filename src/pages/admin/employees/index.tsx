@@ -115,19 +115,19 @@ export default function EmployeeManagementPage() {
       ),
     },
 
-    {
-      accessorKey: 'balance',
-      header: 'Balance',
-      cell: (row: IEmployee) => (
-        <span
-          className={
-            row.balance < 0 ? 'text-red-500' : 'text-green-600'
-          }
-        >
-          ${row.balance.toFixed(2)}
-        </span>
-      ),
-    },
+    // {
+    //   accessorKey: 'balance',
+    //   header: 'Balance',
+    //   cell: (row: IEmployee) => (
+    //     <span
+    //       className={
+    //         row.balance < 0 ? 'text-red-500' : 'text-green-600'
+    //       }
+    //     >
+    //       ${row.balance.toFixed(2)}
+    //     </span>
+    //   ),
+    // },
     {
       accessorKey: 'status',
       header: 'Status',
@@ -224,9 +224,7 @@ export default function EmployeeManagementPage() {
               {row.validity && (
                 <DropdownMenuItem
                   onClick={async () => {
-                    await deleteEmployeeValidity({
-                      id: row._id,
-                    }).unwrap();
+                    await deleteEmployeeValidity(row._id).unwrap();
                     toast.success('Validity removed');
                   }}
                   className="text-red-500 focus:text-red-500 truncate"

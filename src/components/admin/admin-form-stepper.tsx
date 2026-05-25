@@ -1,5 +1,4 @@
 import { Shield } from 'lucide-react';
-import { Stepper } from '@/components/ui/stepper';
 
 interface AdminFormStepperProps {
   steps: {
@@ -25,7 +24,7 @@ interface AdminFormStepperProps {
 export function AdminFormStepper({
   steps,
   currentStep,
-  onStepClick,
+  onStepClick: _onStepClick,
   children,
   onPrevious,
   onNext,
@@ -33,7 +32,7 @@ export function AdminFormStepper({
   isSubmitting,
   isLastStep,
   isFirstStep,
-  allowStepNavigation = false,
+  allowStepNavigation: _allowStepNavigation = false,
   submitLabel,
   formRef,
 }: AdminFormStepperProps) {
@@ -50,17 +49,7 @@ export function AdminFormStepper({
   };
 
   return (
-    <>
-      <div className="mb-8 rounded-2xl border border-[#ececec] bg-white p-6 shadow-sm">
-        <Stepper
-          steps={steps}
-          currentStep={currentStep}
-          onStepClick={onStepClick}
-          allowAllSteps={allowStepNavigation}
-        />
-      </div>
-
-      <div className="rounded-2xl border border-[#ececec] bg-white shadow-sm">
+    <div className="rounded-2xl border border-[#ececec] bg-white shadow-sm">
         <div className="border-b border-[#ececec] bg-[#fafaf8] px-8 py-6">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#edf8e7]">
@@ -108,7 +97,6 @@ export function AdminFormStepper({
             </button>
           )}
         </div>
-      </div>
-    </>
+    </div>
   );
 }

@@ -4,6 +4,9 @@ import { PhoneInput } from '@/components/forms/phone-input';
 import { LocationModeToggle } from '@/components/forms/location-mode-toggle';
 import { GoogleMapPicker } from '@/components/google-maps/picker';
 import { ManualCoordinates } from '@/components/forms/manual-coordinates';
+import { useEffect } from 'react';
+import { Country } from 'country-state-city';
+import { AddressInputs } from '@/components/forms/address-inputs';
 import { validatePhone } from '@/lib/phone-validation';
 
 interface AdminFormStepProps {
@@ -24,6 +27,17 @@ export function AdminFormStep({
   trigger,
 }: AdminFormStepProps) {
   const formValues = watch();
+
+  useEffect(() => {
+    if (!watch('countryIso') && formValues.country) {
+      const match = Country.getAllCountries().find(
+        (c) => c.name.toLowerCase() === formValues.country.toLowerCase(),
+      );
+      if (match) {
+        setValue('countryIso', match.isoCode);
+      }
+    }
+  }, []);
 
   if (step === 1) {
     return (
@@ -181,71 +195,35 @@ export function AdminFormStep({
               )}
             </div>
 
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#151515]">
-                  City
-                </label>
-                <Input
-                  placeholder="Enter city"
-                  {...register('city')}
-                  className="h-12 rounded-xl border-[#e5e5e5] bg-[#fafaf8]"
-                />
-                {errors.city && (
-                  <p className="text-sm text-red-500">
-                    {errors.city.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#151515]">
-                  State
-                </label>
-                <Input
-                  placeholder="Enter state"
-                  {...register('state')}
-                  className="h-12 rounded-xl border-[#e5e5e5] bg-[#fafaf8]"
-                />
-                {errors.state && (
-                  <p className="text-sm text-red-500">
-                    {errors.state.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#151515]">
-                  Postal Code
-                </label>
-                <Input
-                  placeholder="Enter postal code"
-                  {...register('postalCode')}
-                  className="h-12 rounded-xl border-[#e5e5e5] bg-[#fafaf8]"
-                />
-                {errors.postalCode && (
-                  <p className="text-sm text-red-500">
-                    {errors.postalCode.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#151515]">
-                  Country
-                </label>
-                <Input
-                  placeholder="Enter country"
-                  {...register('country')}
-                  className="h-12 rounded-xl border-[#e5e5e5] bg-[#fafaf8]"
-                />
-                {errors.country && (
-                  <p className="text-sm text-red-500">
-                    {errors.country.message}
-                  </p>
-                )}
-              </div>
-            </div>
+            <AddressInputs
+              countryIso={watch('countryIso') || ''}
+              country={formValues.country}
+              state={formValues.state}
+              city={formValues.city}
+              postalCode={formValues.postalCode}
+              onCountryChange={(name, iso) => {
+                setValue('country', name);
+                setValue('countryIso', iso);
+                setValue('state', '');
+                setValue('city', '');
+              }}
+              onStateChange={(name, _iso) => {
+                setValue('state', name);
+                setValue('city', '');
+              }}
+              onCityChange={(name) =>
+                setValue('city', name)
+              }
+              onPostalCodeChange={(val) =>
+                setValue('postalCode', val)
+              }
+              errors={{
+                country: errors.country?.message,
+                state: errors.state?.message,
+                city: errors.city?.message,
+                postalCode: errors.postalCode?.message,
+              }}
+            />
           </div>
         </div>
       </div>

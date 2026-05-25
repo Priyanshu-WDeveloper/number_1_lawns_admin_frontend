@@ -1,6 +1,7 @@
 // Customer types
 export interface ICustomer {
   _id: string;
+  customerId: string;
   firstName: string;
   lastName: string;
   fullName: string;
