@@ -64,9 +64,7 @@ export function Navbar({
           className="relative mr-2 flex h-9 w-9 items-center justify-center"
           onClick={() =>
             navigate(
-              superAccess
-                ? ROUTES.SUPER_ADMIN_NOTIFICATIONS
-                : ROUTES.NOTIFICATIONS,
+              ROUTES.NOTIFICATIONS,
             )
           }
         >

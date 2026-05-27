@@ -18,7 +18,7 @@ export function PublicRoute({ children }: PublicRouteProps) {
 
   if (token) {
     if (role === ROLES.SUPER_ADMIN) {
-      return <Navigate to={ROUTES.SUPER_ADMIN_DASHBOARD} replace />;
+      return <Navigate to={ROUTES.SUPER_ADMIN_LOGIN} replace />;
     }
 
     if (role === ROLES.ADMIN) {
@@ -68,7 +68,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (role !== ROLES.ADMIN) {
-    return <Navigate to={ROUTES.SUPER_ADMIN_DASHBOARD} replace />;
+    return <Navigate to={ROUTES.SUPER_ADMIN_LOGIN} replace />;
   }
 
   if (isLoading || isUninitialized) {
@@ -101,27 +101,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!isExpired && location.pathname === ROUTES.SUBSCRIPTION_EXPIRED) {
-    return <Navigate to={ROUTES.DASHBOARD} replace />;
-  }
-
-  return <>{children}</>;
-}
-
-interface SuperAdminRouteProps {
-  children: React.ReactNode;
-  redirectTo?: string;
-}
-
-export function SuperAdminRoute({ children }: SuperAdminRouteProps) {
-  const token = useSelector((state: RootState) => state.auth.token);
-  const user = useSelector((state: RootState) => state.auth.user);
-  const role = user?.role;
-
-  if (!token) {
-    return <Navigate to={ROUTES.SUPER_ADMIN_LOGIN} replace />;
-  }
-
-  if (role !== ROLES.SUPER_ADMIN) {
     return <Navigate to={ROUTES.DASHBOARD} replace />;
   }
 

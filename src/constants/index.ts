@@ -29,20 +29,8 @@ export const ROUTES = {
   INVOICES_VIEW: '/invoices/:jobId',
   NOTIFICATIONS: '/notifications',
 
-  // Super Admin routes
-  SUPER_ADMIN_DASHBOARD: '/super-admin/dashboard',
-  SUPER_ADMIN_PROFILE: '/super-admin/profile',
-  SUPER_ADMIN_CHANGE_PASSWORD: '/super-admin/change-password',
-  SUPER_ADMIN_ADMINS: '/super-admin/admins',
-  ADMIN_CREATE: '/super-admin/admin/create',
-  ADMIN_VIEW: '/super-admin/admin/:id',
-  ADMIN_EDIT: '/super-admin/admin/:id/edit',
-  SUPER_ADMIN_BILLING: '/super-admin/billing',
-  SUPER_ADMIN_NOTIFICATIONS: '/super-admin/notifications',
-
   // Default redirects
   DEFAULT_REDIRECT: '/dashboard',
-  SUPER_ADMIN_DEFAULT_REDIRECT: '/super-admin/dashboard',
 } as const;
 
 export const ROLES = {

@@ -196,11 +196,7 @@ export default function AccountDropdown({
         <div className="py-1">
           <DropdownMenuItem
             onClick={() =>
-              navigate(
-                superAccess
-                  ? ROUTES.SUPER_ADMIN_PROFILE
-                  : ROUTES.PROFILE,
-              )
+              navigate(ROUTES.PROFILE)
             }
             className="flex cursor-pointer items-center gap-3 px-4 py-3 text-sm"
           >
