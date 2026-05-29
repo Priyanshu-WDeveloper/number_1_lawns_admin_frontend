@@ -73,7 +73,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen sm:bg-[#eef5df] lg:bg-[#eef5df] flex flex-col px-0 sm:px-6 pt-0 sm:pt-6 relative overflow-hidden">
+    <div className="h-dvh sm:bg-[#eef5df] lg:bg-[#eef5df] flex flex-col px-0 sm:px-6 pt-0 sm:pt-6 relative overflow-hidden">
       {/* Mobile Background Effects */}
       <div className="absolute inset-0 lg:hidden overflow-hidden pointer-events-none">
         <div className="absolute -top-16 -left-16 h-48 w-48 rounded-full bg-primary/5" />
@@ -84,9 +84,9 @@ const Login = () => {
       </div>
 
       {/* Main Container */}
-      <div className="relative z-10 flex items-start lg:items-center justify-center">
-        <div className="w-full bg-transparent lg:bg-[#f8f8f4] lg:rounded-[28px] lg:shadow-xl overflow-hidden">
-          <div className="grid lg:grid-cols-2 min-h-full">
+      <div className="relative z-10 flex items-start lg:items-start justify-center flex-1 overflow-y-auto">
+        <div className="w-full h-full bg-transparent lg:bg-[#f8f8f4] lg:rounded-[28px] lg:shadow-xl overflow-hidden">
+          <div className="grid lg:grid-cols-2 h-full">
             {/* Left Section */}
             <div className="relative overflow-hidden hidden lg:block">
               <img
@@ -151,10 +151,8 @@ const Login = () => {
             </div>
 
             {/* Right Section */}
-            <div className="relative z-10 mt-0 sm:mt-13 lg:bg-[#f8f8f4] flex items-stretch justify-center px-0 py-0 sm:p-8 lg:px-12 lg:py-4">
-              <div className="w-full flex flex-col">
-                {/* Login Card */}
-                <div className="w-full lg:max-w-2xl lg:mx-auto bg-white rounded-t-[36px] lg:rounded-[28px] shadow-none lg:shadow-xl border-t border-gray-100 px-6 py-8 sm:p-8 flex flex-col">
+            <div className="relative z-10 mt-0 sm:mt-13 lg:bg-[#f8f8f4] w-full flex flex-col px-0 py-0 lg:px-12">
+                <div className="w-full my-auto bg-white rounded-t-[36px] lg:rounded-[28px] shadow-none lg:shadow-xl border-t border-gray-100 px-6 py-8 sm:p-8 flex flex-col max-sm:h-dvh max-sm:overflow-y-auto sm:min-h-[520px] lg:min-h-[520px] lg:overflow-y-auto">
                   {/* Mobile branding */}
                   <div className="lg:hidden flex flex-col items-center justify-center pt-10 mb-10">
                     <div className="w-28 h-28 rounded-full bg-white shadow-lg border-4 border-white flex items-center justify-center p-3">
@@ -306,11 +304,8 @@ const Login = () => {
                       {isLoading ? 'Signing In...' : 'SIGN IN →'}
                     </Button>
                   </form>
-                </div>
 
-                {/* Mobile Footer */}
-                <div className="w-full bg-white px-6 pb-8 lg:hidden">
-                  <div className="border-t border-gray-100">
+                  <div className="mt-auto border-t border-gray-100 pt-4 pb-2 lg:hidden">
                     <div className="flex flex-col items-center gap-3 text-center">
                       <p className="text-[12px] leading-5 text-gray-500">
                         © 2026 No. 1 Lawns. All rights reserved.
@@ -386,7 +381,6 @@ const Login = () => {
                     </div>
                   </div>
                 </div>
-              </div>
             </div>
           </div>
         </div>

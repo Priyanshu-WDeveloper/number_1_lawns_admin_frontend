@@ -34,6 +34,7 @@ import type {
   IInvoice,
   IAdminUser,
   IAdminStats,
+  IDashboardAnalytics,
 } from '@/types';
 
 const rawBaseQuery = fetchBaseQuery({
@@ -586,6 +587,58 @@ export const api = createApi({
       query: () => API_ROUTES.ADMINS.SELF,
       providesTags: ['Admins'],
     }),
+    updateProfile: builder.mutation<
+      { admin: IAdminUser },
+      Partial<IAdminUser>
+    >({
+      query: (body) => ({
+        url: API_ROUTES.ADMINS.PROFILE,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: ['Admins'],
+    }),
+    getDashboardAnalytics: builder.query<
+      IDashboardAnalytics,
+      { year?: number }
+    >({
+      query: ({ year }) => ({
+        url: API_ROUTES.ADMINS.DASHBOARD_ANALYTICS,
+        params: { year },
+      }),
+    }),
+
+    // Password Reset endpoints
+    forgotPassword: builder.mutation<
+      { message: string },
+      { email: string }
+    >({
+      query: (body) => ({
+        url: API_ROUTES.AUTH.FORGOT_PASSWORD,
+        method: 'POST',
+        body,
+      }),
+    }),
+    verifyOtp: builder.mutation<
+      { token: string },
+      { email: string; otp: string }
+    >({
+      query: (body) => ({
+        url: API_ROUTES.AUTH.VERIFY_OTP,
+        method: 'POST',
+        body,
+      }),
+    }),
+    resetPassword: builder.mutation<
+      { message: string },
+      { token: string; newPassword: string }
+    >({
+      query: (body) => ({
+        url: API_ROUTES.AUTH.RESET_PASSWORD,
+        method: 'POST',
+        body,
+      }),
+    }),
 
     // Auth - Change Password
     changePassword: builder.mutation<
@@ -678,7 +731,12 @@ export const {
   useDeleteAdminValidityMutation,
 
   useGetAdminDetailsQuery,
+  useUpdateProfileMutation,
+  useGetDashboardAnalyticsQuery,
 
+  useForgotPasswordMutation,
+  useVerifyOtpMutation,
+  useResetPasswordMutation,
   useChangePasswordMutation,
   useSuperAdminChangePasswordMutation,
 

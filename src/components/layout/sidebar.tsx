@@ -1,10 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
-import {
-  KeyRound,
-  LogOutIcon,
-} from 'lucide-react';
+import { KeyRound, LogOutIcon, Video } from 'lucide-react';
 
 import Dashboard from '@/assets/dashboard.png';
 import Customer from '@/assets/customer.png';
@@ -27,10 +24,7 @@ import { PanelLeftIcon } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import toast from 'react-hot-toast';
 import { ROUTES } from '@/constants';
-import { localLogout } from '@/lib/auth';
-import { useDispatch } from 'react-redux';
-import { clearAuth } from '@/store/auth-slice';
-import { api } from '@/API/api';
+import { useLogoutMutation } from '@/API/api';
 import { ChangeAdminPasswordDialog } from '@/pages/admin/change-password';
 
 const items = [
@@ -64,6 +58,12 @@ const items = [
     icon: Invoices,
     url: ROUTES.INVOICES,
   },
+  {
+    title: 'Training Center',
+    icon: Video,
+    url: ROUTES.TRAINING_CENTER,
+    isLucide: true,
+  },
 ];
 
 export function DashboardSidebar() {
@@ -71,23 +71,19 @@ export function DashboardSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toggleSidebar } = useSidebar();
-  const dispatch = useDispatch();
 
   const [confirmAction, setConfirmAction] = useState<{
     type: 'change-password';
   } | null>(null);
 
+  const [logout] = useLogoutMutation();
+
   const handleLogout = async () => {
     try {
-      localLogout();
-      dispatch(clearAuth());
-      dispatch(api.util.resetApiState());
+      await logout().unwrap();
       toast.success('Logged out');
       setShowLogoutDialog(false);
-
-      navigate(ROUTES.LOGIN, {
-        replace: true,
-      });
+      navigate(ROUTES.LOGIN, { replace: true });
     } catch (error) {
       console.error(error);
     }
@@ -126,11 +122,15 @@ export function DashboardSidebar() {
                   className="h-14 rounded-2xl text-base hover:bg-[var(--sidebar-active)] data-[active=true]:bg-[var(--sidebar-active)]"
                 >
                   <Link to={item.url}>
-                    <img
-                      src={item.icon}
-                      alt={item.title}
-                      className="h-5 w-5 invert"
-                    />{' '}
+                    {'isLucide' in item ? (
+                      <item.icon className="h-5 w-5 " />
+                    ) : (
+                      <img
+                        src={item.icon}
+                        alt={item.title}
+                        className="h-5 w-5 invert"
+                      />
+                    )}{' '}
                     <span>{item.title}</span>
                   </Link>
                 </SidebarMenuButton>

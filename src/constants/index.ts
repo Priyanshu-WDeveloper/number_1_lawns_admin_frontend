@@ -28,6 +28,8 @@ export const ROUTES = {
   INVOICES: '/invoices',
   INVOICES_VIEW: '/invoices/:jobId',
   NOTIFICATIONS: '/notifications',
+  TRAINING_CENTER: '/training-center',
+  TRAINING_CENTER_VIEW: '/training-center/:id',
 
   // Default redirects
   DEFAULT_REDIRECT: '/dashboard',
@@ -42,7 +44,10 @@ export const API_ROUTES = {
   AUTH: {
     LOGIN: '/admins/login',
     SUPER_LOGIN: '/superadmins/login',
-    LOGOUT: '/auth/logout',
+    LOGOUT: '/admins/logout',
+    FORGOT_PASSWORD: '/admins/forgot-password',
+    VERIFY_OTP: '/admins/verify-otp',
+    RESET_PASSWORD: '/admins/reset-password',
   },
   CUSTOMERS: {
     LIST: '/admins/customers',
@@ -98,6 +103,8 @@ export const API_ROUTES = {
     LIST: '/admins',
     DETAILS: (id: string) => `/admins/${id}`,
     SELF: '/admins/details',
+    PROFILE: '/admins/profile',
+    DASHBOARD_ANALYTICS: '/admins/dashboard-analytics',
     CHANGE_PASSWORD: '/admins/change-password',
   },
   SUPER_ADMINS: {

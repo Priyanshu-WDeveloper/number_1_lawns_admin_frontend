@@ -9,7 +9,7 @@ import {
   X,
 } from 'lucide-react';
 import type { IAdminUser } from '@/types';
-import { useUpdateAdminUserMutation } from '@/API/api';
+import { useUpdateProfileMutation } from '@/API/api';
 import ProfileHero from './profile-hero';
 import ProfileSectionCard from './profile-section-card';
 import ProfileField from './profile-field';
@@ -27,8 +27,8 @@ export default function ProfileContent({
   const [formData, setFormData] = useState<Record<string, string>>(
     {},
   );
-  const [updateAdmin, { isLoading: isSaving }] =
-    useUpdateAdminUserMutation();
+  const [updateProfile, { isLoading: isSaving }] =
+    useUpdateProfileMutation();
 
   const fullName =
     admin.fullName || `${admin.firstName} ${admin.lastName}`;
@@ -58,12 +58,12 @@ export default function ProfileContent({
 
   const handleSave = useCallback(async () => {
     try {
-      await updateAdmin({ id: admin._id, ...formData }).unwrap();
+      await updateProfile(formData).unwrap();
       setIsEditing(false);
     } catch {
       // error handled by RTK
     }
-  }, [updateAdmin, admin._id, formData]);
+  }, [updateProfile, formData]);
 
   const handleCancel = useCallback(() => {
     setIsEditing(false);

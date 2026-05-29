@@ -72,6 +72,12 @@ const InvoiceViewPage = React.lazy(
 const SubscriptionExpiredPage = React.lazy(
   () => import('../pages/admin/subscription-expired'),
 );
+const TrainingCenterPage = React.lazy(
+  () => import('../pages/admin/training-center'),
+);
+const TrainingVideoViewPage = React.lazy(
+  () => import('../pages/admin/training-center/view'),
+);
 const NotFoundPage = React.lazy(() => import('../pages/not-found'));
 
 const AppRoutes = () => {
@@ -266,6 +272,22 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <SubscriptionExpiredPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.TRAINING_CENTER}
+          element={
+            <ProtectedRoute>
+              <TrainingCenterPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.TRAINING_CENTER_VIEW}
+          element={
+            <ProtectedRoute>
+              <TrainingVideoViewPage />
             </ProtectedRoute>
           }
         />

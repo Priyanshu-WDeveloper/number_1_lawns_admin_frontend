@@ -141,6 +141,26 @@ export interface IParentJob {
   };
 }
 
+export interface IDashboardAnalytics {
+  summary: {
+    totalCustomers: number;
+    totalEmployees: number;
+    totalJobs: number;
+    totalInvoices: number;
+  };
+  charts: {
+    customers: number[];
+    employees: number[];
+    jobs: number[];
+  };
+  recentActivities: Array<{
+    id: string;
+    type: 'employee' | 'customer';
+    message: string;
+    timestamp: string;
+  }>;
+}
+
 export interface IInvoice {
   _id?: string;
   invoiceNumber?: string;

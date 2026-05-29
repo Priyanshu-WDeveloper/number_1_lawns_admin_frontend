@@ -22,10 +22,7 @@ import toast from 'react-hot-toast';
 import { ConfirmDialog } from './ui/confirm-dialog';
 import { useState } from 'react';
 import { ROUTES } from '@/constants';
-import { localLogout } from '@/lib/auth';
-import { useDispatch } from 'react-redux';
-import { clearAuth } from '@/store/auth-slice';
-import { api } from '@/API/api';
+import { useLogoutMutation } from '@/API/api';
 import { format } from 'date-fns';
 import { ChangeAdminPasswordDialog } from '@/pages/admin/change-password';
 
@@ -40,7 +37,7 @@ export default function AccountDropdown({
   const user = useSelector((state: RootState) => state.auth.user);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
-  const dispatch = useDispatch();
+  const [logout] = useLogoutMutation();
   const daysLeft = user?.validity
     ? Math.ceil(
         (new Date(user.validity).getTime() - Date.now()) /
@@ -50,17 +47,12 @@ export default function AccountDropdown({
 
   const handleLogout = async () => {
     try {
-      localLogout();
-      dispatch(clearAuth());
-      dispatch(api.util.resetApiState());
+      await logout().unwrap();
       toast.success('Logged out');
       setShowLogoutDialog(false);
-
       navigate(
         superAccess ? ROUTES.SUPER_ADMIN_LOGIN : ROUTES.LOGIN,
-        {
-          replace: true,
-        },
+        { replace: true },
       );
     } catch (error) {
       console.error(error);

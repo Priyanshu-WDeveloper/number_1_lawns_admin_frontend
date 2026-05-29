@@ -1,10 +1,10 @@
 import {
   Briefcase,
   CalendarDays,
-  ClipboardList,
   FileText,
   Users,
   UserSquare2,
+  type LucideIcon,
 } from 'lucide-react';
 
 import {
@@ -17,82 +17,103 @@ import {
 } from 'recharts';
 
 // import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useState } from 'react';
 
 import { AppLayout } from '@/components/layout/app-layout';
 import { Navbar } from '@/components/layout/navbar';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { ROUTES } from '@/constants';
+import { useGetDashboardAnalyticsQuery } from '@/API/api';
 
-const stats = [
+const ACTIVITY_ICON_MAP: Record<string, LucideIcon> = {
+  customer: Users,
+  employee: UserSquare2,
+};
+
+const MONTHS = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+
+const statConfig = [
   {
     title: 'Total Customers',
-    value: '245',
+    key: 'totalCustomers' as const,
     icon: Users,
     url: ROUTES.CUSTOMERS,
   },
   {
     title: 'Total Employees',
-    value: '158',
+    key: 'totalEmployees' as const,
     icon: UserSquare2,
     url: ROUTES.EMPLOYEES,
   },
   {
     title: 'Total Jobs',
-    value: '89',
+    key: 'totalJobs' as const,
     icon: Briefcase,
     url: ROUTES.JOBS,
   },
   {
     title: 'Total Invoices',
-    value: '320',
+    key: 'totalInvoices' as const,
     icon: FileText,
   },
-];
-
-const activities = [
-  {
-    title: 'New user John Doe has been registered.',
-    time: '10 minutes ago',
-    icon: Users,
-  },
-  {
-    title: 'Employee Sarah Smith has been added.',
-    time: '1 hour ago',
-    icon: ClipboardList,
-  },
-  {
-    title: 'New job "Web Developer" has been posted.',
-    time: '3 hours ago',
-    icon: Briefcase,
-  },
-  {
-    title: 'Invoice INV-2024-320 has been generated.',
-    time: '5 hours ago',
-    icon: FileText,
-  },
-];
-
-const chartData = [
-  { name: 'May 1', value: 12 },
-  { name: 'May 5', value: 38 },
-  { name: 'May 8', value: 34 },
-  { name: 'May 12', value: 49 },
-  { name: 'May 15', value: 52 },
-  { name: 'May 18', value: 66 },
-  { name: 'May 21', value: 60 },
-  { name: 'May 24', value: 74 },
-  { name: 'May 27', value: 70 },
-  { name: 'May 29', value: 95 },
 ];
 
 export default function DashboardPage() {
   const user = useSelector((state: RootState) => state.auth.user);
   const navigate = useNavigate();
+  const { data: analytics, isLoading } = useGetDashboardAnalyticsQuery({
+    year: new Date().getFullYear(),
+  });
+  const [selectedSeries, setSelectedSeries] = useState<
+    'all' | 'customers' | 'employees' | 'jobs'
+  >('all');
+
+  const stats = analytics?.summary
+    ? statConfig.map((cfg) => ({
+        ...cfg,
+        value: String(Math.round(analytics.summary[cfg.key] ?? 0)),
+      }))
+    : statConfig.map((cfg) => ({ ...cfg, value: '0' }));
+
+  const chartData = analytics?.charts
+    ? MONTHS.map((name, i) => {
+        let value: number;
+        switch (selectedSeries) {
+          case 'customers':
+            value = analytics.charts.customers?.[i] ?? 0;
+            break;
+          case 'employees':
+            value = analytics.charts.employees?.[i] ?? 0;
+            break;
+          case 'jobs':
+            value = analytics.charts.jobs?.[i] ?? 0;
+            break;
+          default:
+            value =
+              (analytics.charts.customers?.[i] ?? 0) +
+              (analytics.charts.employees?.[i] ?? 0) +
+              (analytics.charts.jobs?.[i] ?? 0);
+        }
+        return { name, value: Math.round(value) };
+      })
+    : [];
+
+  const activities = analytics?.recentActivities ?? [];
 
   const daysLeft = user?.validity
     ? Math.ceil(
@@ -100,6 +121,80 @@ export default function DashboardPage() {
           (1000 * 60 * 60 * 24),
       )
     : null;
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <main className="flex-1 h-full px-4">
+          <div className="min-h-full">
+            <div className="mb-6 space-y-2">
+              <Skeleton className="h-7 w-32" />
+              <Skeleton className="h-4 w-72" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Card
+                  key={i}
+                  className="rounded-[20px] border border-[#ececec] py-4 shadow-sm"
+                >
+                  <CardContent className="flex flex-col items-center text-center">
+                    <Skeleton className="mb-2 h-12 w-12 rounded-full" />
+                    <Skeleton className="h-7 w-16" />
+                    <Skeleton className="mt-1 h-3 w-24" />
+                    <Skeleton className="mt-2 h-3 w-14" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="mt-2.5 grid gap-3 xl:grid-cols-2">
+              <Card className="rounded-[20px] border border-[#ececec] p-8 shadow-sm">
+                <Skeleton className="mb-3 h-6 w-40" />
+                <div className="space-y-2.5">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex items-start gap-4 p-1.5">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <div className="flex-1 space-y-1.5">
+                        <Skeleton className="h-3.5 w-48" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              <div className="space-y-3">
+                <Card className="rounded-[20px] border border-[#ececec] p-3.5 shadow-sm">
+                  <div className="mb-3 p-2 flex items-center justify-between">
+                    <Skeleton className="h-5 w-36" />
+                    <Skeleton className="h-7 w-[130px] rounded-lg" />
+                  </div>
+                  <Skeleton className="h-[170px] w-full rounded-lg" />
+                </Card>
+
+                <Card className="rounded-[20px] border border-[#ececec] shadow-sm">
+                  <CardContent className="flex items-center justify-between px-5">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-3 w-52" />
+                      </div>
+                    </div>
+                    <Skeleton className="hidden h-20 w-20 lg:block" />
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            <Skeleton className="mt-2 mx-auto h-3 w-72" />
+          </div>
+        </main>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       {/* This div contains the main dashboard content */}
@@ -179,12 +274,13 @@ export default function DashboardPage() {
               </h3>
 
               <div className="space-y-2.5">
-                {activities.map((item, index) => {
-                  const Icon = item.icon;
+                {activities.map((item) => {
+                  const Icon =
+                    ACTIVITY_ICON_MAP[item.type] ?? CalendarDays;
 
                   return (
                     <div
-                      key={index}
+                      key={item.id}
                       className="flex items-start gap-4 p-1.5"
                     >
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
@@ -193,11 +289,14 @@ export default function DashboardPage() {
 
                       <div>
                         <h4 className="text-[13px] font-medium text-[#1b1b1b]">
-                          {item.title}
+                          {item.message}
                         </h4>
 
                         <p className="mt-0.5 text-[11px] text-gray-500">
-                          {item.time}
+                          {formatDistanceToNow(
+                            new Date(item.timestamp),
+                            { addSuffix: true },
+                          )}
                         </p>
                       </div>
                     </div>
@@ -215,12 +314,24 @@ export default function DashboardPage() {
                     Summary Overview
                   </h3>
 
-                  <Button
-                    variant="outline"
-                    className="h-7 rounded-lg px-3 text-[11px]"
+                  <Select
+                    value={selectedSeries}
+                    onValueChange={(v) =>
+                      setSelectedSeries(
+                        v as 'all' | 'customers' | 'employees' | 'jobs',
+                      )
+                    }
                   >
-                    This Month
-                  </Button>
+                    <SelectTrigger className="h-7 w-[130px] rounded-lg text-[11px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="customers">Customers</SelectItem>
+                      <SelectItem value="employees">Employees</SelectItem>
+                      <SelectItem value="jobs">Jobs</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="h-[170px]">
@@ -259,6 +370,7 @@ export default function DashboardPage() {
                         tick={{ fontSize: 9 }}
                         axisLine={false}
                         tickLine={false}
+                        allowDecimals={false}
                       />
 
                       <Tooltip />
