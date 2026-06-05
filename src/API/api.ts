@@ -23,6 +23,8 @@ import type {
   UpdateEmployeePayload,
   ParentJobsResponse,
   ChildJobsResponse,
+  TrainingsParams,
+  TrainingsResponse,
 } from '@/types/api.types';
 import type { CreateEmployeePayload } from '@/types/employees.types';
 import { setAuth, clearAuth } from '@/store/auth-slice';
@@ -35,6 +37,7 @@ import type {
   IAdminUser,
   IAdminStats,
   IDashboardAnalytics,
+  ITraining,
 } from '@/types';
 
 const rawBaseQuery = fetchBaseQuery({
@@ -82,6 +85,7 @@ export const api = createApi({
     'Admins',
     'Billing',
     'Notifications',
+    'Trainings',
   ],
   endpoints: (builder) => ({
     // Auth endpoints
@@ -406,7 +410,7 @@ export const api = createApi({
     createJobReceipt: builder.mutation<unknown, string>({
       query: (jobId) => ({
         url: API_ROUTES.JOBS.RECEIPT(jobId),
-        method: 'GET',
+        method: 'POST',
       }),
       invalidatesTags: ['Invoices', 'Jobs'],
     }),
@@ -460,6 +464,12 @@ export const api = createApi({
     downloadInvoice: builder.query<Blob, string>({
       query: (jobId: string) => ({
         url: API_ROUTES.INVOICES.DOWNLOAD(jobId),
+        responseHandler: (response: Response) => response.blob(),
+      }),
+    }),
+    getReceipt: builder.query<Blob, string>({
+      query: (jobId: string) => ({
+        url: API_ROUTES.INVOICES.VIEW_BY_JOB(jobId),
         responseHandler: (response: Response) => response.blob(),
       }),
     }),
@@ -671,6 +681,57 @@ export const api = createApi({
       query: () => API_ROUTES.SUPER_ADMINS.BILLING.INVOICES,
       providesTags: ['Billing'],
     }),
+
+    // Training endpoints
+    getTrainings: builder.query<TrainingsResponse, TrainingsParams>({
+      query: ({ page = 1, limit = 10, search, isActive }) => ({
+        url: API_ROUTES.TRAININGS.LIST,
+        params: { page, limit, search, isActive },
+      }),
+      providesTags: ['Trainings'],
+    }),
+    getTraining: builder.query<ITraining, string>({
+      query: (id) => API_ROUTES.TRAININGS.DETAILS(id),
+      providesTags: (_result, _error, id) => [
+        { type: 'Trainings', id },
+      ],
+    }),
+    createTraining: builder.mutation<ITraining, { title: string; description: string; videoUrl: string }>({
+      query: (body) => ({
+        url: API_ROUTES.TRAININGS.CREATE,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Trainings'],
+    }),
+    updateTraining: builder.mutation<ITraining, { id: string } & { title: string; description: string; videoUrl: string }>({
+      query: ({ id, ...body }) => ({
+        url: API_ROUTES.TRAININGS.UPDATE(id),
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [
+        'Trainings',
+        { type: 'Trainings', id },
+      ],
+    }),
+    deleteTraining: builder.mutation<void, string>({
+      query: (id) => ({
+        url: API_ROUTES.TRAININGS.DELETE(id),
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Trainings'],
+    }),
+    toggleTrainingStatus: builder.mutation<ITraining, string>({
+      query: (id) => ({
+        url: API_ROUTES.TRAININGS.TOGGLE_STATUS(id),
+        method: 'PATCH',
+      }),
+      invalidatesTags: (_result, _error, id) => [
+        'Trainings',
+        { type: 'Trainings', id },
+      ],
+    }),
   }),
 });
 
@@ -715,6 +776,8 @@ export const {
   useGetInvoiceByJobIdQuery,
   useDownloadInvoiceQuery,
   useLazyDownloadInvoiceQuery,
+  useGetReceiptQuery,
+  useLazyGetReceiptQuery,
 
   useGetNotificationsQuery,
   useMarkNotificationReadMutation,
@@ -742,4 +805,11 @@ export const {
 
   useGetBillingStatsQuery,
   useGetBillingInvoicesQuery,
+
+  useGetTrainingsQuery,
+  useGetTrainingQuery,
+  useCreateTrainingMutation,
+  useUpdateTrainingMutation,
+  useDeleteTrainingMutation,
+  useToggleTrainingStatusMutation,
 } = api;

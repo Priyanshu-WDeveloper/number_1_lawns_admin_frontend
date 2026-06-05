@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from '@/store';
 import { useGetAdminDetailsQuery } from '@/API/api';
 import { setAuth } from '@/store/auth-slice';
+import Loader from '@/components/loader';
 
 interface PublicRouteProps {
   children: React.ReactNode;
@@ -41,7 +42,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const dispatch = useDispatch();
   const location = useLocation();
 
-  const { data: adminDetails, isLoading, isUninitialized } = useGetAdminDetailsQuery(undefined, {
+  const {
+    data: adminDetails,
+    isLoading,
+    isUninitialized,
+  } = useGetAdminDetailsQuery(undefined, {
     skip: !token || role !== ROLES.ADMIN,
     refetchOnMountOrArgChange: true,
   });
@@ -74,7 +79,8 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (isLoading || isUninitialized) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
+        {/* <div className="text-muted-foreground">Loading...</div> */}
+        <Loader />
       </div>
     );
   }
@@ -87,8 +93,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
       )
     : null;
 
-  const isExpired =
-    daysLeft === null || daysLeft <= 0;
+  const isExpired = daysLeft === null || daysLeft <= 0;
 
   const allowedPaths = [
     ROUTES.SUBSCRIPTION_EXPIRED,
@@ -96,11 +101,19 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     ROUTES.CHANGE_PASSWORD,
   ];
 
-  if (isExpired && !allowedPaths.includes(location.pathname as typeof allowedPaths[number])) {
+  if (
+    isExpired &&
+    !allowedPaths.includes(
+      location.pathname as (typeof allowedPaths)[number],
+    )
+  ) {
     return <Navigate to={ROUTES.SUBSCRIPTION_EXPIRED} replace />;
   }
 
-  if (!isExpired && location.pathname === ROUTES.SUBSCRIPTION_EXPIRED) {
+  if (
+    !isExpired &&
+    location.pathname === ROUTES.SUBSCRIPTION_EXPIRED
+  ) {
     return <Navigate to={ROUTES.DASHBOARD} replace />;
   }
 

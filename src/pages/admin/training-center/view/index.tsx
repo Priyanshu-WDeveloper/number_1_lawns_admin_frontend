@@ -1,10 +1,12 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/constants';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Navbar } from '@/components/layout/navbar';
 import { Button } from '@/components/ui/button';
-import { mockVideos } from '@/data/training-videos';
+import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
+import { useGetTrainingQuery } from '@/API/api';
 
 function getYoutubeVideoId(url: string): string | null {
   const patterns = [
@@ -22,15 +24,46 @@ function getYoutubeVideoId(url: string): string | null {
 export default function TrainingVideoViewPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const video = mockVideos.find((v) => v.id === id);
+  const { data: video, isLoading, isError } = useGetTrainingQuery(id!, {
+    skip: !id,
+  });
 
-  if (!video) {
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex flex-1 flex-col">
+          <div className="flex-1 w-full px-2 sm:px-5 py-1 sm:py-4 min-h-0 flex flex-col">
+            <div className="flex w-full flex-col flex-1">
+              <Navbar title="" subtitle="" showWelcome={false} />
+              <div className="flex-1 min-h-0 mt-4 flex flex-col">
+                <Skeleton className="h-4 w-32 mb-4" />
+                <div className="bg-white rounded-xl border border-[#ececec] overflow-hidden">
+                  <Skeleton className="aspect-video rounded-none" />
+                  <div className="p-4 sm:p-6">
+                    <Skeleton className="h-6 w-3/4 mb-3" />
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-1/2 mb-4" />
+                    <div className="flex items-center justify-between pt-4 border-t border-[#ececec]">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-4 w-36" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (isError || !video) {
     return (
       <AppLayout>
         <div className="flex flex-1 flex-col items-center justify-center p-8">
           <p className="text-muted-foreground text-lg">Video not found</p>
           <Button
-            onClick={() => navigate('/training-center')}
+            onClick={() => navigate(ROUTES.TRAINING_CENTER)}
             variant="outline"
             className="mt-4 rounded-xl"
           >
@@ -41,7 +74,7 @@ export default function TrainingVideoViewPage() {
     );
   }
 
-  const videoId = getYoutubeVideoId(video.youtubeUrl);
+  const videoId = getYoutubeVideoId(video.videoUrl);
 
   return (
     <AppLayout>
@@ -50,12 +83,12 @@ export default function TrainingVideoViewPage() {
           <div className="flex w-full flex-col flex-1">
             <Navbar
               title={video.title}
-              subtitle={video.subtitle}
+              subtitle={video.description}
               showWelcome={false}
             />
             <div className="flex-1 min-h-0 mt-4 flex flex-col">
               <button
-                onClick={() => navigate('/training-center')}
+                onClick={() => navigate(ROUTES.TRAINING_CENTER)}
                 className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-[#151515] transition-colors mb-4 w-fit"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -63,7 +96,7 @@ export default function TrainingVideoViewPage() {
               </button>
 
               <div className="bg-white rounded-xl border border-[#ececec] overflow-hidden">
-                <div className="aspect-video bg-black">
+                <div className="aspect-video bg-gray-100">
                   {videoId ? (
                     <iframe
                       src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
@@ -83,14 +116,14 @@ export default function TrainingVideoViewPage() {
                     {video.title}
                   </h2>
                   <p className="text-sm text-muted-foreground mt-2">
-                    {video.subtitle}
+                    {video.description}
                   </p>
                   <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#ececec]">
                     <span className="text-sm text-muted-foreground">
-                      {format(new Date(video.date), 'MMM dd, yyyy')}
+                      {format(new Date(video.createdAt), 'MMM dd, yyyy')}
                     </span>
                     <a
-                      href={video.youtubeUrl}
+                      href={video.videoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700"

@@ -107,6 +107,14 @@ export const API_ROUTES = {
     DASHBOARD_ANALYTICS: '/admins/dashboard-analytics',
     CHANGE_PASSWORD: '/admins/change-password',
   },
+  TRAININGS: {
+    LIST: '/trainings',
+    CREATE: '/trainings',
+    DETAILS: (id: string) => `/trainings/${id}`,
+    UPDATE: (id: string) => `/trainings/${id}`,
+    TOGGLE_STATUS: (id: string) => `/trainings/${id}/toggle-status`,
+    DELETE: (id: string) => `/trainings/${id}`,
+  },
   SUPER_ADMINS: {
     ADMINS: {
       LIST: '/superadmins/admins',

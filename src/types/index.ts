@@ -85,6 +85,7 @@ export interface IJob {
   jobType: string;
   status?: string;
   price?: number;
+  receivePrice?: number;
   frequency?: { value: number; unit: string };
   description?: string;
   notes?: string;
@@ -161,17 +162,41 @@ export interface IDashboardAnalytics {
   }>;
 }
 
+export interface IPopulatedCustomer {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  address: string;
+  fullName: string;
+}
+
+export interface ITraining {
+  _id: string;
+  title: string;
+  description: string;
+  videoUrl: string;
+  isActive: boolean;
+  isDeleted: boolean;
+  deletedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
 export interface IInvoice {
   _id?: string;
   invoiceNumber?: string;
   customer?: string;
-  jobId?: string;
-  totalAmount?: number;
+  customerId?: string | IPopulatedCustomer;
+  jobId?: string | IJob;
+  amount?: number;
   receivedAmount?: number;
   balance?: number;
-  date?: string;
   paymentType?: string;
   status?: string;
+  downloadUrl?: string;
   notes?: string;
   createdBy?: string;
   createdAt?: string;

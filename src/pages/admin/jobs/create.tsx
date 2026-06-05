@@ -228,15 +228,17 @@ export default function CreateJobPage() {
                 ],
               } as const)
             : undefined,
-        frequency:
-          data.jobType === 'recurring' &&
-          data.frequencyValue &&
-          data.frequencyUnit
-            ? {
-                value: data.frequencyValue,
-                unit: data.frequencyUnit,
-              }
-            : undefined,
+        // frequency:
+        // data.jobType === 'recurring' && data.frequencyValue && data.frequencyUnit ? {
+        //       value: data.frequencyValue,
+        //       unit: data.frequencyUnit,
+        //     }
+        ...(data.jobType === 'recurring'
+          ? {
+              frequencyValue: data.frequencyValue,
+              frequencyUnit: data.frequencyUnit,
+            }
+          : {}),
       };
       if (data.employee) {
         payload.employeeId = data.employee;

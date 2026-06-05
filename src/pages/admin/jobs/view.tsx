@@ -50,12 +50,12 @@ import {
   useGetJobByIdQuery,
   useCancelJobMutation,
   useCompleteJobMutation,
-  useGetJobReceiptQuery,
   useAssignJobEmployeeMutation,
   useGetEmployeesQuery,
 } from '@/API/api';
 import { getErrorMessage } from '@/lib/get-error-message';
 import { formatDate } from '@/lib/format-date';
+import { getToken } from '@/lib/auth';
 import type { IJob } from '@/types';
 
 function getCustomerName(customer: IJob['customerId']): string {
@@ -127,9 +127,6 @@ export default function JobViewPage() {
 
   const [cancelJob] = useCancelJobMutation();
   const [completeJob] = useCompleteJobMutation();
-  const { data: receiptData } = useGetJobReceiptQuery(id ?? '', {
-    skip: !id || !job || (job?.receiptUrl != null),
-  });
   const [assignJobEmployee] = useAssignJobEmployeeMutation();
   const { data: employeesData } = useGetEmployeesQuery({
     limit: 500,
@@ -153,6 +150,12 @@ export default function JobViewPage() {
 
   const resolvedJob = job ?? passedJob;
   if (!resolvedJob) return null;
+
+  const customer =
+    typeof resolvedJob.customerId === 'object' &&
+    resolvedJob.customerId
+      ? resolvedJob.customerId
+      : null;
 
   const handleConfirmCancel = async () => {
     if (!id) return;
@@ -316,25 +319,35 @@ export default function JobViewPage() {
                     </Button>
                   </>
                 )}
-                {(resolvedJob.receiptUrl ||
-                  (receiptData as { receiptUrl?: string } | undefined)
-                    ?.receiptUrl) && (
+                {resolvedJob._id && resolvedJob.status === 'completed' && (
                   <Button
                     size="sm"
                     variant="outline"
                     className="rounded-xl h-9"
-                    onClick={() =>
-                      window.open(
-                        resolvedJob.receiptUrl ||
-                          (receiptData as { receiptUrl?: string })
-                            .receiptUrl ||
-                          '',
-                        '_blank',
-                      )
-                    }
+                    onClick={async () => {
+                      try {
+                        const token = getToken();
+                        const res = await fetch(
+                          `${import.meta.env.VITE_API_URL}/jobs/${resolvedJob._id}/receipt`,
+                          {
+                            headers: token
+                              ? { Authorization: `Bearer ${token}` }
+                              : {},
+                          },
+                        );
+                        if (!res.ok) {
+                          toast.error('Failed to load receipt');
+                          return;
+                        }
+                        const blob = await res.blob();
+                        window.open(URL.createObjectURL(blob), '_blank');
+                      } catch {
+                        toast.error('Failed to load receipt');
+                      }
+                    }}
                   >
                     <FileDown className="h-4 w-4 mr-1" />
-                    Receipt
+                    View Receipt
                   </Button>
                 )}
               </div>
@@ -680,15 +693,21 @@ export default function JobViewPage() {
       </div>
 
       <CompleteJobDialog
-        open={completeDialogOpen}
-        onOpenChange={setCompleteDialogOpen}
-        onConfirm={async (receivePrice) => {
-          if (!id) return;
-          await completeJob({ jobId: id, receivePrice }).unwrap();
-          toast.success('Job completed successfully');
-          setCompleteDialogOpen(false);
-        }}
-      />
+            open={completeDialogOpen}
+            onOpenChange={setCompleteDialogOpen}
+            onConfirm={async (receivePrice) => {
+              if (!id) return;
+              await completeJob({ jobId: id, receivePrice }).unwrap();
+              toast.success('Job completed successfully');
+              setCompleteDialogOpen(false);
+            }}
+            paymentType={resolvedJob.paymentType}
+            jobDisplayId={`JOB-${resolvedJob.jobId}`}
+            customerName={getCustomerName(resolvedJob.customerId)}
+            customerPhone={customer?.phoneNumber}
+            customerEmail={customer?.email}
+            customerImage={customer?.profileImage}
+          />
 
       <Dialog
         open={cancelDialogOpen}

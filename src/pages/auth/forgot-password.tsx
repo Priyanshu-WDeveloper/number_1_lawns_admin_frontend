@@ -586,9 +586,9 @@ const ForgotPassword = () => {
           <div className="grid lg:grid-cols-2 h-full">
             <div className="relative overflow-hidden hidden lg:block">
               <img
-                src="/bg.jpg"
+                src="/forgot-pass-img.png"
                 alt="Nature"
-                className="absolute inset-0 h-full w-full object-fill"
+                className="absolute inset-0 h-full w-full object-cover "
               />
 
               <div className="absolute inset-0 bg-gradient-to-b from-[#ffffffd9] via-[#ffffff80] to-[#00000030]" />

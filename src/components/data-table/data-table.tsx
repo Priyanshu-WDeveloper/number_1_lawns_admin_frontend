@@ -63,6 +63,7 @@ interface DataTableProps<T extends DataTableData> {
   filterValue?: string;
   onFilterChange?: (value: string) => void;
   serverSideFiltering?: boolean;
+  showAllOption?: boolean;
   // Server-side sorting
   sortValue?: string;
   onSortChange?: (sort: string) => void;
@@ -239,6 +240,7 @@ export default function DataTable<T extends DataTableData>({
   filterValue: filterValueProp,
   onFilterChange,
   serverSideFiltering = false,
+  showAllOption = true,
   // Sorting props (unused - kept for future use)
   // sortValue,
   // onSortChange,
@@ -329,6 +331,10 @@ export default function DataTable<T extends DataTableData>({
 
     if (typeof value === 'number') {
       return value;
+    }
+
+    if (typeof value === 'object') {
+      return String(value);
     }
 
     return String(value);
@@ -449,10 +455,14 @@ export default function DataTable<T extends DataTableData>({
                 onValueChange={handleFilterChange}
               >
                 <SelectTrigger className="w-[120px] sm:w-[140px] rounded-xl h-10 border-border">
-                  <SelectValue placeholder={`All ${filterField}`} />
+                  <SelectValue
+                    placeholder={`${showAllOption ? 'All' : 'Select'} ${filterField}`}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="All">All</SelectItem>
+                  {showAllOption && (
+                    <SelectItem value="All">All</SelectItem>
+                  )}
                   {filterOptions.map((option) => (
                     <SelectItem
                       key={option}

@@ -46,12 +46,12 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import {
   useGetJobByIdQuery,
   useCancelJobMutation,
-  useGetJobReceiptQuery,
   useAssignJobEmployeeMutation,
   useGetEmployeesQuery,
 } from '@/API/api';
 import { getErrorMessage } from '@/lib/get-error-message';
 import { formatDate } from '@/lib/format-date';
+import { getToken } from '@/lib/auth';
 import type { IJob } from '@/types';
 
 function getCustomerName(customer: IJob['customerId']): string {
@@ -122,15 +122,11 @@ export default function JobViewPage() {
   });
 
   const [cancelJob] = useCancelJobMutation();
-  const { data: receiptData } = useGetJobReceiptQuery(id ?? '', {
-    skip: !id || !job || (job?.receiptUrl != null),
-  });
   const [assignJobEmployee] = useAssignJobEmployeeMutation();
   const { data: employeesData } = useGetEmployeesQuery({
     limit: 500,
     page: 1,
   });
-
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -171,6 +167,27 @@ export default function JobViewPage() {
       setSelectedEmployee('');
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to assign employee'));
+    }
+  };
+
+  const handleViewReceipt = async () => {
+    if (!resolvedJob._id) return;
+    try {
+      const token = getToken();
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/jobs/${resolvedJob._id}/receipt`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        },
+      );
+      if (!res.ok) {
+        toast.error('Failed to load receipt');
+        return;
+      }
+      const blob = await res.blob();
+      window.open(URL.createObjectURL(blob), '_blank');
+    } catch {
+      toast.error('Failed to load receipt');
     }
   };
 
@@ -235,7 +252,9 @@ export default function JobViewPage() {
                           ? `$${resolvedJob.price}`
                           : 'No Charge'}
                       </span>
-                      <p className="text-xs text-muted-foreground">Price</p>
+                      <p className="text-xs text-muted-foreground">
+                        Price
+                      </p>
                     </div>
                   </div>
 
@@ -290,25 +309,15 @@ export default function JobViewPage() {
                     Cancel Job
                   </Button>
                 )}
-                {(resolvedJob.receiptUrl ||
-                  (receiptData as { receiptUrl?: string } | undefined)
-                    ?.receiptUrl) && (
+                {resolvedJob._id && resolvedJob.status === 'completed' && (
                   <Button
                     size="sm"
                     variant="outline"
                     className="rounded-xl h-9"
-                    onClick={() =>
-                      window.open(
-                        resolvedJob.receiptUrl ||
-                          (receiptData as { receiptUrl?: string })
-                            .receiptUrl ||
-                          '',
-                        '_blank',
-                      )
-                    }
+                    onClick={handleViewReceipt}
                   >
                     <FileDown className="h-4 w-4 mr-1" />
-                    Receipt
+                    View Receipt
                   </Button>
                 )}
               </div>
@@ -330,7 +339,9 @@ export default function JobViewPage() {
                   <div className="flex items-center gap-3">
                     <User className="h-4 w-4 text-muted-foreground shrink-0" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Name</p>
+                      <p className="text-sm text-muted-foreground">
+                        Name
+                      </p>
                       <p className="text-foreground font-medium">
                         {getCustomerName(resolvedJob.customerId)}
                       </p>
@@ -339,7 +350,9 @@ export default function JobViewPage() {
                   <div className="flex items-center gap-3">
                     <Mail className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Email</p>
+                      <p className="text-sm text-muted-foreground">
+                        Email
+                      </p>
                       <p className="text-foreground font-medium">
                         {getCustomerEmail(resolvedJob.customerId)}
                       </p>
@@ -348,7 +361,9 @@ export default function JobViewPage() {
                   <div className="flex items-center gap-3">
                     <Phone className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Phone</p>
+                      <p className="text-sm text-muted-foreground">
+                        Phone
+                      </p>
                       <p className="text-foreground font-medium">
                         {getCustomerPhone(resolvedJob.customerId)}
                       </p>
@@ -384,7 +399,9 @@ export default function JobViewPage() {
                     <div className="flex items-center gap-3">
                       <Mail className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Email</p>
+                        <p className="text-sm text-muted-foreground">
+                          Email
+                        </p>
                         <p className="text-foreground font-medium">
                           {getEmployeeEmail(resolvedJob.employeeId)}
                         </p>
@@ -393,7 +410,9 @@ export default function JobViewPage() {
                     <div className="flex items-center gap-3">
                       <Phone className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Phone</p>
+                        <p className="text-sm text-muted-foreground">
+                          Phone
+                        </p>
                         <p className="text-foreground font-medium">
                           {getEmployeePhone(resolvedJob.employeeId)}
                         </p>
@@ -456,7 +475,9 @@ export default function JobViewPage() {
                   <div className="flex items-center gap-3">
                     <RefreshCw className="h-4 w-4 text-muted-foreground shrink-0" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Job Type</p>
+                      <p className="text-sm text-muted-foreground">
+                        Job Type
+                      </p>
                       <p className="text-foreground font-medium">
                         {resolvedJob.jobType
                           ? resolvedJob.jobType
@@ -471,7 +492,9 @@ export default function JobViewPage() {
                   <div className="flex items-center gap-3">
                     <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Job Date</p>
+                      <p className="text-sm text-muted-foreground">
+                        Job Date
+                      </p>
                       <p className="text-foreground font-medium">
                         {resolvedJob.jobDate
                           ? formatDate(resolvedJob.jobDate)
@@ -498,7 +521,9 @@ export default function JobViewPage() {
                   <div className="flex items-center gap-3">
                     <DollarSign className="h-4 w-4 text-muted-foreground shrink-0" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Price</p>
+                      <p className="text-sm text-muted-foreground">
+                        Price
+                      </p>
                       <p className="text-foreground font-medium">
                         {resolvedJob.price != null &&
                         resolvedJob.price > 0
@@ -566,7 +591,9 @@ export default function JobViewPage() {
                   <div className="flex items-start gap-3">
                     <FileText className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Notes</p>
+                      <p className="text-sm text-muted-foreground">
+                        Notes
+                      </p>
                       <p className="text-foreground font-medium">
                         {resolvedJob.notes}
                       </p>
@@ -589,7 +616,9 @@ export default function JobViewPage() {
                   <div className="flex items-start gap-3">
                     <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-sm text-muted-foreground">Address</p>
+                      <p className="text-sm text-muted-foreground">
+                        Address
+                      </p>
                       <p className="text-foreground font-medium">
                         {resolvedJob.address || '-'}
                       </p>
@@ -597,13 +626,17 @@ export default function JobViewPage() {
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">City</p>
+                      <p className="text-sm text-muted-foreground">
+                        City
+                      </p>
                       <p className="text-foreground font-medium">
                         {resolvedJob.city || '-'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">State</p>
+                      <p className="text-sm text-muted-foreground">
+                        State
+                      </p>
                       <p className="text-foreground font-medium">
                         {resolvedJob.state || '-'}
                       </p>
@@ -617,7 +650,9 @@ export default function JobViewPage() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Country</p>
+                      <p className="text-sm text-muted-foreground">
+                        Country
+                      </p>
                       <p className="text-foreground font-medium">
                         {resolvedJob.country || '-'}
                       </p>

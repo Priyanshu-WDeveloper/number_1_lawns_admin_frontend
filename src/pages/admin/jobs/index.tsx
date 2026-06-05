@@ -6,6 +6,7 @@ import {
   Ban,
   Calendar,
   User,
+  ExternalLink,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -31,6 +32,7 @@ import { StatusBadge } from '@/components/data-table/status-badge';
 import { STATUS_CONFIG } from '@/constants/status-config';
 import { formatDate } from '@/lib/format-date';
 import { getErrorMessage } from '@/lib/get-error-message';
+import { getToken } from '@/lib/auth';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useDataTableQueryParams } from '@/hooks/use-data-table-query-params';
 import type { IJob } from '@/types';
@@ -253,6 +255,36 @@ export default function JobManagementPage() {
             <Eye className="h-3.5 w-3.5" />
             View
           </button>
+          {row._id && row.status === 'completed' && (
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const token = getToken();
+                  const res = await fetch(
+                    `${import.meta.env.VITE_API_URL}/jobs/${row._id}/receipt`,
+                    {
+                      headers: token
+                        ? { Authorization: `Bearer ${token}` }
+                        : {},
+                    },
+                  );
+                  if (!res.ok) {
+                    toast.error('Failed to load receipt');
+                    return;
+                  }
+                  const blob = await res.blob();
+                  window.open(URL.createObjectURL(blob), '_blank');
+                } catch {
+                  toast.error('Failed to load receipt');
+                }
+              }}
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-sm font-medium bg-white text-primary border border-primary hover:bg-primary/5 transition-colors"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              View Receipt
+            </button>
+          )}
           {row.status !== 'completed' && row.status !== 'cancelled' && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

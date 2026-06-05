@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mail, Phone } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -8,17 +8,43 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from '@/components/ui/avatar';
 
 interface CompleteJobDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: (receivePrice?: number) => Promise<void>;
+  paymentType?: string;
+  jobDisplayId?: string;
+  customerName?: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  customerImage?: string;
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 }
 
 export function CompleteJobDialog({
   open,
   onOpenChange,
   onConfirm,
+  paymentType,
+  jobDisplayId,
+  customerName,
+  customerPhone,
+  customerEmail,
+  customerImage,
 }: CompleteJobDialogProps) {
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,6 +59,8 @@ export function CompleteJobDialog({
     }
   };
 
+  const isCash = paymentType === 'cash';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100%-24px)] sm:max-w-md rounded-3xl border-0 p-0 overflow-hidden shadow-2xl bg-white">
@@ -46,25 +74,77 @@ export function CompleteJobDialog({
               </DialogTitle>
             </DialogHeader>
 
-            <p className="text-sm text-zinc-500 mt-2 mb-6">
-              Enter the amount received from the customer (optional).
-            </p>
+            {isCash ? (
+              <>
+                <p className="text-sm text-zinc-500 mt-2 mb-6">
+                  Enter the amount received from the customer
+                  (optional).
+                </p>
 
-            <div className="pb-6">
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-                Received Amount ($)
-              </label>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                disabled={loading}
-                className="[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield] h-12 rounded-xl"
-              />
-            </div>
+                <div className="pb-6">
+                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                    Received Amount ($)
+                  </label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    disabled={loading}
+                    className="[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield] h-12 rounded-xl"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-zinc-600 mt-2 mb-6">
+                  Are you sure you want to mark{' '}
+                  <span className="font-semibold text-zinc-900">
+                    {jobDisplayId}
+                  </span>{' '}
+                  job as completed?
+                </p>
+
+                <div className="pb-6">
+                  <div className="bg-zinc-50 rounded-xl p-4 border border-zinc-200 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar size="lg">
+                        {customerImage ? (
+                          <AvatarImage
+                            src={customerImage}
+                            alt={customerName}
+                          />
+                        ) : (
+                          <AvatarFallback>
+                            {getInitials(customerName || '')}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <div>
+                        <p className="font-medium text-zinc-900">
+                          {customerName || '-'}
+                        </p>
+                        <div className="flex items-center gap-3 text-sm text-zinc-500">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Phone className="h-3.5 w-3.5" />
+                            {customerPhone || '-'}
+                          </span>
+                          {customerEmail && (
+                            <span className="inline-flex items-center gap-1.5">
+                              <Mail className="h-3.5 w-3.5" />
+                              {customerEmail}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

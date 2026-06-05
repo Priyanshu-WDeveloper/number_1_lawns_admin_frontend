@@ -1,4 +1,4 @@
-import type { ICustomer, IJob, IInvoice, IEmployee, IParentJob } from '.';
+import type { ICustomer, IJob, IInvoice, IEmployee, IParentJob, ITraining } from '.';
 import type { IAdmins } from './admins.types';
 
 export type GetAdminsParams = {
@@ -132,5 +132,20 @@ export interface CreateEmployeePayload {
 
 export interface UpdateEmployeePayload extends Partial<CreateEmployeePayload> {
   id: string;
+}
+
+export interface TrainingsParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  isActive?: boolean;
+}
+
+export interface TrainingsResponse {
+  trainings: ITraining[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 

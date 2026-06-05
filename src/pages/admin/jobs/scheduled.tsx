@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Ellipsis, Eye, Check, Ban } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Ellipsis, Eye, Check, Ban, User, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import type { ColumnDef } from '@/components/data-table/data-table';
@@ -15,17 +15,28 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   useGetChildJobsQuery,
   useCancelJobMutation,
   useCompleteJobMutation,
-  useCreateJobReceiptMutation,
+  useAssignJobEmployeeMutation,
+  useGetEmployeesQuery,
 } from '@/API/api';
 import { StatusBadge } from '@/components/data-table/status-badge';
 import { STATUS_CONFIG } from '@/constants/status-config';
 import { formatDate } from '@/lib/format-date';
+import { getToken } from '@/lib/auth';
 import { getErrorMessage } from '@/lib/get-error-message';
+import { differenceInCalendarDays } from 'date-fns';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { CompleteJobDialog } from '@/components/admin/complete-job-dialog';
+import { SearchableSelect } from '@/components/ui/searchable-select';
+import { Button } from '@/components/ui/button';
 import { useDataTableQueryParams } from '@/hooks/use-data-table-query-params';
 import type { IJob } from '@/types';
 import type { ListQueryParams } from '@/types/api.types';
@@ -51,7 +62,8 @@ export default function ScheduledJobsPage() {
         | 'pending'
         | 'completed'
         | 'cancelled'
-        | 'upcoming',
+        | 'upcoming'
+        | 'overdue',
   });
 
   const { data: apiData, isLoading } = useGetChildJobsQuery(
@@ -63,12 +75,26 @@ export default function ScheduledJobsPage() {
 
   const [cancelJob] = useCancelJobMutation();
   const [completeJob] = useCompleteJobMutation();
-  const [createJobReceipt] = useCreateJobReceiptMutation();
+  const [assignJobEmployee] = useAssignJobEmployeeMutation();
+  const { data: employeesData } = useGetEmployeesQuery({
+    limit: 500,
+    page: 1,
+  });
 
   const [confirmAction, setConfirmAction] = useState<{
     type: 'complete' | 'cancel';
     jobId: string;
+    paymentType?: string;
+    jobDisplayId?: string;
+    customerName?: string;
+    customerPhone?: string;
+    customerEmail?: string;
+    customerImage?: string;
   } | null>(null);
+
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState('');
+  const [assigningJobId, setAssigningJobId] = useState('');
 
   const childJobs = apiData?.jobs ?? [];
   const totalPages =
@@ -82,6 +108,16 @@ export default function ScheduledJobsPage() {
         totalPages,
       }
     : undefined;
+
+  const employeeOptions = useMemo(
+    () =>
+      (employeesData?.employees ?? []).map((e) => ({
+        _id: e._id,
+        label: e.fullName,
+        subtitle: e.email,
+      })),
+    [employeesData],
+  );
 
   const handleCancel = async (id: string) => {
     try {
@@ -98,12 +134,61 @@ export default function ScheduledJobsPage() {
   ) => {
     try {
       await completeJob({ jobId: id, receivePrice }).unwrap();
-      await createJobReceipt(id).unwrap();
       toast.success('Job completed successfully');
       setConfirmAction(null);
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to complete job'));
     }
+  };
+
+  const handleViewReceipt = async (id?: string) => {
+    if (!id) return;
+    try {
+      const token = getToken();
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/jobs/${id}/receipt`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        },
+      );
+      if (!res.ok) {
+        toast.error('Failed to load receipt');
+        return;
+      }
+      const blob = await res.blob();
+      window.open(URL.createObjectURL(blob), '_blank');
+    } catch {
+      toast.error('Failed to load receipt');
+    }
+  };
+
+  const handleAssignEmployee = async () => {
+    if (!assigningJobId || !selectedEmployee) return;
+    try {
+      await assignJobEmployee({
+        id: assigningJobId,
+        employee: selectedEmployee,
+      }).unwrap();
+      toast.success('Employee assigned successfully');
+      setAssignDialogOpen(false);
+      setSelectedEmployee('');
+      setAssigningJobId('');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to assign employee'));
+    }
+  };
+
+  const getDisplayStatus = (job: IJob): string => {
+    if (job.status !== 'pending') return job.status ?? '';
+    if (!job.jobDate) return 'pending';
+
+    const jobDate = new Date(job.jobDate);
+    const today = new Date();
+    const diffDays = differenceInCalendarDays(jobDate, today);
+
+    if (diffDays === 0) return 'in-progress';
+    if (diffDays > 0) return 'upcoming';
+    return 'overdue';
   };
 
   const getCustomerName = (customerId: unknown): string => {
@@ -191,7 +276,7 @@ export default function ScheduledJobsPage() {
       header: 'Status',
       cell: (row: IJob) => (
         <StatusBadge
-          status={row.status ?? ''}
+          status={getDisplayStatus(row)}
           config={STATUS_CONFIG.job}
         />
       ),
@@ -211,16 +296,37 @@ export default function ScheduledJobsPage() {
             <Eye className="h-3.5 w-3.5" />
             View
           </button>
+          {row._id && row.status === 'completed' && (
+            <button
+              type="button"
+              onClick={() => handleViewReceipt(row._id)}
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-sm font-medium bg-white text-primary border border-primary hover:bg-primary/5 transition-colors"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              View Receipt
+            </button>
+          )}
           {row.status === 'pending' && row.jobType === 'one_time' && (
             <>
               <button
                 type="button"
-                onClick={() =>
+                onClick={() => {
+                  const c =
+                    typeof row.customerId === 'object' &&
+                    row.customerId
+                      ? row.customerId
+                      : null;
                   setConfirmAction({
                     type: 'complete',
                     jobId: row._id ?? '',
-                  })
-                }
+                    paymentType: row.paymentType,
+                    jobDisplayId: `JOB-${row.jobId}`,
+                    customerName: getCustomerName(row.customerId),
+                    customerPhone: c?.phoneNumber,
+                    customerEmail: c?.email,
+                    customerImage: c?.profileImage,
+                  });
+                }}
                 className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
               >
                 <Check className="h-3.5 w-3.5" />
@@ -254,17 +360,28 @@ export default function ScheduledJobsPage() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {row.status === 'pending' && (
-                    <DropdownMenuItem
-                      onClick={() =>
-                        setConfirmAction({
-                          type: 'cancel',
-                          jobId: row._id ?? '',
-                        })
-                      }
-                    >
-                      <Ban className="mr-2 h-4 w-4 text-red-500" />
-                      <span>Cancel Job</span>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setAssigningJobId(row._id ?? '');
+                          setAssignDialogOpen(true);
+                        }}
+                      >
+                        <User className="mr-2 h-4 w-4 text-blue-500" />
+                        <span>Assign Employee</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          setConfirmAction({
+                            type: 'cancel',
+                            jobId: row._id ?? '',
+                          })
+                        }
+                      >
+                        <Ban className="mr-2 h-4 w-4 text-red-500" />
+                        <span>Cancel Job</span>
+                      </DropdownMenuItem>
+                    </>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -296,6 +413,7 @@ export default function ScheduledJobsPage() {
                 onSearchChange={setSearch}
                 filterField="status"
                 filterOptions={[
+                  'Overdue',
                   'Pending',
                   'Completed',
                   'Cancelled',
@@ -303,6 +421,7 @@ export default function ScheduledJobsPage() {
                 ]}
                 filterValue={statusFilter}
                 onFilterChange={setStatusFilter}
+                showAllOption={false}
                 serverSideFiltering
                 sortValue={sort}
                 onSortChange={setSort}
@@ -328,7 +447,46 @@ export default function ScheduledJobsPage() {
           if (confirmAction)
             await handleComplete(confirmAction.jobId, receivePrice);
         }}
+        paymentType={confirmAction?.paymentType}
+        jobDisplayId={confirmAction?.jobDisplayId}
+        customerName={confirmAction?.customerName}
+        customerPhone={confirmAction?.customerPhone}
+        customerEmail={confirmAction?.customerEmail}
+        customerImage={confirmAction?.customerImage}
       />
+      <Dialog
+        open={assignDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setAssignDialogOpen(false);
+            setSelectedEmployee('');
+            setAssigningJobId('');
+          }
+        }}
+      >
+        <DialogContent className="rounded-2xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Assign Employee</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <SearchableSelect
+              data={employeeOptions}
+              value={selectedEmployee}
+              onChange={setSelectedEmployee}
+              placeholder="Choose an employee"
+              searchPlaceholder="Search employees..."
+              loading={!employeesData}
+            />
+            <Button
+              className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl"
+              disabled={!selectedEmployee}
+              onClick={handleAssignEmployee}
+            >
+              Assign
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       <ConfirmDialog
         open={confirmAction?.type === 'cancel'}
         onOpenChange={(open) => {

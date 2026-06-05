@@ -8,17 +8,29 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { Navbar } from '@/components/layout/navbar';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/constants';
-import { useGetInvoicesQuery, useLazyDownloadInvoiceQuery } from '@/API/api';
-import { StatusBadge } from '@/components/data-table/status-badge';
-import { STATUS_CONFIG } from '@/constants/status-config';
-import type { IInvoice } from '@/types';
+import {
+  useGetInvoicesQuery,
+  useLazyDownloadInvoiceQuery,
+} from '@/API/api';
+import { formatDate } from '@/lib/format-date';
+import type { IInvoice, IJob, IPopulatedCustomer } from '@/types';
 
 export default function InvoiceManagementPage() {
   const navigate = useNavigate();
-  const { data: apiInvoices, isLoading } = useGetInvoicesQuery({}, {
-    refetchOnMountOrArgChange: true,
-  });
+  const { data: apiInvoices, isLoading } = useGetInvoicesQuery(
+    {},
+    {
+      refetchOnMountOrArgChange: true,
+    },
+  );
   const [downloadInvoice] = useLazyDownloadInvoiceQuery();
+
+  const getJobId = (row: IInvoice): string => {
+    if (row.jobId && typeof row.jobId === 'object') {
+      return String((row.jobId as IJob).jobId ?? '');
+    }
+    return row.jobId ?? '';
+  };
 
   const invoices: IInvoice[] = apiInvoices?.invoices ?? [];
 
@@ -49,60 +61,70 @@ export default function InvoiceManagementPage() {
       ),
     },
     {
-      accessorKey: 'customer',
+      accessorKey: 'customerId',
       header: 'Customer',
       cell: (row: IInvoice) => (
-        <span className="text-[#6b7280]">{row.customer}</span>
+        <span className="text-[#6b7280]">
+          {row.customerId && typeof row.customerId === 'object'
+            ? ((row.customerId as IPopulatedCustomer).fullName ?? '-')
+            : (row.customerId ?? '-')}
+        </span>
       ),
     },
     {
       accessorKey: 'jobId',
       header: 'Job',
       cell: (row: IInvoice) => (
-        <span className="text-[#6b7280]">{row.jobId}</span>
+        <span className="text-[#6b7280]">
+          {row.jobId && typeof row.jobId === 'object'
+            ? ((row.jobId as IJob).jobId ?? '-')
+            : (row.jobId ?? '-')}
+        </span>
       ),
     },
     {
-      accessorKey: 'totalAmount',
+      accessorKey: 'amount',
       header: 'Total',
       cell: (row: IInvoice) => (
         <span className="font-medium text-[#151515]">
-          ${(row.totalAmount ?? 0).toFixed(2)}
+          ${(row.amount ?? 0).toFixed(2)}
         </span>
       ),
     },
+    // {
+    //   accessorKey: 'receivedAmount',
+    //   header: 'Received',
+    //   cell: (row: IInvoice) => (
+    //     <span
+    //       className={
+    //         (row.receivedAmount ?? 0) < (row.amount ?? 0)
+    //           ? 'text-red-500'
+    //           : 'text-primary'
+    //       }
+    //     >
+    //       ${(row.receivedAmount ?? 0).toFixed(2)}
+    //     </span>
+    //   ),
+    // },
     {
-      accessorKey: 'receivedAmount',
-      header: 'Received',
-      cell: (row: IInvoice) => (
-        <span
-          className={
-            (row.receivedAmount ?? 0) < (row.totalAmount ?? 0)
-              ? 'text-red-500'
-              : 'text-primary'
-          }
-        >
-          ${(row.receivedAmount ?? 0).toFixed(2)}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'date',
+      accessorKey: 'createdAt',
       header: 'Date',
       cell: (row: IInvoice) => (
-        <span className="text-[#6b7280]">{row.date}</span>
+        <span className="text-[#6b7280]">
+          {formatDate(row.createdAt)}
+        </span>
       ),
     },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: (row: IInvoice) => (
-        <StatusBadge
-          status={row.status ?? 'pending'}
-          config={STATUS_CONFIG.invoice}
-        />
-      ),
-    },
+    // {
+    //   accessorKey: 'status',
+    //   header: 'Status',
+    //   cell: (row: IInvoice) => (
+    //     <StatusBadge
+    //       status={row.status ?? 'pending'}
+    //       config={STATUS_CONFIG.invoice}
+    //     />
+    //   ),
+    // },
     {
       accessorKey: 'actions',
       header: 'Actions',
@@ -111,14 +133,19 @@ export default function InvoiceManagementPage() {
           <ActionButton
             icon={<Eye className="h-3.5 w-3.5" />}
             className="h-8 w-8 rounded-full border border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#374151] shadow-none"
-            onClick={() =>
-              navigate(ROUTES.INVOICES_VIEW.replace(':jobId', row.jobId ?? ''))
-            }
+            onClick={() => {
+              const id = getJobId(row);
+              sessionStorage.setItem(`invoice-${id}`, JSON.stringify(row));
+              navigate(
+                ROUTES.INVOICES_VIEW.replace(':jobId', id),
+                { state: { invoice: row } },
+              );
+            }}
           />
           <ActionButton
             icon={<Download className="h-3.5 w-3.5" />}
             className="h-8 w-8 rounded-full border border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#374151] shadow-none"
-            onClick={() => handleDownload(row.jobId ?? '')}
+            onClick={() => handleDownload(getJobId(row))}
           />
         </div>
       ),
@@ -143,8 +170,8 @@ export default function InvoiceManagementPage() {
                 title=""
                 description=""
                 searchPlaceholder="Search invoices by customer or invoice number..."
-                filterField="status"
-                filterOptions={['Paid', 'Pending', 'Overdue']}
+                // filterField="status"
+                // filterOptions={['Paid', 'Pending', 'Overdue']}
               />
             </div>
           </div>

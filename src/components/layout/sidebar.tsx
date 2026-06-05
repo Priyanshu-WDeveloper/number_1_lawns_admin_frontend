@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
-import { KeyRound, LogOutIcon, Video } from 'lucide-react';
+import { LogOutIcon, Video } from 'lucide-react';
 
 import Dashboard from '@/assets/dashboard.png';
 import Customer from '@/assets/customer.png';
@@ -25,7 +25,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import toast from 'react-hot-toast';
 import { ROUTES } from '@/constants';
 import { useLogoutMutation } from '@/API/api';
-import { ChangeAdminPasswordDialog } from '@/pages/admin/change-password';
+// import { ChangeAdminPasswordDialog } from '@/pages/admin/change-password';
 
 const items = [
   {
@@ -72,9 +72,9 @@ export function DashboardSidebar() {
   const navigate = useNavigate();
   const { toggleSidebar } = useSidebar();
 
-  const [confirmAction, setConfirmAction] = useState<{
-    type: 'change-password';
-  } | null>(null);
+  // const [confirmAction, setConfirmAction] = useState<{
+  //   type: 'change-password';
+  // } | null>(null);
 
   const [logout] = useLogoutMutation();
 
@@ -90,8 +90,8 @@ export function DashboardSidebar() {
   };
 
   return (
-    <Sidebar className="border-r-0 w-78">
-      <SidebarHeader className="bg-gradient-to-b from-[var(--sidebar-bg-from)] to-[var(--sidebar-bg-to)]">
+    <Sidebar className="border-r-0">
+      <SidebarHeader className="bg-gradient-to-b from-[var(--sidebar-bg-from)] to-[var(--sidebar-bg-to)] border-b border-sidebar-border">
         <div className="flex items-center justify-between px-4 py-6">
           <div className="flex items-center gap-3">
             <img
@@ -113,13 +113,13 @@ export function DashboardSidebar() {
 
       <SidebarContent className="bg-gradient-to-b from-[var(--sidebar-bg-from)] to-[var(--sidebar-bg-to)]">
         <SidebarGroup>
-          <SidebarMenu className="space-y-3 px-3">
+          <SidebarMenu className="space-y-2 px-3">
             {items.map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
                   asChild
                   isActive={location.pathname === item.url}
-                  className="h-14 rounded-2xl text-base hover:bg-[var(--sidebar-active)] data-[active=true]:bg-[var(--sidebar-active)]"
+                  className="h-11 rounded-2xl text-base hover:bg-[var(--sidebar-active)] data-[active=true]:bg-[var(--sidebar-active)]"
                 >
                   <Link to={item.url}>
                     {'isLucide' in item ? (
@@ -141,9 +141,8 @@ export function DashboardSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="bg-[var(--sidebar-bg-to)] p-4 space-y-2">
-        <button
+        {/* <button
           className="w-full rounded-2xl bg-white/10 p-4 text-left backdrop-blur transition hover:bg-white/20"
-          // onClick={() => navigate(ROUTES.CHANGE_PASSWORD)}
           onClick={() =>
             setConfirmAction({
               type: 'change-password',
@@ -163,18 +162,6 @@ export function DashboardSidebar() {
               <p className="text-sm text-white/70">Update password</p>
             </div>
           </div>
-        </button>
-        {/* <button
-          type="button"
-          onClick={() =>
-            setConfirmAction({
-              type: 'change-password',
-            })
-          }
-          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors"
-        >
-          <ShieldCheck className="h-3.5 w-3.5" />
-          Change Password
         </button> */}
 
         <button
@@ -199,12 +186,12 @@ export function DashboardSidebar() {
         </button>
       </SidebarFooter>
 
-      <ChangeAdminPasswordDialog
+      {/* <ChangeAdminPasswordDialog
         open={confirmAction?.type === 'change-password'}
         onOpenChange={(open) => {
           if (!open) setConfirmAction(null);
         }}
-      />
+      /> */}
       <ConfirmDialog
         open={showLogoutDialog}
         onOpenChange={setShowLogoutDialog}

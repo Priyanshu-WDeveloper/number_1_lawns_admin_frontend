@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Leaf, Mail, Lock, Eye, Globe, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -32,6 +32,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [login, { isLoading }] = useLoginMutation();
 
   const {
@@ -41,7 +42,7 @@ const Login = () => {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
+      email: searchParams.get('email') || '',
       password: '',
     },
   });
