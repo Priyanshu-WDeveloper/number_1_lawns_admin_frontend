@@ -2,6 +2,7 @@ import {
   Calendar,
   Ellipsis,
   Eye,
+  Key,
   Pencil,
   Power,
   PowerOff,
@@ -36,6 +37,7 @@ import type { IEmployee } from '@/types';
 import toast from 'react-hot-toast';
 import { useState } from 'react';
 import { EmployeeValidityDialog } from '@/components/admin/employee-validity-dialog';
+import { ResetEmployeePasswordDialog } from '@/components/employees/reset-employee-password-dialog';
 
 import { getErrorMessage } from '@/lib/get-error-message';
 import { formatDate } from '@/lib/format-date';
@@ -47,6 +49,8 @@ export default function EmployeeManagementPage() {
   const [deleteEmployeeValidity] =
     useDeleteEmployeeValidityMutation();
   const [validityEmployee, setValidityEmployee] =
+    useState<IEmployee | null>(null);
+  const [resetPasswordEmployee, setResetPasswordEmployee] =
     useState<IEmployee | null>(null);
 
   const {
@@ -240,6 +244,13 @@ export default function EmployeeManagementPage() {
                 <Calendar className="mr-2 h-4 w-4" />
                 {row.validity ? 'Change Validity' : 'Set Validity'}
               </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setResetPasswordEmployee(row)}
+                className="truncate"
+              >
+                <Key className="mr-2 h-4 w-4" />
+                Reset Password
+              </DropdownMenuItem>
               {row.validity && (
                 <DropdownMenuItem
                   onClick={async () => {
@@ -315,6 +326,15 @@ export default function EmployeeManagementPage() {
           open={!!validityEmployee}
           onOpenChange={(open) => {
             if (!open) setValidityEmployee(null);
+          }}
+        />
+      )}
+      {resetPasswordEmployee && (
+        <ResetEmployeePasswordDialog
+          employee={resetPasswordEmployee}
+          open={!!resetPasswordEmployee}
+          onOpenChange={(open) => {
+            if (!open) setResetPasswordEmployee(null);
           }}
         />
       )}

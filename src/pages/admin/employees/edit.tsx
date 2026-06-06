@@ -18,6 +18,9 @@ import {
   User,
   Phone,
   Building2,
+  ExternalLink,
+  Eye,
+  // ImageIcon,
   Map,
   Hash,
   Globe,
@@ -157,8 +160,18 @@ export default function EditEmployeePage() {
   const [uploadDocument] = useUploadDocumentMutation();
   const [currentStep, setCurrentStep] = useState(1);
   const [documents, setDocuments] = useState<NamedDoc[]>([]);
+  const [profileImageError, setProfileImageError] = useState(false);
   const profileInputRef = useRef<HTMLInputElement>(null);
   const profileImageFileRef = useRef<File | null>(null);
+  const [existingAttachments, setExistingAttachments] = useState<
+    Array<{ key: string; value: string }>
+  >([]);
+  const [previewImageUrl, setPreviewImageUrl] = useState<
+    string | null
+  >(null);
+  const [existingImgErrors, setExistingImgErrors] = useState<
+    Set<number>
+  >(new Set());
   const formRef = useRef<HTMLFormElement>(null);
 
   const {
@@ -217,6 +230,9 @@ export default function EditEmployeePage() {
       setValue('latitude', coords1 ? coords1[1] : 5.8485);
       setValue('longitude', coords1 ? coords1[0] : 14.7633);
       setValue('locationMode', emp.locationMode ?? 'manual');
+      if (emp.attachments) {
+        setExistingAttachments(emp.attachments);
+      }
     } else if (employeeData) {
       const emp = employeeData;
       setValue('firstName', emp.firstName ?? '');
@@ -241,6 +257,9 @@ export default function EditEmployeePage() {
       setValue('latitude', coords2 ? coords2[1] : 5.8485);
       setValue('longitude', coords2 ? coords2[0] : 14.7633);
       setValue('locationMode', emp.locationMode ?? 'manual');
+      if (emp.attachments) {
+        setExistingAttachments(emp.attachments);
+      }
     }
   }, [employeeData, location.state, setValue]);
 
@@ -306,7 +325,10 @@ export default function EditEmployeePage() {
       let profileImageUrl = data.profileImage;
       let attachments:
         | Array<{ key: string; value: string }>
-        | undefined;
+        | undefined =
+        existingAttachments.length > 0
+          ? [...existingAttachments]
+          : undefined;
 
       const uploads: Promise<any>[] = [];
 
@@ -324,7 +346,7 @@ export default function EditEmployeePage() {
 
       const docsToUpload = documents.filter((d) => d.file && d.name);
       if (docsToUpload.length > 0) {
-        const results: Array<{ key: string; value: string }> = [];
+        if (!attachments) attachments = [];
         for (const doc of docsToUpload) {
           const fd = new FormData();
           fd.append('file', doc.file!);
@@ -333,15 +355,10 @@ export default function EditEmployeePage() {
             uploadDocument(fd)
               .unwrap()
               .then((res: any) => {
-                results.push({ key: name, value: res.file.url });
+                attachments!.push({ key: name, value: res.file.url });
               }),
           );
         }
-        uploads.push(
-          Promise.resolve().then(() => {
-            attachments = results;
-          }),
-        );
       }
 
       await Promise.all(uploads);
@@ -411,11 +428,12 @@ export default function EditEmployeePage() {
             </h4>
             <div className="flex items-center gap-4">
               <div className="relative">
-                {profileImage ? (
+                {profileImage && !profileImageError ? (
                   <div className="relative h-24 w-24">
                     <img
                       src={profileImage}
                       alt="Profile preview"
+                      onError={() => setProfileImageError(true)}
                       className="h-24 w-24 rounded-full object-cover border-2 border-border"
                     />
                     <button
@@ -425,6 +443,7 @@ export default function EditEmployeePage() {
                           shouldValidate: true,
                         });
                         profileImageFileRef.current = null;
+                        setProfileImageError(false);
                         if (profileInputRef.current) {
                           profileInputRef.current.value = '';
                         }
@@ -453,7 +472,7 @@ export default function EditEmployeePage() {
               />
               <div>
                 <p className="text-sm font-medium text-foreground">
-                  {profileImage
+                  {profileImage && !profileImageError
                     ? 'Click image to change'
                     : 'Upload profile image'}
                 </p>
@@ -643,8 +662,128 @@ export default function EditEmployeePage() {
     }
 
     if (currentStep === 3) {
+      const getFileExtensionFromUrl = (url: string) => {
+        const clean = url.split('?')[0].split('#')[0];
+        return clean.split('.').pop()?.toUpperCase() || 'FILE';
+      };
+
+      const isImageExtension = (ext: string) =>
+        [
+          'PNG',
+          'JPG',
+          'JPEG',
+          'GIF',
+          'WEBP',
+          'SVG',
+          'BMP',
+          'ICO',
+        ].includes(ext);
+
       return (
         <div className="space-y-6">
+          {existingAttachments.length > 0 && (
+            <div>
+              <h4 className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                Existing Documents
+              </h4>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {existingAttachments.map((att, i) => {
+                  const ext = getFileExtensionFromUrl(att.value);
+                  const isImage = isImageExtension(ext);
+
+                  return (
+                    <div
+                      key={i}
+                      className="flex items-start gap-3 rounded-xl border border-border bg-background p-3"
+                    >
+                      <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-white">
+                        {isImage && !existingImgErrors.has(i) ? (
+                          <img
+                            src={att.value}
+                            alt={att.key}
+                            onError={() =>
+                              setExistingImgErrors((prev) =>
+                                new Set(prev).add(i),
+                              )
+                            }
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gray-50">
+                            <FileText className="h-8 w-8 text-gray-500" />
+                            <span className="rounded bg-gray-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-600">
+                              {ext}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex min-w-0 flex-1 flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={att.key}
+                            onChange={(e) => {
+                              const updated = [
+                                ...existingAttachments,
+                              ];
+                              updated[i] = {
+                                ...updated[i],
+                                key: e.target.value,
+                              };
+                              setExistingAttachments(updated);
+                            }}
+                            className="flex-1 rounded-lg border border-border bg-white px-2 py-1 text-sm outline-none focus:border-primary"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setExistingAttachments(
+                                existingAttachments.filter(
+                                  (_, idx) => idx !== i,
+                                ),
+                              );
+                              setExistingImgErrors((prev) => {
+                                const next = new Set(prev);
+                                next.delete(i);
+                                return next;
+                              });
+                            }}
+                            className="shrink-0 rounded-full p-1 transition-colors hover:bg-red-100"
+                          >
+                            <X className="h-4 w-4 text-muted-foreground hover:text-red-500" />
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {isImage ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setPreviewImageUrl(att.value)
+                              }
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-1.5 text-xs text-muted-foreground hover:bg-[#f3f4f6]"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                              Preview
+                            </button>
+                          ) : (
+                            <a
+                              href={att.value}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-1.5 text-xs text-muted-foreground hover:bg-[#f3f4f6]"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              Open
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <NamedDocumentUpload
             documents={documents}
             onAdd={addDocument}
@@ -652,6 +791,38 @@ export default function EditEmployeePage() {
             onNameChange={updateDocumentName}
             onFileChange={updateDocumentFile}
           />
+
+          {previewImageUrl && (
+            <div
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              onClick={(e) => {
+                if (e.target === e.currentTarget)
+                  setPreviewImageUrl(null);
+              }}
+            >
+              <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+                <div className="flex items-center justify-between border-b border-border p-4">
+                  <span className="text-sm font-medium text-foreground truncate">
+                    Image Preview
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewImageUrl(null)}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-red-50 text-muted-foreground hover:text-red-500"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-auto p-4 flex items-center justify-center">
+                  <img
+                    src={previewImageUrl}
+                    alt="Preview"
+                    className="max-h-[70vh] object-contain rounded-lg"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       );
     }
@@ -663,12 +834,16 @@ export default function EditEmployeePage() {
             {
               icon: <User className="h-5 w-5 text-white" />,
               title: 'Employee Information',
-              subtitle: 'Please verify the employee information below',
-              image: formValues.profileImage
-                ? {
-                    src: formValues.profileImage,
-                    alt: `${formValues.firstName} ${formValues.lastName}`,
-                  }
+              subtitle:
+                'Please verify the employee information below',
+              imageFields: formValues.profileImage
+                ? [
+                    {
+                      label: 'Profile Image',
+                      src: formValues.profileImage,
+                      alt: `${formValues.firstName} ${formValues.lastName}`,
+                    },
+                  ]
                 : undefined,
               fields: [
                 {
@@ -739,6 +914,7 @@ export default function EditEmployeePage() {
                     ]),
               ],
               documents,
+              attachments: existingAttachments,
             },
           ]}
         />

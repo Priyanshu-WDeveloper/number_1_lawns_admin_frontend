@@ -5,6 +5,7 @@ interface AuthUser {
   email: string;
   role: number;
   validity: Date;
+  profileImage?: string;
 }
 
 interface AuthState {
@@ -72,9 +73,18 @@ const authSlice = createSlice({
       state.rememberMe = false;
       clearStorage();
     },
+    updateUser(
+      state,
+      action: PayloadAction<Partial<AuthUser>>,
+    ) {
+      if (state.user) {
+        Object.assign(state.user, action.payload);
+        persistToStorage(state);
+      }
+    },
   },
 });
 
-export const { setAuth, clearAuth } = authSlice.actions;
+export const { setAuth, clearAuth, updateUser } = authSlice.actions;
 export { loadFromStorage };
 export default authSlice.reducer;

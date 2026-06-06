@@ -9,8 +9,8 @@ const containerStyle = {
 };
 
 interface GoogleMapPickerProps {
-  latitude: number;
-  longitude: number;
+  latitude: number | undefined;
+  longitude: number | undefined;
   onPick: (lat: number, lng: number) => void;
 }
 
@@ -168,7 +168,7 @@ export function GoogleMapPicker({
           <MapPin className="h-3 w-3" />
           Click on the map or search to set coordinates
         </p>
-        {(latitude || longitude) && (
+        {latitude != null && longitude != null && (
           <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-lg px-3 py-1.5 text-xs border border-border">
             <Crosshair className="h-3 w-3 text-primary" />
             <span className="text-foreground font-mono">

@@ -210,7 +210,7 @@ export default function JobViewPage() {
           <div className="mx-auto">
             <Button
               variant="ghost"
-              onClick={() => navigate(ROUTES.JOBS)}
+              onClick={() => navigate(-1)}
               className="mb-4 text-muted-foreground hover:text-primary hover:bg-primary/10"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -244,7 +244,9 @@ export default function JobViewPage() {
                           ? `$${resolvedJob.price}`
                           : 'No Charge'}
                       </span>
-                      <p className="text-xs text-muted-foreground">Price</p>
+                      <p className="text-xs text-muted-foreground">
+                        Price
+                      </p>
                     </div>
                   </div>
 
@@ -319,37 +321,41 @@ export default function JobViewPage() {
                     </Button>
                   </>
                 )}
-                {resolvedJob._id && resolvedJob.status === 'completed' && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="rounded-xl h-9"
-                    onClick={async () => {
-                      try {
-                        const token = getToken();
-                        const res = await fetch(
-                          `${import.meta.env.VITE_API_URL}/jobs/${resolvedJob._id}/receipt`,
-                          {
-                            headers: token
-                              ? { Authorization: `Bearer ${token}` }
-                              : {},
-                          },
-                        );
-                        if (!res.ok) {
+                {resolvedJob._id &&
+                  resolvedJob.status === 'completed' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-xl h-9"
+                      onClick={async () => {
+                        try {
+                          const token = getToken();
+                          const res = await fetch(
+                            `${import.meta.env.VITE_API_URL}/jobs/${resolvedJob._id}/receipt`,
+                            {
+                              headers: token
+                                ? { Authorization: `Bearer ${token}` }
+                                : {},
+                            },
+                          );
+                          if (!res.ok) {
+                            toast.error('Failed to load receipt');
+                            return;
+                          }
+                          const blob = await res.blob();
+                          window.open(
+                            URL.createObjectURL(blob),
+                            '_blank',
+                          );
+                        } catch {
                           toast.error('Failed to load receipt');
-                          return;
                         }
-                        const blob = await res.blob();
-                        window.open(URL.createObjectURL(blob), '_blank');
-                      } catch {
-                        toast.error('Failed to load receipt');
-                      }
-                    }}
-                  >
-                    <FileDown className="h-4 w-4 mr-1" />
-                    View Receipt
-                  </Button>
-                )}
+                      }}
+                    >
+                      <FileDown className="h-4 w-4 mr-1" />
+                      View Receipt
+                    </Button>
+                  )}
               </div>
             </div>
 
@@ -369,7 +375,9 @@ export default function JobViewPage() {
                   <div className="flex items-center gap-3">
                     <User className="h-4 w-4 text-muted-foreground shrink-0" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Name</p>
+                      <p className="text-sm text-muted-foreground">
+                        Name
+                      </p>
                       <p className="text-foreground font-medium">
                         {getCustomerName(resolvedJob.customerId)}
                       </p>
@@ -378,7 +386,9 @@ export default function JobViewPage() {
                   <div className="flex items-center gap-3">
                     <Mail className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Email</p>
+                      <p className="text-sm text-muted-foreground">
+                        Email
+                      </p>
                       <p className="text-foreground font-medium">
                         {getCustomerEmail(resolvedJob.customerId)}
                       </p>
@@ -387,7 +397,9 @@ export default function JobViewPage() {
                   <div className="flex items-center gap-3">
                     <Phone className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Phone</p>
+                      <p className="text-sm text-muted-foreground">
+                        Phone
+                      </p>
                       <p className="text-foreground font-medium">
                         {getCustomerPhone(resolvedJob.customerId)}
                       </p>
@@ -423,7 +435,9 @@ export default function JobViewPage() {
                     <div className="flex items-center gap-3">
                       <Mail className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Email</p>
+                        <p className="text-sm text-muted-foreground">
+                          Email
+                        </p>
                         <p className="text-foreground font-medium">
                           {getEmployeeEmail(resolvedJob.employeeId)}
                         </p>
@@ -432,7 +446,9 @@ export default function JobViewPage() {
                     <div className="flex items-center gap-3">
                       <Phone className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Phone</p>
+                        <p className="text-sm text-muted-foreground">
+                          Phone
+                        </p>
                         <p className="text-foreground font-medium">
                           {getEmployeePhone(resolvedJob.employeeId)}
                         </p>
@@ -495,7 +511,9 @@ export default function JobViewPage() {
                   <div className="flex items-center gap-3">
                     <RefreshCw className="h-4 w-4 text-muted-foreground shrink-0" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Job Type</p>
+                      <p className="text-sm text-muted-foreground">
+                        Job Type
+                      </p>
                       <p className="text-foreground font-medium">
                         {resolvedJob.jobType
                           ? resolvedJob.jobType
@@ -510,7 +528,9 @@ export default function JobViewPage() {
                   <div className="flex items-center gap-3">
                     <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Job Date</p>
+                      <p className="text-sm text-muted-foreground">
+                        Job Date
+                      </p>
                       <p className="text-foreground font-medium">
                         {resolvedJob.jobDate
                           ? formatDate(resolvedJob.jobDate)
@@ -537,7 +557,9 @@ export default function JobViewPage() {
                   <div className="flex items-center gap-3">
                     <DollarSign className="h-4 w-4 text-muted-foreground shrink-0" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Price</p>
+                      <p className="text-sm text-muted-foreground">
+                        Price
+                      </p>
                       <p className="text-foreground font-medium">
                         {resolvedJob.price != null &&
                         resolvedJob.price > 0
@@ -605,7 +627,9 @@ export default function JobViewPage() {
                   <div className="flex items-start gap-3">
                     <FileText className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Notes</p>
+                      <p className="text-sm text-muted-foreground">
+                        Notes
+                      </p>
                       <p className="text-foreground font-medium">
                         {resolvedJob.notes}
                       </p>
@@ -628,7 +652,9 @@ export default function JobViewPage() {
                   <div className="flex items-start gap-3">
                     <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-sm text-muted-foreground">Address</p>
+                      <p className="text-sm text-muted-foreground">
+                        Address
+                      </p>
                       <p className="text-foreground font-medium">
                         {resolvedJob.address || '-'}
                       </p>
@@ -636,13 +662,17 @@ export default function JobViewPage() {
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">City</p>
+                      <p className="text-sm text-muted-foreground">
+                        City
+                      </p>
                       <p className="text-foreground font-medium">
                         {resolvedJob.city || '-'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">State</p>
+                      <p className="text-sm text-muted-foreground">
+                        State
+                      </p>
                       <p className="text-foreground font-medium">
                         {resolvedJob.state || '-'}
                       </p>
@@ -656,7 +686,9 @@ export default function JobViewPage() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Country</p>
+                      <p className="text-sm text-muted-foreground">
+                        Country
+                      </p>
                       <p className="text-foreground font-medium">
                         {resolvedJob.country || '-'}
                       </p>
@@ -693,21 +725,21 @@ export default function JobViewPage() {
       </div>
 
       <CompleteJobDialog
-            open={completeDialogOpen}
-            onOpenChange={setCompleteDialogOpen}
-            onConfirm={async (receivePrice) => {
-              if (!id) return;
-              await completeJob({ jobId: id, receivePrice }).unwrap();
-              toast.success('Job completed successfully');
-              setCompleteDialogOpen(false);
-            }}
-            paymentType={resolvedJob.paymentType}
-            jobDisplayId={`JOB-${resolvedJob.jobId}`}
-            customerName={getCustomerName(resolvedJob.customerId)}
-            customerPhone={customer?.phoneNumber}
-            customerEmail={customer?.email}
-            customerImage={customer?.profileImage}
-          />
+        open={completeDialogOpen}
+        onOpenChange={setCompleteDialogOpen}
+        onConfirm={async (receivePrice) => {
+          if (!id) return;
+          await completeJob({ jobId: id, receivePrice }).unwrap();
+          toast.success('Job completed successfully');
+          setCompleteDialogOpen(false);
+        }}
+        paymentType={resolvedJob.paymentType}
+        jobDisplayId={`JOB-${resolvedJob.jobId}`}
+        customerName={getCustomerName(resolvedJob.customerId)}
+        customerPhone={customer?.phoneNumber}
+        customerEmail={customer?.email}
+        customerImage={customer?.profileImage}
+      />
 
       <Dialog
         open={cancelDialogOpen}

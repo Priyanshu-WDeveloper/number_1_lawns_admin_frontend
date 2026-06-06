@@ -81,7 +81,11 @@ export default function CustomerManagementPage() {
       header: 'Name',
       sortable: true,
       cell: (row: ICustomer) => (
-        <AvatarCell name={row.fullName} email={row.email} />
+        <AvatarCell
+          profileImage={row.profileImage}
+          name={row.fullName}
+          email={row.email}
+        />
       ),
     },
     {
@@ -117,11 +121,11 @@ export default function CustomerManagementPage() {
       header: 'Balance',
       cell: (row: ICustomer) => (
         <span
-          className={
-            row.balance < 0 ? 'text-red-500' : 'text-primary'
-          }
-        >
-          ${row.balance.toFixed(2)}
+            className={
+              (row.balance ?? 0) < 0 ? 'text-red-500' : 'text-primary'
+            }
+          >
+            ${(row.balance ?? 0).toFixed(2)}
         </span>
       ),
     },

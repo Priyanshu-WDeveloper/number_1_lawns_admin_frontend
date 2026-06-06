@@ -27,7 +27,7 @@ import type {
   TrainingsResponse,
 } from '@/types/api.types';
 import type { CreateEmployeePayload } from '@/types/employees.types';
-import { setAuth, clearAuth } from '@/store/auth-slice';
+import { setAuth, clearAuth, updateUser } from '@/store/auth-slice';
 import { API_ROUTES, ROUTES } from '@/constants';
 import type {
   ICustomer,
@@ -323,6 +323,16 @@ export const api = createApi({
         body,
       }),
     }),
+    resetEmployeePassword: builder.mutation<
+      { message: string },
+      { id: string; password: string }
+    >({
+      query: ({ id, password }) => ({
+        url: API_ROUTES.EMPLOYEES.RESET_PASSWORD(id),
+        method: 'PATCH',
+        body: { password },
+      }),
+    }),
 
     // Job endpoints
     getJobs: builder.query<JobsResponse, ListQueryParams>({
@@ -414,18 +424,39 @@ export const api = createApi({
       }),
       invalidatesTags: ['Invoices', 'Jobs'],
     }),
+    updateJobDate: builder.mutation<
+      void,
+      { jobId: string; jobDate: string }
+    >({
+      query: ({ jobId, jobDate }) => ({
+        url: API_ROUTES.JOBS.DATE(jobId),
+        method: 'PATCH',
+        body: { jobDate },
+      }),
+      invalidatesTags: (_result, _error, { jobId }) => [
+        'Jobs',
+        'ChildJobs',
+        { type: 'Jobs', jobId },
+      ],
+    }),
 
     // Parent Job endpoints
-    getParentJobs: builder.query<
-      ParentJobsResponse,
-      ListQueryParams
-    >({
-      query: ({ page = 1, limit = 10, search, status, sort, jobType }) => ({
-        url: API_ROUTES.PARENT_JOBS.LIST,
-        params: { page, limit, search, status, sort, jobType },
-      }),
-      providesTags: ['ParentJobs'],
-    }),
+    getParentJobs: builder.query<ParentJobsResponse, ListQueryParams>(
+      {
+        query: ({
+          page = 1,
+          limit = 10,
+          search,
+          status,
+          sort,
+          jobType,
+        }) => ({
+          url: API_ROUTES.PARENT_JOBS.LIST,
+          params: { page, limit, search, status, sort, jobType },
+        }),
+        providesTags: ['ParentJobs'],
+      },
+    ),
     cancelParentJob: builder.mutation<void, string>({
       query: (id) => ({
         url: API_ROUTES.PARENT_JOBS.CANCEL(id),
@@ -435,15 +466,48 @@ export const api = createApi({
     }),
 
     // Child Job endpoints
-    getChildJobs: builder.query<
-      ChildJobsResponse,
-      ListQueryParams
-    >({
+    getChildJobs: builder.query<ChildJobsResponse, ListQueryParams>({
       query: ({ page = 1, limit = 10, search, status, sort }) => ({
         url: API_ROUTES.CHILD_JOBS.LIST,
         params: { page, limit, search, status, sort },
       }),
       providesTags: ['ChildJobs'],
+    }),
+    getChildJobsByParentId: builder.query<
+      ChildJobsResponse,
+      {
+        parentJobId: string;
+        page?: number;
+        limit?: number;
+        status?: string;
+        sort?: string;
+      }
+    >({
+      query: ({
+        parentJobId,
+        page = 1,
+        limit = 10,
+        status,
+        sort,
+      }) => ({
+        url: API_ROUTES.CHILD_JOBS.BY_PARENT(parentJobId),
+        params: { page, limit, status, sort },
+      }),
+      providesTags: ['ChildJobs'],
+    }),
+    updateChildJobStatus: builder.mutation<
+      void,
+      { jobId: string; status: string }
+    >({
+      query: ({ jobId, status }) => ({
+        url: API_ROUTES.CHILD_JOBS.STATUS(jobId),
+        method: 'PATCH',
+        body: { status },
+      }),
+      invalidatesTags: (_result, _error, { jobId }) => [
+        'ChildJobs',
+        { type: 'ChildJobs', id: jobId },
+      ],
     }),
 
     // Invoice endpoints
@@ -596,6 +660,18 @@ export const api = createApi({
     >({
       query: () => API_ROUTES.ADMINS.SELF,
       providesTags: ['Admins'],
+      async onQueryStarted(_, { queryFulfilled, dispatch }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data?.admin?.profileImage) {
+            dispatch(
+              updateUser({ profileImage: data.admin.profileImage }),
+            );
+          }
+        } catch {
+          /* silenty fail */
+        }
+      },
     }),
     updateProfile: builder.mutation<
       { admin: IAdminUser },
@@ -661,26 +737,26 @@ export const api = createApi({
         body,
       }),
     }),
-    superAdminChangePassword: builder.mutation<
-      { message: string },
-      { oldPassword: string; newPassword: string }
-    >({
-      query: (body) => ({
-        url: API_ROUTES.SUPER_ADMINS.CHANGE_PASSWORD,
-        method: 'PATCH',
-        body,
-      }),
-    }),
+    // superAdminChangePassword: builder.mutation<
+    //   { message: string },
+    //   { oldPassword: string; newPassword: string }
+    // >({
+    //   query: (body) => ({
+    //     url: API_ROUTES.SUPER_ADMINS.CHANGE_PASSWORD,
+    //     method: 'PATCH',
+    //     body,
+    //   }),
+    // }),
 
     // Super Admin - Billing endpoints
-    getBillingStats: builder.query<Record<string, unknown>, void>({
-      query: () => API_ROUTES.SUPER_ADMINS.BILLING.STATS,
-      providesTags: ['Billing'],
-    }),
-    getBillingInvoices: builder.query<unknown[], void>({
-      query: () => API_ROUTES.SUPER_ADMINS.BILLING.INVOICES,
-      providesTags: ['Billing'],
-    }),
+    // getBillingStats: builder.query<Record<string, unknown>, void>({
+    //   query: () => API_ROUTES.SUPER_ADMINS.BILLING.STATS,
+    //   providesTags: ['Billing'],
+    // }),
+    // getBillingInvoices: builder.query<unknown[], void>({
+    //   query: () => API_ROUTES.SUPER_ADMINS.BILLING.INVOICES,
+    //   providesTags: ['Billing'],
+    // }),
 
     // Training endpoints
     getTrainings: builder.query<TrainingsResponse, TrainingsParams>({
@@ -696,7 +772,10 @@ export const api = createApi({
         { type: 'Trainings', id },
       ],
     }),
-    createTraining: builder.mutation<ITraining, { title: string; description: string; videoUrl: string }>({
+    createTraining: builder.mutation<
+      ITraining,
+      { title: string; description: string; videoUrl: string }
+    >({
       query: (body) => ({
         url: API_ROUTES.TRAININGS.CREATE,
         method: 'POST',
@@ -704,7 +783,14 @@ export const api = createApi({
       }),
       invalidatesTags: ['Trainings'],
     }),
-    updateTraining: builder.mutation<ITraining, { id: string } & { title: string; description: string; videoUrl: string }>({
+    updateTraining: builder.mutation<
+      ITraining,
+      { id: string } & {
+        title: string;
+        description: string;
+        videoUrl: string;
+      }
+    >({
       query: ({ id, ...body }) => ({
         url: API_ROUTES.TRAININGS.UPDATE(id),
         method: 'PUT',
@@ -756,6 +842,7 @@ export const {
   useSetEmployeeValidityMutation,
   useDeleteEmployeeValidityMutation,
   useUploadDocumentMutation,
+  useResetEmployeePasswordMutation,
 
   useGetJobsQuery,
   useGetJobByIdQuery,
@@ -767,10 +854,13 @@ export const {
   useAssignJobEmployeeMutation,
   useGetJobReceiptQuery,
   useCreateJobReceiptMutation,
+  useUpdateJobDateMutation,
 
   useGetParentJobsQuery,
   useCancelParentJobMutation,
   useGetChildJobsQuery,
+  useGetChildJobsByParentIdQuery,
+  useUpdateChildJobStatusMutation,
 
   useGetInvoicesQuery,
   useGetInvoiceByJobIdQuery,
@@ -801,10 +891,10 @@ export const {
   useVerifyOtpMutation,
   useResetPasswordMutation,
   useChangePasswordMutation,
-  useSuperAdminChangePasswordMutation,
+  // useSuperAdminChangePasswordMutation,
 
-  useGetBillingStatsQuery,
-  useGetBillingInvoicesQuery,
+  // useGetBillingStatsQuery,
+  // useGetBillingInvoicesQuery,
 
   useGetTrainingsQuery,
   useGetTrainingQuery,

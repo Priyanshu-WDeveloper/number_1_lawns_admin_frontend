@@ -14,6 +14,8 @@ import {
   Map,
   Hash,
   Globe,
+  Camera,
+  X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -22,16 +24,21 @@ import { getErrorMessage } from '@/lib/get-error-message';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Navbar } from '@/components/layout/navbar';
 import { ROUTES } from '@/constants';
-import { useCreateCustomerMutation } from '@/API/api';
+import {
+  useCreateCustomerMutation,
+  useUploadDocumentMutation,
+} from '@/API/api';
 import { AdminFormStepper } from '@/components/admin/admin-form-stepper';
 import { AdminFormStep } from '@/components/admin/admin-form-step';
 import { ReviewCard } from '@/components/admin/review-card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { validatePhone } from '@/lib/phone-validation';
 import {
   validateAddress,
   getCountryIsoFromPhoneCode,
 } from '@/lib/address-validation';
+import { PhoneInput } from '@/components/forms/phone-input';
 
 const createCustomerSchema = z
   .object({
@@ -57,10 +64,11 @@ const createCustomerSchema = z
       .regex(/^\d+$/, 'Invalid postal code'),
     country: z.string().min(1, 'Country is required'),
     countryIso: z.string(),
-    location: z.string(),
-    latitude: z.number(),
-    longitude: z.number(),
+    location: z.string().optional(),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
     locationMode: z.enum(['map', 'manual']),
+    profileImage: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     const phoneResult = validatePhone(
@@ -114,6 +122,7 @@ const initialFormData: CreateCustomerFormData = {
   latitude: 40.7128,
   longitude: -74.006,
   locationMode: 'map',
+  profileImage: '',
 };
 
 const steps = [
@@ -141,7 +150,30 @@ export default function CreateCustomerPage() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [createCustomer, { isLoading }] = useCreateCustomerMutation();
+  const [uploadDocument] = useUploadDocumentMutation();
   const formRef = useRef<HTMLFormElement>(null);
+
+  const [profileImage, setProfileImage] = useState<string | null>(
+    null,
+  );
+  const [profileImageError, setProfileImageError] = useState(false);
+  const profileInputRef = useRef<HTMLInputElement>(null);
+  const profileImageFileRef = useRef<File | null>(null);
+
+  const handleProfileImageChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    profileImageFileRef.current = file;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfileImage(reader.result as string);
+      setProfileImageError(false);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const {
     register,
@@ -195,6 +227,14 @@ export default function CreateCustomerPage() {
 
   const onSubmit = async (data: CreateCustomerFormData) => {
     try {
+      let profileImageUrl = '';
+      if (profileImageFileRef.current) {
+        const formData = new FormData();
+        formData.append('file', profileImageFileRef.current);
+        const res = await uploadDocument(formData).unwrap();
+        profileImageUrl = res.url;
+      }
+
       await createCustomer({
         firstName: data.firstName,
         lastName: data.lastName,
@@ -206,10 +246,9 @@ export default function CreateCustomerPage() {
         state: data.state,
         postalCode: data.postalCode,
         country: data.country,
-        location: {
-          type: 'Point',
-          coordinates: [data.longitude, data.latitude],
-        },
+        latitude: data.latitude,
+        longitude: data.longitude,
+        profileImage: profileImageUrl || undefined,
       }).unwrap();
 
       toast.success('Customer created successfully');
@@ -222,6 +261,199 @@ export default function CreateCustomerPage() {
   };
 
   const renderStepContent = () => {
+    if (currentStep === 1) {
+      return (
+        <div className="space-y-6">
+          {/* <div className="flex flex-col items-center justify-center space-y-4">
+            <div className="relative h-32 w-32">
+              <input
+                type="file"
+                ref={profileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleProfileImageChange}
+              />
+              <button
+                type="button"
+                onClick={() => profileInputRef.current?.click()}
+                className="group relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-border bg-muted transition-colors hover:border-primary"
+              >
+                {profileImage && !profileImageError ? (
+                  <img
+                    src={profileImage}
+                    alt="Preview"
+                    className="h-full w-full object-cover"
+                    onError={() => setProfileImageError(true)}
+                  />
+                ) : (
+                  <Camera className="h-8 w-8 text-muted-foreground transition-colors group-hover:text-primary" />
+                )}
+              </button>
+              {profileImage && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileImage(null);
+                    profileImageFileRef.current = null;
+                  }}
+                  className="absolute right-0 top-0 rounded-full bg-destructive p-1.5 text-destructive-foreground shadow-sm hover:bg-destructive/90"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <p className="text-sm font-medium text-foreground">
+              {profileImage ? 'Change Photo' : 'Upload Profile Image'}
+            </p>
+          </div> */}
+          <div>
+            <h4 className="mb-4 text-sm font-medium uppercase tracking-wide mx-auto text-muted-foreground">
+              Profile Image
+              {/* <span className="text-primary"> *</span> */}
+            </h4>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                {profileImage && !profileImageError ? (
+                  <div className="relative h-24 w-24">
+                    <img
+                      src={profileImage}
+                      alt="Profile preview"
+                      onError={() => setProfileImageError(true)}
+                      className="h-24 w-24 rounded-full object-cover border-2 border-border"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setValue('profileImage', '', {
+                          shouldValidate: true,
+                        });
+                        profileImageFileRef.current = null;
+                        setProfileImageError(false);
+                        if (profileInputRef.current) {
+                          profileInputRef.current.value = '';
+                        }
+                      }}
+                      className="absolute -right-1 -top-1 rounded-full bg-white p-0.5 shadow-sm"
+                    >
+                      <X className="h-4 w-4 text-red-500" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => profileInputRef.current?.click()}
+                    className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-dashed border-border bg-background hover:border-primary"
+                  >
+                    <Camera className="h-6 w-6 text-muted-foreground" />
+                  </button>
+                )}
+              </div>
+              <input
+                ref={profileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleProfileImageChange}
+              />
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  {profileImage && !profileImageError
+                    ? 'Click image to change'
+                    : 'Upload profile image'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  PNG, JPG up to 5MB
+                </p>
+                {errors.profileImage && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors.profileImage.message}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <h4 className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+            Basic Information
+          </h4>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                First Name
+                <span className="text-primary"> *</span>
+              </label>
+              <Input
+                placeholder="Enter first name"
+                {...register('firstName')}
+                className="h-12 rounded-xl border-border bg-background"
+              />
+              {errors.firstName && (
+                <p className="text-sm text-red-500">
+                  {errors.firstName.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Last Name
+                <span className="text-primary"> *</span>
+              </label>
+              <Input
+                placeholder="Enter last name"
+                {...register('lastName')}
+                className="h-12 rounded-xl border-border bg-background"
+              />
+              {errors.lastName && (
+                <p className="text-sm text-red-500">
+                  {errors.lastName.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Email Address
+                <span className="text-primary"> *</span>
+              </label>
+              <Input
+                type="email"
+                placeholder="Enter email address"
+                {...register('email')}
+                className="h-12 rounded-xl border-border bg-background"
+              />
+              {errors.email && (
+                <p className="text-sm text-red-500">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Phone Number
+                <span className="text-primary"> *</span>
+              </label>
+              <PhoneInput
+                value={formValues.phoneNumber ?? ''}
+                onChange={(val) =>
+                  setValue('phoneNumber', val ?? '', {
+                    shouldDirty: true,
+                  })
+                }
+                countryCode={formValues.countryCode ?? '+64'}
+                onCountryCodeChange={(code) =>
+                  setValue('countryCode', code, {
+                    shouldDirty: true,
+                  })
+                }
+                error={errors.phoneNumber?.message}
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
     if (currentStep === 3) {
       return (
         <form ref={formRef} onSubmit={handleSubmit(onSubmit)}>
@@ -230,7 +462,17 @@ export default function CreateCustomerPage() {
               {
                 icon: <User className="h-5 w-5 text-white" />,
                 title: 'Customer Information',
-                subtitle: 'Please verify the customer information below',
+                subtitle:
+                  'Please verify the customer information below',
+                imageFields: formValues.profileImage
+                  ? [
+                      {
+                        label: 'Profile Image',
+                        src: formValues.profileImage,
+                        alt: `${formValues.firstName} ${formValues.lastName}`,
+                      },
+                    ]
+                  : undefined,
                 fields: [
                   {
                     icon: <User className="h-3 w-3" />,

@@ -67,6 +67,7 @@ export const API_ROUTES = {
     SET_VALIDITY: (id: string) => `/admins/employees/${id}/validity`,
     REMOVE_VALIDITY: (id: string) =>
       `/admins/employees/${id}/validity`,
+    RESET_PASSWORD: (id: string) => `/admins/employees/${id}/password`,
     UPLOAD: '/admins/upload',
   },
   JOBS: {
@@ -79,6 +80,7 @@ export const API_ROUTES = {
     COMPLETE: '/jobs/complete',
     ASSIGN_EMPLOYEE: `/jobs/assign-employee`,
     RECEIPT: (id: string) => `/jobs/${id}/receipt`,
+    DATE: (id: string) => `/jobs/${id}/change-date`,
   },
   PARENT_JOBS: {
     LIST: '/jobs/parents',
@@ -86,6 +88,9 @@ export const API_ROUTES = {
   },
   CHILD_JOBS: {
     LIST: '/jobs',
+    BY_PARENT: (parentJobId: string) =>
+      `/jobs/parents/${parentJobId}/children`,
+    STATUS: (id: string) => `/jobs/${id}/status`,
   },
   INVOICES: {
     LIST: '/invoices',

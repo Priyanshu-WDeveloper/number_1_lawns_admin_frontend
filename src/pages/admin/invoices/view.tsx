@@ -18,10 +18,11 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/constants';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/lib/get-error-message';
 import {
   useGetInvoiceByJobIdQuery,
   useLazyDownloadInvoiceQuery,
-  useLazyGetReceiptQuery,
+  // useLazyGetReceiptQuery,
 } from '@/API/api';
 import type { IInvoice, IJob, IPopulatedCustomer } from '@/types';
 
@@ -65,26 +66,37 @@ export default function InvoiceViewPage() {
       skip: !jobId || !isValidObjectId,
     });
 
-  const invoice = invoiceFromState ?? invoiceFromStorage ?? apiInvoice;
+  const invoice =
+    invoiceFromState ?? invoiceFromStorage ?? apiInvoice;
   const downloadUrl = apiInvoice?.downloadUrl ?? invoice?.downloadUrl;
-  const isLoading = isApiLoading && !invoiceFromState && !invoiceFromStorage;
+  const isLoading =
+    isApiLoading && !invoiceFromState && !invoiceFromStorage;
   const [downloadInvoice] = useLazyDownloadInvoiceQuery();
-  const [getReceipt] = useLazyGetReceiptQuery();
+  // const [getReceipt] = useLazyGetReceiptQuery();
 
   const handleDownload = async () => {
-    if (!jobId) return;
+    const job = invoice?.jobId;
+    const mongoId = typeof job === 'object' && job ? job._id : undefined;
+    
+    if (!mongoId) {
+        toast.error('Job ID not available for download');
+        return;
+    }
+    
     try {
-      const result = await downloadInvoice(jobId);
+      const result = await downloadInvoice(mongoId);
       if (result.data) {
         const url = window.URL.createObjectURL(result.data);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `invoice-${jobId}.pdf`;
+        const displayId = typeof job === 'object' ? job.jobId : jobId;
+        a.download = `invoice-${displayId}.pdf`;
         a.click();
         window.URL.revokeObjectURL(url);
       }
     } catch (error) {
       console.error('Download failed:', error);
+      toast.error(getErrorMessage(error, 'Download failed'));
     }
   };
 
@@ -93,14 +105,17 @@ export default function InvoiceViewPage() {
       window.open(downloadUrl, '_blank');
       return;
     }
-    if (!jobId) return;
+    const effectiveJobId = isValidObjectId
+      ? jobId
+      : typeof invoice?.jobId === 'object' && invoice?.jobId?._id;
+    if (!effectiveJobId) return;
     try {
-      const result = await getReceipt(jobId);
-      if (result.data) {
-        window.open(URL.createObjectURL(result.data), '_blank');
-      }
-    } catch {
-      toast.error('Failed to load receipt');
+      const result = await downloadInvoice(effectiveJobId).unwrap();
+      const url = window.URL.createObjectURL(result);
+      window.open(url, '_blank');
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to load receipt'));
     }
   };
 
@@ -364,7 +379,7 @@ export default function InvoiceViewPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  {/* <div className="flex items-center gap-3">
                     <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
                     <div>
                       <p className="text-sm text-muted-foreground">
@@ -374,7 +389,7 @@ export default function InvoiceViewPage() {
                         {formatDate(invoice.createdAt)}
                       </p>
                     </div>
-                  </div>
+                  </div> */}
                   {/* <div className="flex items-center gap-3">
                     <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
                     <div>

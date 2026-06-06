@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Ellipsis, Eye, Check, Ban, User, ExternalLink } from 'lucide-react';
+import { Ellipsis, Eye, Check, Ban, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import type { ColumnDef } from '@/components/data-table/data-table';
@@ -26,13 +26,11 @@ import {
   useCompleteJobMutation,
   useAssignJobEmployeeMutation,
   useGetEmployeesQuery,
+  useUpdateJobDateMutation,
 } from '@/API/api';
-import { StatusBadge } from '@/components/data-table/status-badge';
-import { STATUS_CONFIG } from '@/constants/status-config';
 import { formatDate } from '@/lib/format-date';
-import { getToken } from '@/lib/auth';
+
 import { getErrorMessage } from '@/lib/get-error-message';
-import { differenceInCalendarDays } from 'date-fns';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { CompleteJobDialog } from '@/components/admin/complete-job-dialog';
 import { SearchableSelect } from '@/components/ui/searchable-select';
@@ -40,6 +38,8 @@ import { Button } from '@/components/ui/button';
 import { useDataTableQueryParams } from '@/hooks/use-data-table-query-params';
 import type { IJob } from '@/types';
 import type { ListQueryParams } from '@/types/api.types';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
 
 export default function ScheduledJobsPage() {
   const navigate = useNavigate();
@@ -76,13 +76,16 @@ export default function ScheduledJobsPage() {
   const [cancelJob] = useCancelJobMutation();
   const [completeJob] = useCompleteJobMutation();
   const [assignJobEmployee] = useAssignJobEmployeeMutation();
+  const [changeJobDate, { isLoading: UpdateJobDateLoading }] =
+    useUpdateJobDateMutation();
+
   const { data: employeesData } = useGetEmployeesQuery({
     limit: 500,
     page: 1,
   });
 
   const [confirmAction, setConfirmAction] = useState<{
-    type: 'complete' | 'cancel';
+    type: 'complete' | 'cancel' | 'jobDateChange';
     jobId: string;
     paymentType?: string;
     jobDisplayId?: string;
@@ -95,6 +98,7 @@ export default function ScheduledJobsPage() {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [assigningJobId, setAssigningJobId] = useState('');
+  const [selectedDate, setSelectedDate] = useState<string>();
 
   const childJobs = apiData?.jobs ?? [];
   const totalPages =
@@ -140,25 +144,19 @@ export default function ScheduledJobsPage() {
       toast.error(getErrorMessage(err, 'Failed to complete job'));
     }
   };
-
-  const handleViewReceipt = async (id?: string) => {
-    if (!id) return;
+  const handleChangeJobDate = async (id: string) => {
+    if (!selectedDate) {
+      toast.error('Please select a date');
+      return;
+    }
     try {
-      const token = getToken();
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/jobs/${id}/receipt`,
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        },
-      );
-      if (!res.ok) {
-        toast.error('Failed to load receipt');
-        return;
-      }
-      const blob = await res.blob();
-      window.open(URL.createObjectURL(blob), '_blank');
-    } catch {
-      toast.error('Failed to load receipt');
+      await changeJobDate({ jobId: id, jobDate: selectedDate }).unwrap();
+      toast.success('Job Date Changed successfully');
+
+      setConfirmAction(null);
+      setSelectedDate(undefined);
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to complete job'));
     }
   };
 
@@ -176,19 +174,6 @@ export default function ScheduledJobsPage() {
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to assign employee'));
     }
-  };
-
-  const getDisplayStatus = (job: IJob): string => {
-    if (job.status !== 'pending') return job.status ?? '';
-    if (!job.jobDate) return 'pending';
-
-    const jobDate = new Date(job.jobDate);
-    const today = new Date();
-    const diffDays = differenceInCalendarDays(jobDate, today);
-
-    if (diffDays === 0) return 'in-progress';
-    if (diffDays > 0) return 'upcoming';
-    return 'overdue';
   };
 
   const getCustomerName = (customerId: unknown): string => {
@@ -211,12 +196,23 @@ export default function ScheduledJobsPage() {
     return '-';
   };
 
+  // console.log(setStatusFilter);
+  // console.log(statusFilter);
+  // console.log('status', apiData || '');
+
   const columns: ColumnDef<IJob>[] = [
     {
       accessorKey: 'jobId',
       header: 'JobId',
       cell: (row: IJob) => (
         <span className="text-[#6b7280]">{row.jobId}</span>
+      ),
+    },
+    {
+      accessorKey: 'address',
+      header: 'Address',
+      cell: (row: IJob) => (
+        <span className="text-[#6b7280]">{row.address}</span>
       ),
     },
     {
@@ -237,6 +233,28 @@ export default function ScheduledJobsPage() {
         </span>
       ),
     },
+    // {
+    //   accessorKey: 'customerId',
+    //   header: 'Customer',
+    //   cell: (row: IJob) => (
+    //     <AvatarCell
+    //       name={getEmployeeName(row.customerId)}
+    //       email={row.customerId.email}
+    //       profileImage={row.customerId.profileImage}
+    //     />
+    //   ),
+    // },
+    // {
+    //   accessorKey: 'employeeId',
+    //   header: 'Employee',
+    //   cell: (row: IJob) => (
+    //     <AvatarCell
+    //       name={getEmployeeName(row.employeeId)}
+    //       email={row.employeeId.email}
+    //       profileImage={row.employeeId.profileImage}
+    //     />
+    //   ),
+    // },
     {
       accessorKey: 'jobDate',
       header: 'Date',
@@ -264,23 +282,17 @@ export default function ScheduledJobsPage() {
         </span>
       ),
     },
+
     // {
-    //   accessorKey: 'address',
-    //   header: 'Address',
+    //   accessorKey: 'status',
+    //   header: 'Status',
     //   cell: (row: IJob) => (
-    //     <span className="text-[#6b7280]">{row.address}</span>
+    //     <StatusBadge
+    //       status={getDisplayStatus(row)}
+    //       config={STATUS_CONFIG.job}
+    //     />
     //   ),
     // },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: (row: IJob) => (
-        <StatusBadge
-          status={getDisplayStatus(row)}
-          config={STATUS_CONFIG.job}
-        />
-      ),
-    },
     {
       accessorKey: 'actions',
       header: 'Actions',
@@ -296,7 +308,7 @@ export default function ScheduledJobsPage() {
             <Eye className="h-3.5 w-3.5" />
             View
           </button>
-          {row._id && row.status === 'completed' && (
+          {/* {row._id && row.status === 'completed' && (
             <button
               type="button"
               onClick={() => handleViewReceipt(row._id)}
@@ -305,8 +317,8 @@ export default function ScheduledJobsPage() {
               <ExternalLink className="h-3.5 w-3.5" />
               View Receipt
             </button>
-          )}
-          {row.status === 'pending' && row.jobType === 'one_time' && (
+          )} */}
+          {statusFilter === 'pending' && row.status === 'pending' && (
             <>
               <button
                 type="button"
@@ -347,6 +359,28 @@ export default function ScheduledJobsPage() {
               </button> */}
             </>
           )}
+          {(statusFilter === 'pending' ||
+            statusFilter === 'upcoming') &&
+            (row.status === 'pending' ||
+              row.status === 'upcoming') && (
+              <button
+                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors"
+                onClick={() => {
+                  setSelectedDate(
+                    row.jobDate
+                      ? format(new Date(row.jobDate), 'yyyy-MM-dd')
+                      : undefined,
+                  );
+
+                  setConfirmAction({
+                    type: 'jobDateChange',
+                    jobId: row._id || '',
+                  });
+                }}
+              >
+                Change Date
+              </button>
+            )}
           {row.status !== 'completed' &&
             row.status !== 'cancelled' && (
               <DropdownMenu>
@@ -361,15 +395,18 @@ export default function ScheduledJobsPage() {
                 <DropdownMenuContent align="end">
                   {row.status === 'pending' && (
                     <>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setAssigningJobId(row._id ?? '');
-                          setAssignDialogOpen(true);
-                        }}
-                      >
-                        <User className="mr-2 h-4 w-4 text-blue-500" />
-                        <span>Assign Employee</span>
-                      </DropdownMenuItem>
+                      {(!row.employeeId ||
+                        typeof row.employeeId === 'string') && (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setAssigningJobId(row._id ?? '');
+                            setAssignDialogOpen(true);
+                          }}
+                        >
+                          <User className="mr-2 h-4 w-4 text-blue-500" />
+                          <span>Assign Employee</span>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         onClick={() =>
                           setConfirmAction({
@@ -500,6 +537,69 @@ export default function ScheduledJobsPage() {
           setConfirmAction(null);
         }}
       />
+
+      <Dialog
+        open={confirmAction?.type === 'jobDateChange'}
+        onOpenChange={(open) => {
+          if (!open) {
+            setConfirmAction(null);
+            setSelectedDate(undefined);
+          }
+        }}
+      >
+        {/* <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Job Date</DialogTitle>
+          </DialogHeader>
+
+          <DatePicker
+            date={selectedDate}
+            onChange={setSelectedDate}
+          />
+
+          <Button
+            onClick={() => {
+              if (!confirmAction?.jobId) return;
+              handleChangeJobDate(confirmAction.jobId);
+            }}
+            disabled={!selectedDate}
+          >
+            Save
+          </Button>
+        </DialogContent> */}
+        {/* <DialogContent> */}
+        <DialogContent className="max-w-[320px]">
+          <DialogHeader>
+            <DialogTitle>Change Job Date</DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center">
+            <Calendar
+              mode="single"
+              selected={
+                selectedDate ? new Date(selectedDate) : undefined
+              }
+              onSelect={(date) => {
+                if (!date) return;
+
+                setSelectedDate(format(date, 'yyyy-MM-dd'));
+              }}
+              // setConfirmAction(null);
+              className="rounded-md border"
+            />
+          </div>
+
+          <Button
+            onClick={() =>
+              handleChangeJobDate(confirmAction?.jobId || '')
+            }
+            disabled={!selectedDate}
+          >
+            {UpdateJobDateLoading
+              ? 'Changing Date...'
+              : ' Change Date'}
+          </Button>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

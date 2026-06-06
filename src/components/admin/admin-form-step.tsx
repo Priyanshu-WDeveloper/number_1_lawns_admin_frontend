@@ -59,10 +59,12 @@ export function AdminFormStep({
   useEffect(() => {
     // Sync country -> countryIso
     if (formValues.country && !formValues.countryIso) {
-      const match = Country.getAllCountries().find(
-        (c) =>
-          c.name.toLowerCase() === formValues.country.toLowerCase(),
-      );
+      const allCountries = Country.getAllCountries();
+      const query = formValues.country.trim().toLowerCase();
+      const match =
+        allCountries.find((c) => c.name.toLowerCase() === query) ||
+        allCountries.find((c) => c.name.toLowerCase().startsWith(query)) ||
+        allCountries.find((c) => c.name.toLowerCase().includes(query));
 
       if (match) {
         setValue('countryIso', match.isoCode, {
@@ -213,8 +215,8 @@ export function AdminFormStep({
 
   if (step === 2) {
     const locationMode = watch('locationMode') || 'manual';
-    const latitude = watch('latitude') || 0;
-    const longitude = watch('longitude') || 0;
+    const latitude = watch('latitude');
+    const longitude = watch('longitude');
 
     const handleModeChange = (mode: 'map' | 'manual') => {
       setValue('locationMode', mode);

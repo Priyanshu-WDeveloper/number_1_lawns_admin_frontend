@@ -7,7 +7,7 @@ export interface ICustomer {
   fullName: string;
   email: string;
   status: 'active' | 'inactive' | 'expired';
-  profileImage: string;
+
   countryCode: string;
   phoneNumber: string;
   role: number;
@@ -16,15 +16,13 @@ export interface ICustomer {
   state: string;
   postalCode: string;
   country: string;
-  balance: number;
-  parentAdmin: string;
-  active: boolean;
-  isDeleted: boolean;
-  deletedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  location: {
-    type: 'Point';
-    coordinates: [number, number];
-  };
+  profileImage?: string;
+  balance?: number;
+  createdAt?: string;
+
+
+  location?: { type: 'Point'; coordinates: [number, number] };
+  latitude?: number;
+
+  longitude?: number;
 }

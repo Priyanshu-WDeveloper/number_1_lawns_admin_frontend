@@ -1,12 +1,11 @@
 import { ArrowLeft, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 
 interface ProfileHeroProps {
   profileImage?: string;
   fullName: string;
   email: string;
-  initials: string;
   status: string;
   role: number;
   balance: number;
@@ -19,7 +18,7 @@ export default function ProfileHero({
   profileImage,
   fullName,
   email,
-  initials,
+
   status: _status,
   role,
   onBack,
@@ -45,19 +44,7 @@ export default function ProfileHero({
 
         <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-5">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-            <Avatar className="h-20 w-20 ring-4 ring-white/30 shadow-xl">
-              {profileImage ? (
-                <img
-                  src={profileImage}
-                  alt={fullName}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <AvatarFallback className="text-2xl font-bold bg-white/20 text-white">
-                  {initials}
-                </AvatarFallback>
-              )}
-            </Avatar>
+            <UserAvatar image={profileImage} name={fullName} size="lg" className="h-20 w-20 ring-4 ring-white/30 shadow-xl" />
             <div className="text-center sm:text-left">
               <h1 className="text-2xl font-bold text-white">
                 {fullName}

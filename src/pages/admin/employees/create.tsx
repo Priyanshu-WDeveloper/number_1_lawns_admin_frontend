@@ -161,7 +161,11 @@ const steps = [
 export default function CreateEmployeePage() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
+
   const [documents, setDocuments] = useState<NamedDoc[]>([]);
+
+  const [profileImageError, setProfileImageError] = useState(false);
+
   const [createEmployee, { isLoading: isCreating }] =
     useCreateEmployeeMutation();
   const [uploadDocument] = useUploadDocumentMutation();
@@ -370,11 +374,12 @@ export default function CreateEmployeePage() {
             </h4>
             <div className="flex items-center gap-4">
               <div className="relative">
-                {profileImage ? (
+                {profileImage && !profileImageError ? (
                   <div className="relative h-24 w-24">
                     <img
                       src={profileImage}
                       alt="Profile preview"
+                      onError={() => setProfileImageError(true)}
                       className="h-24 w-24 rounded-full object-cover border-2 border-border"
                     />
                     <button
@@ -384,6 +389,7 @@ export default function CreateEmployeePage() {
                           shouldValidate: true,
                         });
                         profileImageFileRef.current = null;
+                        setProfileImageError(false);
                         if (profileInputRef.current) {
                           profileInputRef.current.value = '';
                         }
@@ -412,7 +418,7 @@ export default function CreateEmployeePage() {
               />
               <div>
                 <p className="text-sm font-medium text-foreground">
-                  {profileImage
+                  {profileImage && !profileImageError
                     ? 'Click image to change'
                     : 'Upload profile image'}
                 </p>
@@ -626,11 +632,14 @@ export default function CreateEmployeePage() {
               icon: <User className="h-5 w-5 text-white" />,
               title: 'Employee Information',
               subtitle: 'Please verify the employee information below',
-              image: formValues.profileImage
-                ? {
-                    src: formValues.profileImage,
-                    alt: `${formValues.firstName} ${formValues.lastName}`,
-                  }
+              imageFields: formValues.profileImage
+                ? [
+                    {
+                      label: 'Profile Image',
+                      src: formValues.profileImage,
+                      alt: `${formValues.firstName} ${formValues.lastName}`,
+                    },
+                  ]
                 : undefined,
               fields: [
                 {

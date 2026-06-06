@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { FileText } from 'lucide-react';
 import { DocumentRow } from './document-row';
 import { DocumentPreviewModal } from './document-preview-modal';
 import { ReviewField } from './review-field';
@@ -14,9 +15,10 @@ interface ReviewSection {
   icon: ReactNode;
   title: string;
   subtitle?: string;
-  image?: { src: string; alt: string };
+  imageFields?: Array<{ label: string; src: string; alt: string }>;
   fields?: ReviewFieldDef[];
   documents?: NamedDoc[];
+  attachments?: Array<{ key: string; value: string }>;
 }
 
 interface ReviewCardProps {
@@ -25,7 +27,6 @@ interface ReviewCardProps {
 
 export function ReviewCard({ sections }: ReviewCardProps) {
   const [previewFile, setPreviewFile] = useState<File | null>(null);
-
   const handlePreview = (doc: NamedDoc) => {
     if (doc.file) setPreviewFile(doc.file);
   };
@@ -57,25 +58,65 @@ export function ReviewCard({ sections }: ReviewCardProps) {
                   )}
                 </div>
               </div>
-              {section.image && (
-                <img
-                  src={section.image.src}
-                  alt={section.image.alt}
-                  className="h-10 w-10 rounded-full object-cover"
-                />
-              )}
             </div>
 
-            {section.fields && section.fields.length > 0 && (
+            {(section.fields && section.fields.length > 0) ||
+            (section.imageFields && section.imageFields.length > 0) ? (
               <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {section.fields.map((field, fi) => (
-                    <ReviewField
-                      key={fi}
-                      icon={field.icon}
-                      label={field.label}
-                      value={field.value}
-                    />
+                {section.imageFields && section.imageFields.length > 0 && (
+                  <div className="space-y-4">
+                    {section.imageFields.map((img, ii) => (
+                      <div key={ii}>
+                        <p className="text-xs text-[#6b7280] mb-1.5">
+                          {img.label}
+                        </p>
+                        <img
+                          src={img.src}
+                          alt={img.alt}
+                          className="h-14 w-14 rounded-full object-cover border-2 border-border"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {section.fields && section.fields.length > 0 && (
+                  <div
+                    className={`grid grid-cols-1 md:grid-cols-2 gap-5 ${
+                      section.imageFields && section.imageFields.length > 0
+                        ? 'mt-5 pt-5 border-t border-[#e5e7eb]'
+                        : ''
+                    }`}
+                  >
+                    {section.fields.map((field, fi) => (
+                      <ReviewField
+                        key={fi}
+                        icon={field.icon}
+                        label={field.label}
+                        value={field.value}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            {section.attachments && section.attachments.length > 0 && (
+              <div className="px-6 pb-4 space-y-3">
+                <p className="text-xs font-medium text-[#6b7280] uppercase tracking-wide">
+                  Existing Documents
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {section.attachments.map((att, ai) => (
+                    <a
+                      key={ai}
+                      href={att.value}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-[#e5e7eb] bg-white px-3 py-1.5 text-xs text-[#374151] hover:bg-[#f9fafb] hover:border-[#d1d5db] transition-colors"
+                    >
+                      <FileText className="h-3.5 w-3.5 text-[#6b7280]" />
+                      {att.key}
+                    </a>
                   ))}
                 </div>
               </div>

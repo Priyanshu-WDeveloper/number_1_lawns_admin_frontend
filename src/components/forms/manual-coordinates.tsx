@@ -2,14 +2,14 @@ import { Input } from '@/components/ui/input';
 import { Hash } from 'lucide-react';
 
 interface ManualCoordinatesProps {
-  latitude: number;
-  longitude: number;
+  latitude: number | undefined;
+  longitude: number | undefined;
   onChange: (lat: number, lng: number) => void;
 }
 
 export function ManualCoordinates({ latitude, longitude, onChange }: ManualCoordinatesProps) {
-  const latValid = !latitude || (latitude >= -90 && latitude <= 90);
-  const lngValid = !longitude || (longitude >= -180 && longitude <= 180);
+  const latValid = latitude == null || (latitude >= -90 && latitude <= 90);
+  const lngValid = longitude == null || (longitude >= -180 && longitude <= 180);
 
   return (
     <div className="space-y-3">
@@ -23,10 +23,10 @@ export function ManualCoordinates({ latitude, longitude, onChange }: ManualCoord
             type="number"
             step="any"
             placeholder="e.g., 28.6139"
-            value={latitude || ''}
+            value={latitude ?? ''}
             onChange={(e) => {
               const val = parseFloat(e.target.value);
-              onChange(isNaN(val) ? 0 : val, longitude);
+              onChange(isNaN(val) ? 0 : val, longitude ?? 0);
             }}
             className={`h-12 rounded-xl border bg-background ${
               !latValid ? 'border-red-300 bg-red-50' : 'border-border'
@@ -46,10 +46,10 @@ export function ManualCoordinates({ latitude, longitude, onChange }: ManualCoord
             type="number"
             step="any"
             placeholder="e.g., 77.2090"
-            value={longitude || ''}
+            value={longitude ?? ''}
             onChange={(e) => {
               const val = parseFloat(e.target.value);
-              onChange(latitude, isNaN(val) ? 0 : val);
+              onChange(latitude ?? 0, isNaN(val) ? 0 : val);
             }}
             className={`h-12 rounded-xl border bg-background ${
               !lngValid ? 'border-red-300 bg-red-50' : 'border-border'

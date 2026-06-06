@@ -1,8 +1,8 @@
 import { MapPin, Crosshair } from 'lucide-react';
 
 interface MockMapPickerProps {
-  latitude: number;
-  longitude: number;
+  latitude: number | undefined;
+  longitude: number | undefined;
   onPick: (lat: number, lng: number) => void;
 }
 
@@ -12,8 +12,8 @@ const LAT_RANGE = 10;
 const LNG_RANGE = 12;
 
 export function MockMapPicker({ latitude, longitude, onPick }: MockMapPickerProps) {
-  const displayLat = latitude || DEFAULT_LAT;
-  const displayLng = longitude || DEFAULT_LNG;
+  const displayLat = latitude != null ? latitude : DEFAULT_LAT;
+  const displayLng = longitude != null ? longitude : DEFAULT_LNG;
 
   const pinX = Math.min(
     95,

@@ -4,7 +4,8 @@ import type { ColumnDef } from '@/components/data-table/data-table';
 import DataTable, {
   ActionButton,
 } from '@/components/data-table/data-table';
-import { AppLayout } from '@/components/layout/app-layout';
+import toast from 'react-hot-toast';
+
 import { Navbar } from '@/components/layout/navbar';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/constants';
@@ -14,6 +15,7 @@ import {
 } from '@/API/api';
 import { formatDate } from '@/lib/format-date';
 import type { IInvoice, IJob, IPopulatedCustomer } from '@/types';
+import { AppLayout } from '@/components/layout/app-layout';
 
 export default function InvoiceManagementPage() {
   const navigate = useNavigate();
@@ -34,14 +36,17 @@ export default function InvoiceManagementPage() {
 
   const invoices: IInvoice[] = apiInvoices?.invoices ?? [];
 
-  const handleDownload = async (jobId: string) => {
+  const handleDownload = async (
+    jobId: string,
+    jobDisplayId: string,
+  ) => {
     try {
       const result = await downloadInvoice(jobId);
       if (result.data) {
         const url = window.URL.createObjectURL(result.data);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `invoice-${jobId}.pdf`;
+        a.download = `invoice-${jobDisplayId}.pdf`;
         a.click();
         window.URL.revokeObjectURL(url);
       }
@@ -84,7 +89,7 @@ export default function InvoiceManagementPage() {
     },
     {
       accessorKey: 'amount',
-      header: 'Total',
+      header: 'Amount',
       cell: (row: IInvoice) => (
         <span className="font-medium text-[#151515]">
           ${(row.amount ?? 0).toFixed(2)}
@@ -135,17 +140,32 @@ export default function InvoiceManagementPage() {
             className="h-8 w-8 rounded-full border border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#374151] shadow-none"
             onClick={() => {
               const id = getJobId(row);
-              sessionStorage.setItem(`invoice-${id}`, JSON.stringify(row));
-              navigate(
-                ROUTES.INVOICES_VIEW.replace(':jobId', id),
-                { state: { invoice: row } },
+              sessionStorage.setItem(
+                `invoice-${id}`,
+                JSON.stringify(row),
               );
+              navigate(ROUTES.INVOICES_VIEW.replace(':jobId', id), {
+                state: { invoice: row },
+              });
             }}
           />
           <ActionButton
             icon={<Download className="h-3.5 w-3.5" />}
             className="h-8 w-8 rounded-full border border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#374151] shadow-none"
-            onClick={() => handleDownload(getJobId(row))}
+            onClick={() => {
+              const job = row.jobId;
+              const mongoId =
+                typeof job === 'object' && job ? job._id : '';
+              const displayId =
+                typeof job === 'object' && job
+                  ? job.jobId
+                  : (job ?? '');
+              if (mongoId) {
+                handleDownload(mongoId, String(displayId));
+              } else {
+                toast.error('Job ID not available for download');
+              }
+            }}
           />
         </div>
       ),

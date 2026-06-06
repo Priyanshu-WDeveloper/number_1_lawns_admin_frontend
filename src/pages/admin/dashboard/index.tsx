@@ -43,8 +43,18 @@ const ACTIVITY_ICON_MAP: Record<string, LucideIcon> = {
 };
 
 const MONTHS = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 const statConfig = [
@@ -76,12 +86,13 @@ const statConfig = [
 export default function DashboardPage() {
   const user = useSelector((state: RootState) => state.auth.user);
   const navigate = useNavigate();
-  const { data: analytics, isLoading } = useGetDashboardAnalyticsQuery({
-    year: new Date().getFullYear(),
-  });
+  const { data: analytics, isLoading } =
+    useGetDashboardAnalyticsQuery({
+      year: new Date().getFullYear(),
+    });
   const [selectedSeries, setSelectedSeries] = useState<
-    'all' | 'customers' | 'employees' | 'jobs'
-  >('all');
+    'customers' | 'employees' | 'jobs'
+  >('customers');
 
   const stats = analytics?.summary
     ? statConfig.map((cfg) => ({
@@ -153,7 +164,10 @@ export default function DashboardPage() {
                 <Skeleton className="mb-3 h-6 w-40" />
                 <div className="space-y-2.5">
                   {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="flex items-start gap-4 p-1.5">
+                    <div
+                      key={i}
+                      className="flex items-start gap-4 p-1.5"
+                    >
                       <Skeleton className="h-8 w-8 rounded-full" />
                       <div className="flex-1 space-y-1.5">
                         <Skeleton className="h-3.5 w-48" />
@@ -199,7 +213,7 @@ export default function DashboardPage() {
     <AppLayout>
       {/* This div contains the main dashboard content */}
       {/* Sidebar is handled by AppLayout */}
-      <main className="flex-1 h-full px-4">
+      <main className="flex-1 h-full px-4 pt-3">
         <div className="min-h-full">
           {/* Validity Warning */}
           {daysLeft !== null && daysLeft <= 7 && (
@@ -231,7 +245,7 @@ export default function DashboardPage() {
           />
 
           {/* Stats */}
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-4 pt-4">
             {stats.map((item, index) => {
               const Icon = item.icon;
 
@@ -268,41 +282,48 @@ export default function DashboardPage() {
           {/* Bottom Grid */}
           <div className="mt-2.5 grid gap-3 xl:grid-cols-2">
             {/* Activities */}
-            <Card className="rounded-[20px] border border-[#ececec] p-8 shadow-sm">
-              <h3 className="mb-3 text-2xl font-bold">
+            <Card className="rounded-[20px] border border-[#ececec] px-6  pt-6 shadow-sm">
+              <h3 className="text-2xl font-bold">
                 Recent Activities
               </h3>
 
-              <div className="space-y-2.5">
-                {activities.map((item) => {
-                  const Icon =
-                    ACTIVITY_ICON_MAP[item.type] ?? CalendarDays;
+              {activities.length > 0 ? (
+                <div className="space-y-2.5">
+                  {activities.slice(0, 7).map((item) => {
+                    const Icon =
+                      ACTIVITY_ICON_MAP[item.type] ?? CalendarDays;
 
-                  return (
-                    <div
-                      key={item.id}
-                      className="flex items-start gap-4 p-1.5"
-                    >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                        <Icon className="h-3.5 w-3.5 text-primary" />
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex items-start gap-4 p-1"
+                      >
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                          <Icon className="h-3.5 w-3.5 text-primary" />
+                        </div>
+
+                        <div>
+                          <h4 className="text-[13px] font-medium text-[#1b1b1b]">
+                            {item.message}
+                          </h4>
+
+                          <p className="mt-0.5 text-[11px] text-gray-500">
+                            {formatDistanceToNow(
+                              new Date(item.timestamp),
+                              { addSuffix: true },
+                            )}
+                          </p>
+                        </div>
                       </div>
-
-                      <div>
-                        <h4 className="text-[13px] font-medium text-[#1b1b1b]">
-                          {item.message}
-                        </h4>
-
-                        <p className="mt-0.5 text-[11px] text-gray-500">
-                          {formatDistanceToNow(
-                            new Date(item.timestamp),
-                            { addSuffix: true },
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex min-h-[200px] flex-1 flex-col items-center justify-center text-muted-foreground">
+                  <CalendarDays className="mb-2 h-8 w-8 opacity-40" />
+                  <p className="text-sm">No recent activities</p>
+                </div>
+              )}
             </Card>
 
             {/* Right */}
@@ -318,7 +339,7 @@ export default function DashboardPage() {
                     value={selectedSeries}
                     onValueChange={(v) =>
                       setSelectedSeries(
-                        v as 'all' | 'customers' | 'employees' | 'jobs',
+                        v as 'customers' | 'employees' | 'jobs', // | 'all'
                       )
                     }
                   >
@@ -326,15 +347,19 @@ export default function DashboardPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="customers">Customers</SelectItem>
-                      <SelectItem value="employees">Employees</SelectItem>
+                      {/* <SelectItem value="all">All</SelectItem> */}
+                      <SelectItem value="customers">
+                        Customers
+                      </SelectItem>
+                      <SelectItem value="employees">
+                        Employees
+                      </SelectItem>
                       <SelectItem value="jobs">Jobs</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="h-[170px]">
+                <div className="h-[220px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={chartData}>
                       <defs>

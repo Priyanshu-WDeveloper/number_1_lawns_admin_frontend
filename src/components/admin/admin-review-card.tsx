@@ -58,6 +58,8 @@ export function AdminReviewCard({
   documents = [],
 }: AdminReviewCardProps) {
   const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [profileImageError, setProfileImageError] = useState(false);
+  const [invoiceLogoError, setInvoiceLogoError] = useState(false);
 
   const handlePreview = (doc: NamedDoc) => {
     if (doc.file) setPreviewFile(doc.file);
@@ -84,12 +86,18 @@ export function AdminReviewCard({
               </div>
             </div>
           </div>
-          {profileImage && (
+          {profileImage && !profileImageError && (
             <img
               src={profileImage}
               alt={fullName}
+              onError={() => setProfileImageError(true)}
               className="h-10 w-10 rounded-full object-cover"
             />
+          )}
+          {profileImage && profileImageError && (
+            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+              <User className="h-5 w-5 text-muted-foreground" />
+            </div>
           )}
         </div>
 
@@ -178,12 +186,18 @@ export function AdminReviewCard({
                 </div>
               </div>
             </div>
-            {invoiceLogo && (
+            {invoiceLogo && !invoiceLogoError && (
               <img
                 src={invoiceLogo}
                 alt="Invoice Logo"
+                onError={() => setInvoiceLogoError(true)}
                 className="h-10 w-10 rounded object-cover"
               />
+            )}
+            {invoiceLogo && invoiceLogoError && (
+              <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
+                <Building2 className="h-5 w-5 text-muted-foreground" />
+              </div>
             )}
           </div>
 

@@ -32,8 +32,6 @@ export default function ProfileContent({
 
   const fullName =
     admin.fullName || `${admin.firstName} ${admin.lastName}`;
-  const initials =
-    `${admin.firstName?.charAt(0) || ''}${admin.lastName?.charAt(0) || ''}`.toUpperCase();
 
   const handleEditClick = useCallback(() => {
     if (!isEditing) {
@@ -76,7 +74,6 @@ export default function ProfileContent({
         profileImage={admin.profileImage}
         fullName={fullName}
         email={admin.email}
-        initials={initials}
         status={admin.status}
         role={admin.role}
         balance={admin.balance ?? 0}

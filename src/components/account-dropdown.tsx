@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { useNavigate } from 'react-router-dom';
-import { Avatar, AvatarFallback } from './ui/avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import toast from 'react-hot-toast';
@@ -59,15 +59,6 @@ export default function AccountDropdown({
     }
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -80,11 +71,7 @@ export default function AccountDropdown({
         {variant === 'navbar' ? (
           <>
             <div className="flex sm:hidden items-center gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="text-xs">
-                  {user?.fullName ? getInitials(user.fullName) : 'A'}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar name={user?.fullName ?? ''} image={user?.profileImage} size="sm" />
               {/* <span className="text-sm font-medium text-[#6b7280]">
                 {user?.role === 1
                   ? 'Super Admin'
@@ -96,11 +83,7 @@ export default function AccountDropdown({
               </span> */}
             </div>
             <div className="hidden sm:flex items-center gap-3">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="text-xs">
-                  {user?.fullName ? getInitials(user.fullName) : 'A'}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar name={user?.fullName ?? ''} image={user?.profileImage} size="sm" />
               <span className="text-sm font-semibold">
                 {user?.fullName ||
                   `${superAccess ? 'Super Admin' : 'Admin'}`}
@@ -110,11 +93,7 @@ export default function AccountDropdown({
           </>
         ) : (
           <>
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="text-xs">
-                {user?.fullName ? getInitials(user.fullName) : 'A'}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar name={user?.fullName ?? ''} image={user?.profileImage} size="sm" />
 
             <span className="text-sm font-semibold">
               {user?.fullName ||
@@ -133,14 +112,17 @@ export default function AccountDropdown({
       >
         {/* Top Section */}
         <div className="space-y-3 p-4">
-          <div>
-            <h2 className="text-lg font-medium text-slate-800">
-              {user?.fullName || 'Admin'}
-            </h2>
+          <div className="flex items-center gap-3">
+            <UserAvatar name={user?.fullName ?? ''} image={user?.profileImage} size="sm" />
+            <div>
+              <h2 className="text-lg font-medium text-slate-800">
+                {user?.fullName || 'Admin'}
+              </h2>
 
-            <p className="mt-1 text-sm text-muted-foreground">
-              {user?.email || 'admin@example.com'}
-            </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {user?.email || 'admin@example.com'}
+              </p>
+            </div>
           </div>
 
           {!superAccess && daysLeft !== null && daysLeft <= 7 && (

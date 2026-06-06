@@ -8,11 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
-} from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 
 interface CompleteJobDialogProps {
   open: boolean;
@@ -24,15 +20,6 @@ interface CompleteJobDialogProps {
   customerPhone?: string;
   customerEmail?: string;
   customerImage?: string;
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
 }
 
 export function CompleteJobDialog({
@@ -110,18 +97,7 @@ export function CompleteJobDialog({
                 <div className="pb-6">
                   <div className="bg-zinc-50 rounded-xl p-4 border border-zinc-200 space-y-3">
                     <div className="flex items-center gap-3">
-                      <Avatar size="lg">
-                        {customerImage ? (
-                          <AvatarImage
-                            src={customerImage}
-                            alt={customerName}
-                          />
-                        ) : (
-                          <AvatarFallback>
-                            {getInitials(customerName || '')}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
+                      <UserAvatar image={customerImage} name={customerName ?? ''} />
                       <div>
                         <p className="font-medium text-zinc-900">
                           {customerName || '-'}

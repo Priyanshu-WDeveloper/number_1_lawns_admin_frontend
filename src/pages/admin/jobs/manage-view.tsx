@@ -19,6 +19,7 @@ import {
   MoreVertical,
   FileText,
   Calendar,
+  Eye,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -45,6 +46,7 @@ import { STATUS_CONFIG } from '@/constants/status-config';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import {
   useGetJobByIdQuery,
+  useGetChildJobsByParentIdQuery,
   useCancelJobMutation,
   useAssignJobEmployeeMutation,
   useGetEmployeesQuery,
@@ -130,6 +132,31 @@ export default function JobViewPage() {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [childPage, setChildPage] = useState(1);
+  const childLimit = 10;
+
+  const { data: childJobsData, isLoading: childJobsLoading } =
+    useGetChildJobsByParentIdQuery(
+      {
+        parentJobId: id ?? '',
+        page: childPage,
+        limit: childLimit,
+        sort: (location.state as { sort?: string })?.sort ?? 'newest',
+      },
+      { skip: !id },
+    );
+
+  const childJobs = childJobsData?.jobs ?? [];
+  const childJobsPagination = childJobsData
+    ? {
+        page: childJobsData.page,
+        limit: childJobsData.limit,
+        total: childJobsData.total,
+        totalPages:
+          childJobsData.totalPages ??
+          Math.ceil(childJobsData.total / childJobsData.limit),
+      }
+    : undefined;
 
   const employeeOptions = useMemo(
     () =>
@@ -218,7 +245,7 @@ export default function JobViewPage() {
           <div className="mx-auto">
             <Button
               variant="ghost"
-              onClick={() => navigate(ROUTES.JOBS)}
+              onClick={() => navigate(-1)}
               className="mb-4 text-muted-foreground hover:text-primary hover:bg-primary/10"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -309,17 +336,18 @@ export default function JobViewPage() {
                     Cancel Job
                   </Button>
                 )}
-                {resolvedJob._id && resolvedJob.status === 'completed' && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="rounded-xl h-9"
-                    onClick={handleViewReceipt}
-                  >
-                    <FileDown className="h-4 w-4 mr-1" />
-                    View Receipt
-                  </Button>
-                )}
+                {resolvedJob._id &&
+                  resolvedJob.status === 'completed' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-xl h-9"
+                      onClick={handleViewReceipt}
+                    >
+                      <FileDown className="h-4 w-4 mr-1" />
+                      View Receipt
+                    </Button>
+                  )}
               </div>
             </div>
 
@@ -684,6 +712,190 @@ export default function JobViewPage() {
                 </div>
               </div>
             </div>
+
+            {/* Child Jobs Section */}
+            {resolvedJob.jobType === 'recurring' && (
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec] mt-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <RefreshCw className="h-4 w-4 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Child Jobs
+                  </h3>
+                </div>
+
+                {childJobsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader />
+                  </div>
+                ) : childJobs.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">
+                    No child jobs found.
+                  </p>
+                ) : (
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-[#ececec] text-left text-xs text-muted-foreground uppercase tracking-wider">
+                            <th className="py-3 px-2 font-medium">
+                              JobId
+                            </th>
+                            <th className="py-3 px-2 font-medium">
+                              Customer
+                            </th>
+                            <th className="py-3 px-2 font-medium">
+                              Employee
+                            </th>
+                            <th className="py-3 px-2 font-medium">
+                              Date
+                            </th>
+                            <th className="py-3 px-2 font-medium">
+                              Payment
+                            </th>
+                            <th className="py-3 px-2 font-medium">
+                              Price
+                            </th>
+                            <th className="py-3 px-2 font-medium">
+                              Status
+                            </th>
+                            <th className="py-3 px-2 font-medium">
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {childJobs.map((job) => {
+                            const customerName =
+                              typeof job.customerId === 'object' &&
+                              job.customerId
+                                ? job.customerId.fullName ||
+                                  `${job.customerId.firstName} ${job.customerId.lastName}`
+                                : '-';
+                            const employeeName =
+                              typeof job.employeeId === 'object' &&
+                              job.employeeId
+                                ? job.employeeId.fullName ||
+                                  `${job.employeeId.firstName} ${job.employeeId.lastName}`
+                                : '-';
+
+                            return (
+                              <tr
+                                key={job._id}
+                                className="border-b border-[#ececec] last:border-0 hover:bg-[#f9f9f9]"
+                              >
+                                <td className="py-3 px-2 text-[#6b7280]">
+                                  {job.jobId}
+                                </td>
+                                <td className="py-3 px-2 text-[#6b7280]">
+                                  {customerName}
+                                </td>
+                                <td className="py-3 px-2 text-[#6b7280]">
+                                  {employeeName}
+                                </td>
+                                <td className="py-3 px-2 text-[#6b7280]">
+                                  {formatDate(
+                                    job.jobDate || job.date || '',
+                                  )}
+                                </td>
+                                <td className="py-3 px-2 text-[#6b7280] capitalize">
+                                  {job.paymentType?.replace(
+                                    /_/g,
+                                    ' ',
+                                  ) || '-'}
+                                </td>
+                                <td className="py-3 px-2 text-[#6b7280]">
+                                  {job.price != null
+                                    ? `$${job.price}`
+                                    : '-'}
+                                </td>
+                                <td className="py-3 px-2">
+                                  <StatusBadge
+                                    status={job.status ?? ''}
+                                    config={STATUS_CONFIG.job}
+                                  />
+                                </td>
+                                <td className="py-3 px-2">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      navigate(
+                                        ROUTES.JOBS_VIEW.replace(
+                                          ':id',
+                                          job._id ?? '',
+                                        ),
+                                      )
+                                    }
+                                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-sm font-medium bg-[#f5f5f5] text-[#374151] hover:bg-[#e5e5e5] transition-colors"
+                                  >
+                                    <Eye className="h-3.5 w-3.5" />
+                                    View
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Pagination */}
+                    {childJobsPagination &&
+                      childJobsPagination.totalPages > 1 && (
+                        <div className="flex items-center justify-between pt-4 border-t border-[#ececec] mt-4">
+                          <p className="text-xs text-muted-foreground">
+                            Showing{' '}
+                            {(childJobsPagination.page - 1) *
+                              childJobsPagination.limit +
+                              1}
+                            -
+                            {Math.min(
+                              childJobsPagination.page *
+                                childJobsPagination.limit,
+                              childJobsPagination.total,
+                            )}{' '}
+                            of {childJobsPagination.total}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={childPage <= 1}
+                              onClick={() =>
+                                setChildPage((p) =>
+                                  Math.max(1, p - 1),
+                                )
+                              }
+                              className="rounded-lg h-8 text-xs"
+                            >
+                              Previous
+                            </Button>
+                            <span className="text-xs text-muted-foreground">
+                              Page {childJobsPagination.page} of{' '}
+                              {childJobsPagination.totalPages}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={
+                                childPage >=
+                                childJobsPagination.totalPages
+                              }
+                              onClick={() =>
+                                setChildPage((p) => p + 1)
+                              }
+                              className="rounded-lg h-8 text-xs"
+                            >
+                              Next
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

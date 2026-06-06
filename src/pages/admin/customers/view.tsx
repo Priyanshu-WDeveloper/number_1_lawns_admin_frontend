@@ -25,7 +25,7 @@ import {
 
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { ROUTES } from '@/constants';
 
 import {
@@ -91,10 +91,6 @@ export default function CustomerViewPage() {
     }
   };
 
-  const getInitials = (name: string) => {
-    return name?.charAt(0)?.toUpperCase() || '?';
-  };
-
   if (isLoading) {
     return (
       <AppLayout>
@@ -133,11 +129,11 @@ export default function CustomerViewPage() {
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 {/* Left */}
                 <div className="flex min-w-0 items-center gap-4">
-                  <Avatar className="h-16 w-16 shrink-0 bg-primary text-white">
-                    <AvatarFallback className="text-xl font-bold">
-                      {getInitials(customer.fullName)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    image={customer.profileImage}
+                    name={customer.fullName}
+                    size="lg"
+                  />
 
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-3">

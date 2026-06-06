@@ -1,9 +1,11 @@
+import { useState } from 'react';
+import { User } from 'lucide-react';
+
 interface AvatarCellProps {
   name: string;
   email?: string;
   profileImage?: string;
   size?: 'sm' | 'md';
-  fallbackChar?: string;
 }
 
 export function AvatarCell({
@@ -11,9 +13,9 @@ export function AvatarCell({
   email,
   profileImage,
   size = 'sm',
-  fallbackChar = '?',
 }: AvatarCellProps) {
-  const initial = name ? name.charAt(0).toUpperCase() : fallbackChar;
+  const [imgError, setImgError] = useState(false);
+  const initial = name && /[a-zA-Z]/.test(name.charAt(0)) ? name.charAt(0).toUpperCase() : null;
   const hue = name ? (name.charCodeAt(0) * 137.5) % 360 : 0;
   const bgColor = `hsl(${hue}, 60%, 90%)`;
   const textColor = `hsl(${hue}, 60%, 35%)`;
@@ -21,10 +23,11 @@ export function AvatarCell({
 
   return (
     <div className="flex items-center gap-3">
-      {profileImage ? (
+      {profileImage && !imgError ? (
         <img
           src={profileImage}
           alt={name}
+          onError={() => setImgError(true)}
           className={`${sizeClasses} rounded-full object-cover`}
         />
       ) : (
@@ -32,7 +35,11 @@ export function AvatarCell({
           className={`${sizeClasses} flex items-center justify-center rounded-full font-semibold`}
           style={{ backgroundColor: bgColor, color: textColor }}
         >
-          {initial}
+          {initial ? (
+            <span>{initial}</span>
+          ) : (
+            <User className={size === 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
+          )}
         </div>
       )}
       <div>
