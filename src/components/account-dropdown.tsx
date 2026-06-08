@@ -147,8 +147,8 @@ export default function AccountDropdown({
         <div className="space-y-3 p-4">
           <div className="flex items-center gap-3">
             <UserAvatar
-              name={user?.fullName ?? ''}
-              image={user?.profileImage}
+              name={data?.admin.fullName || user?.fullName || ''}
+              image={data?.admin.profileImage || user?.profileImage}
               size="sm"
             />
             <div>
