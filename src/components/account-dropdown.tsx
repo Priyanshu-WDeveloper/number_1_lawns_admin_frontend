@@ -93,7 +93,7 @@ export default function AccountDropdown({
               <UserAvatar
                 name={data?.admin.fullName || user?.fullName || '-'}
                 image={
-                  data?.admin.fullName || user?.profileImage || ''
+                  data?.admin.profileImage || user?.profileImage || ''
                 }
                 size="sm"
               />
@@ -109,8 +109,8 @@ export default function AccountDropdown({
             </div>
             <div className="hidden sm:flex items-center gap-3">
               <UserAvatar
-                name={user?.fullName ?? ''}
-                image={user?.profileImage}
+                name={data?.admin.fullName || user?.fullName || ''}
+                image={data?.admin.profileImage || user?.profileImage}
                 size="sm"
               />
               <span className="text-sm font-semibold">
