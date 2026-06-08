@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
-import { MapPin, Crosshair, Search } from 'lucide-react';
+import { MapPin, Crosshair, Search, X } from 'lucide-react';
 import { MockMapPicker } from '@/components/forms/mock-map-picker';
 
 const containerStyle = {
@@ -14,13 +14,13 @@ interface GoogleMapPickerProps {
   onPick: (lat: number, lng: number) => void;
 }
 
-const statusMessages: Record<string, string> = {
-  ZERO_RESULTS: 'No results found for this address.',
-  OVER_QUERY_LIMIT: 'Too many requests. Please wait a moment.',
-  REQUEST_DENIED: 'Geocoding API is not enabled. Enable it in Google Cloud Console.',
-  INVALID_REQUEST: 'Invalid search request. Please enter a valid address.',
-  UNKNOWN_ERROR: 'Server error. Please try again.',
-};
+interface NominatimResult {
+  place_id: number;
+  lat: string;
+  lon: string;
+  display_name: string;
+  type: string;
+}
 
 export function GoogleMapPicker({
   latitude,
@@ -32,6 +32,46 @@ export function GoogleMapPicker({
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<NominatimResult[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!searchQuery.trim() || searchQuery.trim().length < 2) {
+      setShowResults(false);
+      setSearchResults([]);
+      return;
+    }
+
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+
+    searchTimerRef.current = setTimeout(() => {
+      setIsSearching(true);
+      setSearchError(null);
+      fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&countrycodes=in,nz&limit=5`,
+        { headers: { 'User-Agent': 'No1LawnsAdmin/1.0' } },
+      )
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then((data: NominatimResult[]) => {
+          setSearchResults(data);
+          setShowResults(data.length > 0);
+          if (data.length === 0) setSearchError('No results found. Try a different search.');
+        })
+        .catch((err) => {
+          setSearchError('Search failed. Please try again.');
+          console.error('Nominatim search error:', err);
+        })
+        .finally(() => setIsSearching(false));
+    }, 500);
+
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, [searchQuery]);
 
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: apiKey || '',
@@ -42,33 +82,47 @@ export function GoogleMapPicker({
     lng: longitude || 78.9629,
   });
 
-  const handleSearch = useCallback(() => {
-    if (!searchQuery.trim() || !mapRef.current) return;
+  const handleSearch = useCallback(async () => {
+    if (!searchQuery.trim()) return;
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
 
     setIsSearching(true);
     setSearchError(null);
+    setShowResults(false);
 
-    const geocoder = new google.maps.Geocoder();
-
-    geocoder.geocode({ address: searchQuery }, (results, status) => {
-      setIsSearching(false);
-
-      if (status === 'OK' && results && results[0]) {
-        const location = results[0].geometry.location;
-        const lat = Math.round(location.lat() * 10000) / 10000;
-        const lng = Math.round(location.lng() * 10000) / 10000;
-
-        mapRef.current?.panTo({ lat, lng });
-        mapRef.current?.setZoom(15);
-        onPick(lat, lng);
-        setSearchQuery(results[0].formatted_address);
-      } else {
-        const message = statusMessages[status] || `Address not found (status: ${status}). Try a different search.`;
-        setSearchError(message);
-        console.warn('Geocoding failed:', status, results);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&countrycodes=in,nz&limit=5`,
+        { headers: { 'User-Agent': 'No1LawnsAdmin/1.0' } },
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: NominatimResult[] = await res.json();
+      setSearchResults(data);
+      setShowResults(data.length > 0);
+      if (data.length === 0) {
+        setSearchError('No results found. Try a different search.');
       }
-    });
-  }, [searchQuery, onPick]);
+    } catch (err) {
+      setSearchError('Search failed. Please try again.');
+      console.error('Nominatim search error:', err);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [searchQuery]);
+
+  const handleSelectResult = (result: NominatimResult) => {
+    const lat = parseFloat(result.lat);
+    const lng = parseFloat(result.lon);
+    mapRef.current?.panTo({ lat, lng });
+    mapRef.current?.setZoom(15);
+    onPick(
+      Math.round(lat * 10000) / 10000,
+      Math.round(lng * 10000) / 10000,
+    );
+    setSearchQuery(result.display_name);
+    setShowResults(false);
+    setSearchError(null);
+  };
 
   const handleMapClick = useCallback(
     (e: google.maps.MapMouseEvent) => {
@@ -123,8 +177,40 @@ export function GoogleMapPicker({
             }}
             onKeyDown={handleKeyDown}
             placeholder="Enter address to search..."
-            className="w-full h-12 pl-10 pr-4 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary"
+            className="w-full h-12 pl-10 pr-10 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setShowResults(false);
+                setSearchError(null);
+                setSearchResults([]);
+                if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+          {showResults && (
+            <div className="absolute z-10 w-full mt-1 rounded-xl border border-border bg-white shadow-lg max-h-60 overflow-y-auto">
+              {searchResults.map((r) => (
+                <button
+                  key={r.place_id}
+                  type="button"
+                  onClick={() => handleSelectResult(r)}
+                  className="w-full text-left px-4 py-3 text-sm hover:bg-muted/50 border-b border-border last:border-0 transition-colors"
+                >
+                  <span className="text-foreground">{r.display_name}</span>
+                  <span className="text-xs text-muted-foreground capitalize ml-2">
+                    ({r.type})
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <button
           type="button"

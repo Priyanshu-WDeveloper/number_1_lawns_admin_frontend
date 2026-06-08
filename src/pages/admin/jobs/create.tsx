@@ -1,22 +1,36 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import z from 'zod';
 import {
   Users,
-  MapPin,
-  CreditCard,
   ArrowLeft,
   DollarSign,
+  CheckCircle2,
+  User,
+  Briefcase,
+  MapPin,
+  Building2,
+  Map,
+  Hash,
+  Globe,
+  Calendar,
+  Repeat,
+  CreditCard,
+  FileText,
+  StickyNote,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Country } from 'country-state-city';
 
 import { AppLayout } from '@/components/layout/app-layout';
 import { Navbar } from '@/components/layout/navbar';
 import { ROUTES } from '@/constants';
 import { AdminFormStepper } from '@/components/admin/admin-form-stepper';
+import { ReviewCard } from '@/components/admin/review-card';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -107,21 +121,21 @@ const initialFormData: CreateJobFormData = {
 const steps = [
   {
     id: 1,
-    title: 'Location',
-    description: 'Job address & map',
-    icon: <MapPin className="h-4 w-4" />,
-  },
-  {
-    id: 2,
-    title: 'Assignment & Schedule',
-    description: 'Customer, type & date',
+    title: 'Customer & Location',
+    description: 'Customer, employee & job address',
     icon: <Users className="h-4 w-4" />,
   },
   {
+    id: 2,
+    title: 'Schedule & Pricing',
+    description: 'Job details & payment',
+    icon: <DollarSign className="h-4 w-4" />,
+  },
+  {
     id: 3,
-    title: 'Payment',
-    description: 'Payment details',
-    icon: <CreditCard className="h-4 w-4" />,
+    title: 'Review & Confirm',
+    description: 'Review before submitting',
+    icon: <CheckCircle2 className="h-4 w-4" />,
   },
 ];
 
@@ -140,14 +154,16 @@ export default function CreateJobPage() {
     page: 1,
   });
 
+  const customers = customersData?.customers ?? [];
+
   const customerOptions = useMemo(
     () =>
-      (customersData?.customers ?? []).map((c) => ({
+      customers.map((c) => ({
         _id: c._id,
         label: c.fullName,
         subtitle: c.email,
       })),
-    [customersData],
+    [customers],
   );
 
   const employeeOptions = useMemo(
@@ -160,12 +176,15 @@ export default function CreateJobPage() {
     [employeesData],
   );
 
+  const [sameAsCustomer, setSameAsCustomer] = useState(false);
+
   const {
     register,
     handleSubmit,
     trigger,
     watch,
     setValue,
+    control,
     formState: { errors },
   } = useForm<CreateJobFormData>({
     resolver: zodResolver(createJobSchema),
@@ -174,21 +193,48 @@ export default function CreateJobPage() {
 
   const formValues = watch();
 
+  const selectedCustomer = useMemo(
+    () => customers.find((c) => c._id === formValues.customer) ?? null,
+    [customers, formValues.customer],
+  );
+
+  useEffect(() => {
+    if (!sameAsCustomer || !selectedCustomer) return;
+    const opts = { shouldDirty: true };
+    setValue('jobAddress', selectedCustomer.address || '', opts);
+    setValue('city', selectedCustomer.city || '', opts);
+    setValue('state', selectedCustomer.state || '', opts);
+    setValue('country', selectedCustomer.country || '', opts);
+    setValue('postalCode', selectedCustomer.postalCode || '', opts);
+    const countryRecord = Country.getAllCountries().find(
+      (ctry) =>
+        ctry.name.toLowerCase() ===
+        (selectedCustomer.country || '').toLowerCase(),
+    );
+    setValue('countryIso', countryRecord?.isoCode ?? '', opts);
+    if (selectedCustomer.location?.coordinates) {
+      setValue('longitude', selectedCustomer.location.coordinates[0], opts);
+      setValue('latitude', selectedCustomer.location.coordinates[1], opts);
+    } else if (selectedCustomer.latitude != null && selectedCustomer.longitude != null) {
+      setValue('latitude', selectedCustomer.latitude, opts);
+      setValue('longitude', selectedCustomer.longitude, opts);
+    }
+  }, [formValues.customer, sameAsCustomer]);
+
   const handleNext = async () => {
     let fieldsToValidate: (keyof CreateJobFormData)[] = [];
 
     if (currentStep === 1) {
       fieldsToValidate = [
-        'locationMode',
+        'customer',
         'jobAddress',
         'state',
         'city',
         'postalCode',
         'country',
-        'countryIso',
       ];
     } else if (currentStep === 2) {
-      fieldsToValidate = ['customer', 'jobType', 'jobDate'];
+      fieldsToValidate = ['jobType', 'jobDate', 'paymentType', 'price'];
     }
 
     const isValid = await trigger(fieldsToValidate);
@@ -205,6 +251,12 @@ export default function CreateJobPage() {
 
   const onSubmit = async (data: CreateJobFormData) => {
     try {
+      if (data.customer === 'undefined' || data.employee === 'undefined') {
+        console.error('[createJob] Invalid form state: customer or employee is literal "undefined"', { customer: data.customer, employee: data.employee });
+        toast.error('Invalid form state. Please re-select the customer/employee and try again.');
+        return;
+      }
+      const employeeId = data.employee;
       const payload: Record<string, unknown> = {
         customerId: data.customer,
         address: data.jobAddress,
@@ -228,11 +280,6 @@ export default function CreateJobPage() {
                 ],
               } as const)
             : undefined,
-        // frequency:
-        // data.jobType === 'recurring' && data.frequencyValue && data.frequencyUnit ? {
-        //       value: data.frequencyValue,
-        //       unit: data.frequencyUnit,
-        //     }
         ...(data.jobType === 'recurring'
           ? {
               frequencyValue: data.frequencyValue,
@@ -240,9 +287,10 @@ export default function CreateJobPage() {
             }
           : {}),
       };
-      if (data.employee) {
-        payload.employeeId = data.employee;
+      if (employeeId) {
+        payload.employeeId = employeeId;
       }
+      console.debug('[createJob] payload:', payload);
       await createJob(payload).unwrap();
       toast.success('Job created successfully');
       navigate(ROUTES.JOBS);
@@ -251,25 +299,91 @@ export default function CreateJobPage() {
     }
   };
 
+  const renderAddressReadonly = () => (
+    <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2 text-sm">
+      <p><span className="font-medium text-muted-foreground">Address: </span>{formValues.jobAddress || '-'}</p>
+      <p><span className="font-medium text-muted-foreground">City: </span>{formValues.city || '-'}</p>
+      <p><span className="font-medium text-muted-foreground">State: </span>{formValues.state || '-'}</p>
+      <p><span className="font-medium text-muted-foreground">Country: </span>{formValues.country || '-'}</p>
+      <p><span className="font-medium text-muted-foreground">Postal Code: </span>{formValues.postalCode || '-'}</p>
+    </div>
+  );
+
   const renderStepContent = () => {
     if (currentStep === 1) {
       return (
         <div className="space-y-8">
+          {/* Customer & Employee Section */}
+          <div>
+            <h4 className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              Customer & Assignment
+            </h4>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Select Customer
+                  <span className="text-primary"> *</span>
+                </label>
+                <SearchableSelect
+                  data={customerOptions}
+                  value={formValues.customer || ''}
+                  onChange={(v) => setValue('customer', v)}
+                  placeholder="Choose a customer"
+                  searchPlaceholder="Search customers..."
+                  loading={!customersData}
+                  error={errors.customer?.message}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Select Employee
+                </label>
+                <SearchableSelect
+                  data={employeeOptions}
+                  value={formValues.employee || ''}
+                  onChange={(v) => setValue('employee', v)}
+                  placeholder="Choose an employee"
+                  searchPlaceholder="Search employees..."
+                  loading={!employeesData}
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Location Section */}
           <div>
             <h4 className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
               Job Location
             </h4>
             <div className="space-y-5">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <Switch
+                  checked={sameAsCustomer}
+                  onCheckedChange={setSameAsCustomer}
+                  disabled={!selectedCustomer}
+                  size="default"
+                />
+                <span className="text-sm font-medium text-foreground">
+                  Same as Customer Address
+                </span>
+              </label>
+
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
                   Job Address
                   <span className="text-primary"> *</span>
                 </label>
-                <Textarea
-                  placeholder="Enter job address"
-                  {...register('jobAddress')}
-                  className="min-h-[80px] rounded-xl border-border bg-background p-4"
+                <Controller
+                  name="jobAddress"
+                  control={control}
+                  render={({ field }) => (
+                    <Textarea
+                      placeholder="Enter job address"
+                      {...field}
+                      disabled={sameAsCustomer}
+                      className="min-h-[80px] rounded-xl border-border bg-background p-4"
+                    />
+                  )}
                 />
                 {errors.jobAddress && (
                   <p className="text-sm text-red-500">
@@ -278,39 +392,43 @@ export default function CreateJobPage() {
                 )}
               </div>
 
-              <AddressInputs
-                countryIso={formValues.countryIso || ''}
-                country={formValues.country}
-                state={formValues.state}
-                city={formValues.city}
-                postalCode={formValues.postalCode}
-                onCountryChange={(name, iso) => {
-                  setValue('country', name, { shouldValidate: true });
-                  setValue('countryIso', iso, {
-                    shouldValidate: true,
-                  });
-                  setValue('state', '', { shouldValidate: true });
-                  setValue('city', '', { shouldValidate: true });
-                }}
-                onStateChange={(name, _iso) => {
-                  setValue('state', name, { shouldValidate: true });
-                  setValue('city', '', { shouldValidate: true });
-                }}
-                onCityChange={(name) =>
-                  setValue('city', name, { shouldValidate: true })
-                }
-                onPostalCodeChange={(val) =>
-                  setValue('postalCode', val, {
-                    shouldValidate: true,
-                  })
-                }
-                errors={{
-                  country: errors.country?.message,
-                  state: errors.state?.message,
-                  city: errors.city?.message,
-                  postalCode: errors.postalCode?.message,
-                }}
-              />
+              {sameAsCustomer ? (
+                renderAddressReadonly()
+              ) : (
+                <AddressInputs
+                  countryIso={formValues.countryIso || ''}
+                  country={formValues.country}
+                  state={formValues.state}
+                  city={formValues.city}
+                  postalCode={formValues.postalCode}
+                  onCountryChange={(name, iso) => {
+                    setValue('country', name, { shouldValidate: true });
+                    setValue('countryIso', iso, {
+                      shouldValidate: true,
+                    });
+                    setValue('state', '', { shouldValidate: true });
+                    setValue('city', '', { shouldValidate: true });
+                  }}
+                  onStateChange={(name, _iso) => {
+                    setValue('state', name, { shouldValidate: true });
+                    setValue('city', '', { shouldValidate: true });
+                  }}
+                  onCityChange={(name) =>
+                    setValue('city', name, { shouldValidate: true })
+                  }
+                  onPostalCodeChange={(val) =>
+                    setValue('postalCode', val, {
+                      shouldValidate: true,
+                    })
+                  }
+                  errors={{
+                    country: errors.country?.message,
+                    state: errors.state?.message,
+                    city: errors.city?.message,
+                    postalCode: errors.postalCode?.message,
+                  }}
+                />
+              )}
 
               <LocationModeToggle
                 value={formValues.locationMode || 'map'}
@@ -345,43 +463,12 @@ export default function CreateJobPage() {
     if (currentStep === 2) {
       return (
         <div className="space-y-8">
-          {/* Assignment & Schedule Section */}
+          {/* Schedule Section */}
           <div>
             <h4 className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-              Job Assignment & Schedule
+              Schedule
             </h4>
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Select Customer
-                  <span className="text-primary"> *</span>
-                </label>
-                <SearchableSelect
-                  data={customerOptions}
-                  value={formValues.customer || ''}
-                  onChange={(v) => setValue('customer', v)}
-                  placeholder="Choose a customer"
-                  searchPlaceholder="Search customers..."
-                  loading={!customersData}
-                  error={errors.customer?.message}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Select Employee
-                  <span className="text-[#9ca3af] text-xs ml-1">
-                    (Optional)
-                  </span>
-                </label>
-                <SearchableSelect
-                  data={employeeOptions}
-                  value={formValues.employee || ''}
-                  onChange={(v) => setValue('employee', v)}
-                  placeholder="Choose an employee"
-                  searchPlaceholder="Search employees..."
-                  loading={!employeesData}
-                />
-              </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
                   Job Type
@@ -460,17 +547,12 @@ export default function CreateJobPage() {
               )}
             </div>
           </div>
-        </div>
-      );
-    }
 
-    return (
-      <div className="space-y-6">
-        <div>
-          <h4 className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Payment
-          </h4>
-          <div className="space-y-5">
+          {/* Pricing Section */}
+          <div>
+            <h4 className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              Pricing
+            </h4>
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
@@ -522,29 +604,92 @@ export default function CreateJobPage() {
                 )}
               </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
-                Description
-              </label>
-              <Textarea
-                placeholder="Enter job description..."
-                {...register('description')}
-                className="min-h-[80px] rounded-xl border-border bg-background p-4"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
-                Notes
-              </label>
-              <Textarea
-                placeholder="Add any additional notes..."
-                {...register('notes')}
-                className="min-h-[100px] rounded-xl border-border bg-background p-4"
-              />
+          </div>
+
+          {/* Description & Notes Section */}
+          <div>
+            <h4 className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              Additional Details
+            </h4>
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Description
+                </label>
+                <Textarea
+                  placeholder="Enter job description..."
+                  {...register('description')}
+                  className="min-h-[80px] rounded-xl border-border bg-background p-4"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Notes
+                </label>
+                <Textarea
+                  placeholder="Add any additional notes..."
+                  {...register('notes')}
+                  className="min-h-[100px] rounded-xl border-border bg-background p-4"
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      );
+    }
+
+    // Step 3: Review & Confirm
+    const customerName = selectedCustomer?.fullName ?? formValues.customer;
+    const employeeName = formValues.employee
+      ? employeeOptions.find((e) => e._id === formValues.employee)?.label ?? formValues.employee
+      : null;
+    const jobTypeLabel = formValues.jobType === 'one_time' ? 'One Time' : formValues.jobType === 'recurring' ? 'Recurring' : '-';
+    const paymentTypeLabel = formValues.paymentType
+      ? { bank_transfer: 'Bank Transfer', cash: 'Cash', drop_invoice: 'Drop Invoice' }[formValues.paymentType] ?? formValues.paymentType
+      : '-';
+
+    const customerLocationFields = [
+      { icon: <User className="h-3 w-3" />, label: 'Customer', value: customerName },
+      ...(employeeName ? [{ icon: <Briefcase className="h-3 w-3" />, label: 'Employee', value: employeeName }] : []),
+      { icon: <MapPin className="h-3 w-3" />, label: 'Address', value: formValues.jobAddress || '-' },
+      { icon: <Building2 className="h-3 w-3" />, label: 'City', value: formValues.city || '-' },
+      { icon: <Map className="h-3 w-3" />, label: 'State', value: formValues.state || '-' },
+      { icon: <Globe className="h-3 w-3" />, label: 'Country', value: formValues.country || '-' },
+      { icon: <Hash className="h-3 w-3" />, label: 'Postal Code', value: formValues.postalCode || '-' },
+      ...(formValues.latitude && formValues.longitude
+        ? [{ icon: <Map className="h-3 w-3" />, label: 'Coordinates', value: `${formValues.latitude.toFixed(6)}, ${formValues.longitude.toFixed(6)}` }]
+        : []),
+    ];
+
+    const scheduleFields = [
+      { icon: <Briefcase className="h-3 w-3" />, label: 'Job Type', value: jobTypeLabel },
+      { icon: <Calendar className="h-3 w-3" />, label: 'Job Date', value: formValues.jobDate || '-' },
+      ...(formValues.jobType === 'recurring' && formValues.frequencyValue
+        ? [{ icon: <Repeat className="h-3 w-3" />, label: 'Frequency', value: `Every ${formValues.frequencyValue} ${formValues.frequencyUnit}${formValues.frequencyValue && formValues.frequencyValue > 1 ? 's' : ''}` }]
+        : []),
+      { icon: <CreditCard className="h-3 w-3" />, label: 'Payment Type', value: paymentTypeLabel },
+      { icon: <DollarSign className="h-3 w-3" />, label: 'Price', value: `$${formValues.price || '0.00'}` },
+      ...(formValues.description ? [{ icon: <FileText className="h-3 w-3" />, label: 'Description', value: formValues.description }] : []),
+      ...(formValues.notes ? [{ icon: <StickyNote className="h-3 w-3" />, label: 'Notes', value: formValues.notes }] : []),
+    ];
+
+    return (
+      <ReviewCard
+        sections={[
+          {
+            icon: <Users className="h-5 w-5 text-white" />,
+            title: 'Customer & Location',
+            subtitle: 'Please verify the customer and location details below',
+            fields: customerLocationFields,
+          },
+          {
+            icon: <DollarSign className="h-5 w-5 text-white" />,
+            title: 'Schedule & Pricing',
+            subtitle: 'Please verify the schedule and pricing details below',
+            fields: scheduleFields,
+          },
+        ]}
+      />
     );
   };
 

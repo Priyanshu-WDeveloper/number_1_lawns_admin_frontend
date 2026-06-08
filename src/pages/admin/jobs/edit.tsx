@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import z from 'zod';
 import {
@@ -12,7 +12,14 @@ import {
   ArrowLeft,
   User,
   FileText,
-  RefreshCw,
+  CheckCircle2,
+  Briefcase,
+  Building2,
+  Map,
+  Hash,
+  Globe,
+  Repeat,
+  StickyNote,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -31,8 +38,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { LocationModeToggle } from '@/components/forms/location-mode-toggle';
-import { MockMapPicker } from '@/components/forms/mock-map-picker';
+import { GoogleMapPicker } from '@/components/google-maps/picker';
 import { ManualCoordinates } from '@/components/forms/manual-coordinates';
+import { Switch } from '@/components/ui/switch';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { DatePicker } from '@/components/ui/date-picker';
 import {
@@ -43,11 +51,10 @@ import {
 } from '@/API/api';
 import Loader from '@/components/loader';
 import { getErrorMessage } from '@/lib/get-error-message';
-// import { ReviewCard } from '@/components/admin/review-card';
+import { ReviewCard } from '@/components/admin/review-card';
 import { AddressInputs } from '@/components/forms/address-inputs';
 import { validateAddress } from '@/lib/address-validation';
 import { Country } from 'country-state-city';
-import { ReviewField } from '@/components/admin/review-field';
 
 const editJobSchema = z
   .object({
@@ -94,27 +101,21 @@ type EditJobFormData = z.infer<typeof editJobSchema>;
 const steps = [
   {
     id: 1,
-    title: 'Location',
-    description: 'Job address & map',
-    icon: <MapPin className="h-4 w-4" />,
-  },
-  {
-    id: 2,
-    title: 'Assignment & Schedule',
-    description: 'Customer, type & date',
+    title: 'Customer & Location',
+    description: 'Customer, employee & job address',
     icon: <Users className="h-4 w-4" />,
   },
   {
-    id: 3,
-    title: 'Payment & Details',
-    description: 'Payment & notes',
-    icon: <CreditCard className="h-4 w-4" />,
+    id: 2,
+    title: 'Schedule & Pricing',
+    description: 'Job details & payment',
+    icon: <DollarSign className="h-4 w-4" />,
   },
   {
-    id: 4,
-    title: 'Review',
-    description: 'Final review',
-    icon: <Calendar className="h-4 w-4" />,
+    id: 3,
+    title: 'Review & Confirm',
+    description: 'Review before submitting',
+    icon: <CheckCircle2 className="h-4 w-4" />,
   },
 ];
 
@@ -122,6 +123,7 @@ export default function EditJobPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
+  const [sameAsCustomer, setSameAsCustomer] = useState(false);
 
   const { data: jobData, isLoading: isFetching } = useGetJobByIdQuery(
     id ?? '',
@@ -164,6 +166,7 @@ export default function EditJobPage() {
     trigger,
     watch,
     setValue,
+    control,
     formState: { errors },
   } = useForm<EditJobFormData>({
     resolver: zodResolver(editJobSchema),
@@ -187,9 +190,7 @@ export default function EditJobPage() {
           countryIso: (jobData as any).countryIso || '',
           latitude: jobData.location?.coordinates?.[1] ?? undefined,
           longitude: jobData.location?.coordinates?.[0] ?? undefined,
-          locationMode: jobData.location?.coordinates?.[0]
-            ? 'map'
-            : 'manual',
+          locationMode: 'map',
           jobType: jobData.jobType ?? '',
           jobDate: jobData.jobDate
             ? jobData.jobDate.split('T')[0]
@@ -208,6 +209,27 @@ export default function EditJobPage() {
 
   const formValues = watch();
 
+  const selectedCustomer = useMemo(
+    () => customerOptions.find((c) => c._id === formValues.customer) ?? null,
+    [customerOptions, formValues.customer],
+  );
+
+  useEffect(() => {
+    if (!sameAsCustomer || !selectedCustomer) return;
+    const opts = { shouldDirty: true };
+    setValue('jobAddress', (selectedCustomer as any).address || '', opts);
+    setValue('city', (selectedCustomer as any).city || '', opts);
+    setValue('state', (selectedCustomer as any).state || '', opts);
+    setValue('country', (selectedCustomer as any).country || '', opts);
+    setValue('postalCode', (selectedCustomer as any).postalCode || '', opts);
+    const countryRecord = Country.getAllCountries().find(
+      (ctry) =>
+        ctry.name.toLowerCase() ===
+        ((selectedCustomer as any).country || '').toLowerCase(),
+    );
+    setValue('countryIso', countryRecord?.isoCode ?? '', opts);
+  }, [formValues.customer, sameAsCustomer, selectedCustomer]);
+
   useEffect(() => {
     if (formValues.country && !formValues.countryIso) {
       const match = Country.getAllCountries().find(
@@ -225,18 +247,15 @@ export default function EditJobPage() {
 
     if (currentStep === 1) {
       fieldsToValidate = [
-        'locationMode',
+        'customer',
         'jobAddress',
         'state',
         'city',
         'postalCode',
         'country',
-        'countryIso',
       ];
     } else if (currentStep === 2) {
-      fieldsToValidate = ['customer', 'jobType', 'jobDate'];
-    } else if (currentStep === 3) {
-      fieldsToValidate = ['paymentType', 'price'];
+      fieldsToValidate = ['jobType', 'jobDate', 'paymentType', 'price'];
     }
 
     const isValid = await trigger(fieldsToValidate);
@@ -312,19 +331,136 @@ export default function EditJobPage() {
     if (currentStep === 1) {
       return (
         <div className="space-y-8">
+          {/* Customer & Employee Section */}
+          <div>
+            <h4 className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              Customer & Assignment
+            </h4>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Select Customer
+                  <span className="text-primary"> *</span>
+                </label>
+                <SearchableSelect
+                  data={customerOptions}
+                  value={formValues.customer || ''}
+                  onChange={(v) => setValue('customer', v)}
+                  placeholder="Choose a customer"
+                  searchPlaceholder="Search customers..."
+                  loading={!customersData}
+                  error={errors.customer?.message}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Select Employee
+                </label>
+                <SearchableSelect
+                  data={employeeOptions}
+                  value={formValues.employee || ''}
+                  onChange={(v) => setValue('employee', v)}
+                  placeholder="Choose an employee"
+                  searchPlaceholder="Search employees..."
+                  loading={!employeesData}
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Location Section */}
           <div>
             <h4 className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
               Job Location
             </h4>
             <div className="space-y-5">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <Switch
+                  checked={sameAsCustomer}
+                  onCheckedChange={setSameAsCustomer}
+                  disabled={!selectedCustomer}
+                  size="default"
+                />
+                <span className="text-sm font-medium text-foreground">
+                  Same as Customer Address
+                </span>
+              </label>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Job Address
+                  <span className="text-primary"> *</span>
+                </label>
+                <Controller
+                  name="jobAddress"
+                  control={control}
+                  render={({ field }) => (
+                    <Textarea
+                      placeholder="Enter job address"
+                      {...field}
+                      disabled={sameAsCustomer}
+                      className="min-h-[80px] rounded-xl border-border bg-background p-4"
+                    />
+                  )}
+                />
+                {errors.jobAddress && (
+                  <p className="text-sm text-red-500">
+                    {errors.jobAddress.message}
+                  </p>
+                )}
+              </div>
+
+              {sameAsCustomer ? (
+                <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2 text-sm">
+                  <p><span className="font-medium text-muted-foreground">Address: </span>{formValues.jobAddress || '-'}</p>
+                  <p><span className="font-medium text-muted-foreground">City: </span>{formValues.city || '-'}</p>
+                  <p><span className="font-medium text-muted-foreground">State: </span>{formValues.state || '-'}</p>
+                  <p><span className="font-medium text-muted-foreground">Country: </span>{formValues.country || '-'}</p>
+                  <p><span className="font-medium text-muted-foreground">Postal Code: </span>{formValues.postalCode || '-'}</p>
+                </div>
+              ) : (
+                <AddressInputs
+                  countryIso={formValues.countryIso || ''}
+                  country={formValues.country}
+                  state={formValues.state}
+                  city={formValues.city}
+                  postalCode={formValues.postalCode}
+                  onCountryChange={(name, iso) => {
+                    setValue('country', name, { shouldValidate: true });
+                    setValue('countryIso', iso, {
+                      shouldValidate: true,
+                    });
+                    setValue('state', '', { shouldValidate: true });
+                    setValue('city', '', { shouldValidate: true });
+                  }}
+                  onStateChange={(name, _iso) => {
+                    setValue('state', name, { shouldValidate: true });
+                    setValue('city', '', { shouldValidate: true });
+                  }}
+                  onCityChange={(name) =>
+                    setValue('city', name, { shouldValidate: true })
+                  }
+                  onPostalCodeChange={(val) =>
+                    setValue('postalCode', val, {
+                      shouldValidate: true,
+                    })
+                  }
+                  errors={{
+                    country: errors.country?.message,
+                    state: errors.state?.message,
+                    city: errors.city?.message,
+                    postalCode: errors.postalCode?.message,
+                  }}
+                />
+              )}
+
               <LocationModeToggle
                 value={formValues.locationMode || 'map'}
                 onChange={(mode) => setValue('locationMode', mode)}
               />
 
               {formValues.locationMode === 'map' ? (
-                <MockMapPicker
+                <GoogleMapPicker
                   latitude={formValues.latitude || 0}
                   longitude={formValues.longitude || 0}
                   onPick={(lat, lng) => {
@@ -342,57 +478,6 @@ export default function EditJobPage() {
                   }}
                 />
               )}
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Job Address
-                  <span className="text-primary"> *</span>
-                </label>
-                <Textarea
-                  placeholder="Enter job address"
-                  {...register('jobAddress')}
-                  className="min-h-[80px] rounded-xl border-border bg-background p-4"
-                />
-                {errors.jobAddress && (
-                  <p className="text-sm text-red-500">
-                    {errors.jobAddress.message}
-                  </p>
-                )}
-              </div>
-
-              <AddressInputs
-                countryIso={formValues.countryIso || ''}
-                country={formValues.country}
-                state={formValues.state}
-                city={formValues.city}
-                postalCode={formValues.postalCode}
-                onCountryChange={(name, iso) => {
-                  setValue('country', name, { shouldValidate: true });
-                  setValue('countryIso', iso, {
-                    shouldValidate: true,
-                  });
-                  setValue('state', '', { shouldValidate: true });
-                  setValue('city', '', { shouldValidate: true });
-                }}
-                onStateChange={(name, _iso) => {
-                  setValue('state', name, { shouldValidate: true });
-                  setValue('city', '', { shouldValidate: true });
-                }}
-                onCityChange={(name) =>
-                  setValue('city', name, { shouldValidate: true })
-                }
-                onPostalCodeChange={(val) =>
-                  setValue('postalCode', val, {
-                    shouldValidate: true,
-                  })
-                }
-                errors={{
-                  country: errors.country?.message,
-                  state: errors.state?.message,
-                  city: errors.city?.message,
-                  postalCode: errors.postalCode?.message,
-                }}
-              />
             </div>
           </div>
         </div>
@@ -517,69 +602,71 @@ export default function EditJobPage() {
               )}
             </div>
           </div>
-        </div>
-      );
-    }
 
-    if (currentStep === 3) {
-      return (
-        <div className="space-y-6">
+          {/* Pricing Section */}
           <div>
             <h4 className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-              Payment & Details
+              Pricing
+            </h4>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Payment Type
+                  <span className="text-primary"> *</span>
+                </label>
+                <Select
+                  value={formValues.paymentType || ''}
+                  onValueChange={(v) => setValue('paymentType', v)}
+                >
+                  <SelectTrigger className="h-12 rounded-xl border-border bg-background">
+                    <SelectValue placeholder="Select payment type" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="bank_transfer">
+                      Bank Transfer
+                    </SelectItem>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="drop_invoice">
+                      Drop Invoice
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.paymentType && (
+                  <p className="text-sm text-red-500">
+                    {errors.paymentType.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Price
+                  <span className="text-primary"> *</span>
+                </label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9ca3af]" />
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="0.00"
+                    {...register('price', { valueAsNumber: true })}
+                    className="h-12 rounded-xl border-border bg-background pl-10"
+                  />
+                </div>
+                {errors.price && (
+                  <p className="text-sm text-red-500">
+                    {errors.price.message}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Description & Notes Section */}
+          <div>
+            <h4 className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              Additional Details
             </h4>
             <div className="space-y-5">
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Payment Type
-                    <span className="text-primary"> *</span>
-                  </label>
-                  <Select
-                    value={formValues.paymentType || ''}
-                    onValueChange={(v) => setValue('paymentType', v)}
-                  >
-                    <SelectTrigger className="h-12 rounded-xl border-border bg-background">
-                      <SelectValue placeholder="Select payment type" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      <SelectItem value="bank_transfer">
-                        Bank Transfer
-                      </SelectItem>
-                      <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="drop_invoice">
-                        Drop Invoice
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.paymentType && (
-                    <p className="text-sm text-red-500">
-                      {errors.paymentType.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Price
-                    <span className="text-primary"> *</span>
-                  </label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9ca3af]" />
-                    <Input
-                      type="text"
-                      inputMode="decimal"
-                      placeholder="0.00"
-                      {...register('price', { valueAsNumber: true })}
-                      className="h-12 rounded-xl border-border bg-background pl-10"
-                    />
-                  </div>
-                  {errors.price && (
-                    <p className="text-sm text-red-500">
-                      {errors.price.message}
-                    </p>
-                  )}
-                </div>
-              </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
                   Description
@@ -606,193 +693,58 @@ export default function EditJobPage() {
       );
     }
 
+    // Step 3: Review & Confirm
+    const customerName = selectedCustomer?.label ?? formValues.customer;
+    const employeeName = formValues.employee
+      ? employeeOptions.find((e) => e._id === formValues.employee)?.label ?? formValues.employee
+      : null;
+    const jobTypeLabel = formValues.jobType === 'one_time' ? 'One Time' : formValues.jobType === 'recurring' ? 'Recurring' : '-';
+    const paymentTypeLabel = formValues.paymentType
+      ? { bank_transfer: 'Bank Transfer', cash: 'Cash', drop_invoice: 'Drop Invoice' }[formValues.paymentType] ?? formValues.paymentType
+      : '-';
+
+    const customerLocationFields = [
+      { icon: <User className="h-3 w-3" />, label: 'Customer', value: customerName },
+      ...(employeeName ? [{ icon: <Briefcase className="h-3 w-3" />, label: 'Employee', value: employeeName }] : []),
+      { icon: <MapPin className="h-3 w-3" />, label: 'Address', value: formValues.jobAddress || '-' },
+      { icon: <Building2 className="h-3 w-3" />, label: 'City', value: formValues.city || '-' },
+      { icon: <Map className="h-3 w-3" />, label: 'State', value: formValues.state || '-' },
+      { icon: <Globe className="h-3 w-3" />, label: 'Country', value: formValues.country || '-' },
+      { icon: <Hash className="h-3 w-3" />, label: 'Postal Code', value: formValues.postalCode || '-' },
+      ...(formValues.latitude && formValues.longitude
+        ? [{ icon: <Map className="h-3 w-3" />, label: 'Coordinates', value: `${formValues.latitude.toFixed(6)}, ${formValues.longitude.toFixed(6)}` }]
+        : []),
+    ];
+
+    const scheduleFields = [
+      { icon: <Briefcase className="h-3 w-3" />, label: 'Job Type', value: jobTypeLabel },
+      { icon: <Calendar className="h-3 w-3" />, label: 'Job Date', value: formValues.jobDate || '-' },
+      ...(formValues.jobType === 'recurring' && formValues.frequencyValue
+        ? [{ icon: <Repeat className="h-3 w-3" />, label: 'Frequency', value: `Every ${formValues.frequencyValue} ${formValues.frequencyUnit}${formValues.frequencyValue && formValues.frequencyValue > 1 ? 's' : ''}` }]
+        : []),
+      { icon: <CreditCard className="h-3 w-3" />, label: 'Payment Type', value: paymentTypeLabel },
+      { icon: <DollarSign className="h-3 w-3" />, label: 'Price', value: `$${formValues.price || '0.00'}` },
+      ...(formValues.description ? [{ icon: <FileText className="h-3 w-3" />, label: 'Description', value: formValues.description }] : []),
+      ...(formValues.notes ? [{ icon: <StickyNote className="h-3 w-3" />, label: 'Notes', value: formValues.notes }] : []),
+    ];
+
     return (
-      <div className="space-y-5">
-        {/* Assignment Card */}
-        <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
-          <div className="flex items-center gap-3.5 px-6 py-4 border-b border-[#e5e7eb]">
-            <div className="w-[42px] h-[42px] rounded-xl bg-[#2d6a4f] flex items-center justify-center shrink-0">
-              <User className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-[#111827]">
-                Assignment
-              </div>
-            </div>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <ReviewField
-                icon={<User className="h-3 w-3" />}
-                label="Customer"
-                value={
-                  (typeof jobData?.customerId === 'object'
-                    ? jobData.customerId.fullName
-                    : customerOptions.find(
-                        (c) => c._id === formValues.customer,
-                      )?.label) ||
-                  formValues.customer ||
-                  'Not provided'
-                }
-              />
-              <ReviewField
-                icon={<User className="h-3 w-3" />}
-                label="Employee"
-                value={
-                  (typeof jobData?.employeeId === 'object'
-                    ? jobData.employeeId.fullName
-                    : employeeOptions.find(
-                        (e) => e._id === formValues.employee,
-                      )?.label) || 'Not assigned'
-                }
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Schedule Card */}
-        <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
-          <div className="flex items-center gap-3.5 px-6 py-4 border-b border-[#e5e7eb]">
-            <div className="w-[42px] h-[42px] rounded-xl bg-[#2d6a4f] flex items-center justify-center shrink-0">
-              <Calendar className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-[#111827]">
-                Schedule
-              </div>
-            </div>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <ReviewField
-                icon={<RefreshCw className="h-3 w-3" />}
-                label="Job Type"
-                value={
-                  formValues.jobType
-                    ? formValues.jobType
-                        .replace(/_/g, ' ')
-                        .replace(/\b\w/g, (c) => c.toUpperCase())
-                    : '-'
-                }
-              />
-              <ReviewField
-                icon={<Calendar className="h-3 w-3" />}
-                label="Job Date"
-                value={formValues.jobDate || '-'}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Payment Card */}
-        <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
-          <div className="flex items-center gap-3.5 px-6 py-4 border-b border-[#e5e7eb]">
-            <div className="w-[42px] h-[42px] rounded-xl bg-[#2d6a4f] flex items-center justify-center shrink-0">
-              <DollarSign className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-[#111827]">
-                Payment
-              </div>
-            </div>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <ReviewField
-                icon={<DollarSign className="h-3 w-3" />}
-                label="Price"
-                value={
-                  formValues.price != null && formValues.price > 0
-                    ? `$${formValues.price}`
-                    : 'No Charge'
-                }
-              />
-              <ReviewField
-                icon={<CreditCard className="h-3 w-3" />}
-                label="Payment Type"
-                value={
-                  formValues.paymentType
-                    ? formValues.paymentType
-                        .replace(/_/g, ' ')
-                        .replace(/\b\w/g, (c) => c.toUpperCase())
-                    : '-'
-                }
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Location Card */}
-        <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
-          <div className="flex items-center gap-3.5 px-6 py-4 border-b border-[#e5e7eb]">
-            <div className="w-[42px] h-[42px] rounded-xl bg-[#2d6a4f] flex items-center justify-center shrink-0">
-              <MapPin className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-[#111827]">
-                Location
-              </div>
-            </div>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <ReviewField
-                icon={<MapPin className="h-3 w-3" />}
-                label="Address"
-                value={formValues.jobAddress || '-'}
-              />
-              <ReviewField
-                icon={<MapPin className="h-3 w-3" />}
-                label="City"
-                value={formValues.city || '-'}
-              />
-              <ReviewField
-                icon={<MapPin className="h-3 w-3" />}
-                label="State"
-                value={formValues.state || '-'}
-              />
-              <ReviewField
-                icon={<MapPin className="h-3 w-3" />}
-                label="Postal Code"
-                value={formValues.postalCode || '-'}
-              />
-              <ReviewField
-                icon={<MapPin className="h-3 w-3" />}
-                label="Country"
-                value={formValues.country || '-'}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Details Card */}
-        <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
-          <div className="flex items-center gap-3.5 px-6 py-4 border-b border-[#e5e7eb]">
-            <div className="w-[42px] h-[42px] rounded-xl bg-[#2d6a4f] flex items-center justify-center shrink-0">
-              <FileText className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-[#111827]">
-                Details
-              </div>
-            </div>
-          </div>
-          <div className="p-6">
-            <ReviewField
-              icon={<FileText className="h-3 w-3" />}
-              label="Description"
-              value={formValues.description || 'Not provided'}
-            />
-            <div className="mt-5">
-              <ReviewField
-                icon={<FileText className="h-3 w-3" />}
-                label="Notes"
-                value={formValues.notes || 'Not provided'}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      <ReviewCard
+        sections={[
+          {
+            icon: <Users className="h-5 w-5 text-white" />,
+            title: 'Customer & Location',
+            subtitle: 'Please verify the customer and location details below',
+            fields: customerLocationFields,
+          },
+          {
+            icon: <DollarSign className="h-5 w-5 text-white" />,
+            title: 'Schedule & Pricing',
+            subtitle: 'Please verify the schedule and pricing details below',
+            fields: scheduleFields,
+          },
+        ]}
+      />
     );
   };
 

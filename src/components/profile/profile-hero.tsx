@@ -1,4 +1,5 @@
-import { ArrowLeft, Pencil } from 'lucide-react';
+import { useRef } from 'react';
+import { ArrowLeft, Camera, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
 
@@ -12,6 +13,7 @@ interface ProfileHeroProps {
   onBack: () => void;
   isEditing?: boolean;
   onEditClick?: () => void;
+  onProfileImageChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export default function ProfileHero({
@@ -24,7 +26,9 @@ export default function ProfileHero({
   onBack,
   isEditing,
   onEditClick,
+  onProfileImageChange,
 }: ProfileHeroProps) {
+  const profileInputRef = useRef<HTMLInputElement>(null);
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary/80 to-primary/60 pb-10 shadow-lg">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.12)_0%,transparent_60%)]" />
@@ -44,7 +48,27 @@ export default function ProfileHero({
 
         <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-5">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-            <UserAvatar image={profileImage} name={fullName} size="lg" className="h-20 w-20 ring-4 ring-white/30 shadow-xl" />
+            <div className="relative">
+              <UserAvatar image={profileImage} name={fullName} size="lg" className="h-20 w-20 ring-4 ring-white/30 shadow-xl" />
+              {isEditing && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => profileInputRef.current?.click()}
+                    className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white text-gray-700 shadow-md hover:bg-gray-100 transition-all cursor-pointer"
+                  >
+                    <Camera className="h-3.5 w-3.5" />
+                  </button>
+                  <input
+                    ref={profileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={onProfileImageChange}
+                  />
+                </>
+              )}
+            </div>
             <div className="text-center sm:text-left">
               <h1 className="text-2xl font-bold text-white">
                 {fullName}

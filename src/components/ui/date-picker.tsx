@@ -14,13 +14,14 @@ interface DatePickerProps {
 }
 
 function DatePicker({ value, onChange, error, placeholder }: DatePickerProps) {
+  const [open, setOpen] = React.useState(false);
   const [date, setDate] = React.useState<Date | undefined>(
     value ? new Date(value + "T00:00:00") : undefined,
   );
 
   return (
     <div className="space-y-1">
-      <Popover>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -42,6 +43,7 @@ function DatePicker({ value, onChange, error, placeholder }: DatePickerProps) {
               if (newDate && onChange) {
                 onChange(format(newDate, "yyyy-MM-dd"));
               }
+              setOpen(false);
             }}
             initialFocus
           />

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   User,
   Mail,
@@ -9,7 +9,7 @@ import {
   X,
 } from 'lucide-react';
 import type { IAdminUser } from '@/types';
-import { useUpdateProfileMutation } from '@/API/api';
+import { useUpdateProfileMutation, useUploadDocumentMutation } from '@/API/api';
 import ProfileHero from './profile-hero';
 import ProfileSectionCard from './profile-section-card';
 import ProfileField from './profile-field';
@@ -29,6 +29,9 @@ export default function ProfileContent({
   );
   const [updateProfile, { isLoading: isSaving }] =
     useUpdateProfileMutation();
+  const [uploadDocument] = useUploadDocumentMutation();
+  const profileImageFileRef = useRef<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string>('');
 
   const fullName =
     admin.fullName || `${admin.firstName} ${admin.lastName}`;
@@ -50,28 +53,56 @@ export default function ProfileContent({
     setIsEditing(!isEditing);
   }, [isEditing, admin]);
 
+  const handleProfileImageChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        profileImageFileRef.current = file;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setProfileImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+    [],
+  );
+
   const handleChange = useCallback((key: string, val: string) => {
     setFormData((prev) => ({ ...prev, [key]: val }));
   }, []);
 
   const handleSave = useCallback(async () => {
     try {
-      await updateProfile(formData).unwrap();
+      let payload = { ...formData };
+
+      if (profileImageFileRef.current) {
+        const fd = new FormData();
+        fd.append('file', profileImageFileRef.current);
+        const res = await uploadDocument(fd).unwrap() as any;
+        payload = { ...payload, profileImage: res.file.url };
+      }
+
+      await updateProfile(payload).unwrap();
       setIsEditing(false);
+      setProfileImagePreview('');
+      profileImageFileRef.current = null;
     } catch {
       // error handled by RTK
     }
-  }, [updateProfile, formData]);
+  }, [updateProfile, formData, uploadDocument]);
 
   const handleCancel = useCallback(() => {
     setIsEditing(false);
     setFormData({});
+    setProfileImagePreview('');
+    profileImageFileRef.current = null;
   }, []);
 
   return (
     <div className="w-full px-5 sm:px-8 py-5 sm:py-8 space-y-6">
       <ProfileHero
-        profileImage={admin.profileImage}
+        profileImage={profileImagePreview || admin.profileImage}
         fullName={fullName}
         email={admin.email}
         status={admin.status}
@@ -80,6 +111,7 @@ export default function ProfileContent({
         onBack={onBack}
         isEditing={isEditing}
         onEditClick={handleEditClick}
+        onProfileImageChange={handleProfileImageChange}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

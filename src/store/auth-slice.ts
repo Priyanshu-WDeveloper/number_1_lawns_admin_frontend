@@ -57,12 +57,12 @@ const authSlice = createSlice({
     setAuth(
       state,
       action: PayloadAction<{
-        user: AuthUser;
+        user: Partial<AuthUser>;
         token: string;
         rememberMe?: boolean;
       }>,
     ) {
-      state.user = action.payload.user;
+      state.user = action.payload.user as AuthUser;
       state.token = action.payload.token;
       state.rememberMe = action.payload.rememberMe ?? false;
       persistToStorage(state);

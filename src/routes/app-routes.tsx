@@ -8,6 +8,9 @@ import { ROUTES } from '@/constants';
 import Loader from '@/components/loader';
 
 const Login = React.lazy(() => import('../pages/auth/login'));
+const ImpersonateHandler = React.lazy(
+  () => import('../pages/auth/impersonate'),
+);
 const ForgotPassword = React.lazy(
   () => import('../pages/auth/forgot-password'),
 );
@@ -93,6 +96,7 @@ const AppRoutes = () => {
             </PublicRoute>
           }
         />
+        <Route path="/impersonate" element={<ImpersonateHandler />} />
         <Route
           path={ROUTES.FORGOT_PASSWORD}
           element={
