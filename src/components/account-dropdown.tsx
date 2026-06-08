@@ -35,6 +35,13 @@ export default function AccountDropdown({
 }) {
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.auth.user);
+  console.log(
+    '\n===================== 🟢 user =====================',
+  );
+  console.log(user);
+  console.log(user?.profileImage);
+
+  console.log('=================================================\n');
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [logout] = useLogoutMutation();
@@ -71,7 +78,11 @@ export default function AccountDropdown({
         {variant === 'navbar' ? (
           <>
             <div className="flex sm:hidden items-center gap-2">
-              <UserAvatar name={user?.fullName ?? ''} image={user?.profileImage} size="sm" />
+              <UserAvatar
+                name={user?.fullName ?? ''}
+                image={user?.profileImage}
+                size="sm"
+              />
               {/* <span className="text-sm font-medium text-[#6b7280]">
                 {user?.role === 1
                   ? 'Super Admin'
@@ -83,7 +94,11 @@ export default function AccountDropdown({
               </span> */}
             </div>
             <div className="hidden sm:flex items-center gap-3">
-              <UserAvatar name={user?.fullName ?? ''} image={user?.profileImage} size="sm" />
+              <UserAvatar
+                name={user?.fullName ?? ''}
+                image={user?.profileImage}
+                size="sm"
+              />
               <span className="text-sm font-semibold">
                 {user?.fullName ||
                   `${superAccess ? 'Super Admin' : 'Admin'}`}
@@ -93,7 +108,11 @@ export default function AccountDropdown({
           </>
         ) : (
           <>
-            <UserAvatar name={user?.fullName ?? ''} image={user?.profileImage} size="sm" />
+            <UserAvatar
+              name={user?.fullName ?? ''}
+              image={user?.profileImage}
+              size="sm"
+            />
 
             <span className="text-sm font-semibold">
               {user?.fullName ||
@@ -113,7 +132,11 @@ export default function AccountDropdown({
         {/* Top Section */}
         <div className="space-y-3 p-4">
           <div className="flex items-center gap-3">
-            <UserAvatar name={user?.fullName ?? ''} image={user?.profileImage} size="sm" />
+            <UserAvatar
+              name={user?.fullName ?? ''}
+              image={user?.profileImage}
+              size="sm"
+            />
             <div>
               <h2 className="text-lg font-medium text-slate-800">
                 {user?.fullName || 'Admin'}
@@ -169,9 +192,7 @@ export default function AccountDropdown({
         {/* Menu Items */}
         <div className="py-1">
           <DropdownMenuItem
-            onClick={() =>
-              navigate(ROUTES.PROFILE)
-            }
+            onClick={() => navigate(ROUTES.PROFILE)}
             className="flex cursor-pointer items-center gap-3 px-4 py-3 text-sm"
           >
             <User className="h-4 w-4 text-slate-700" />

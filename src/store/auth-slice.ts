@@ -29,6 +29,7 @@ function loadFromStorage(): AuthState {
   } catch {
     /* ignore */
   }
+
   return { user: null, token: null, rememberMe: false };
 }
 
@@ -63,6 +64,8 @@ const authSlice = createSlice({
       }>,
     ) {
       state.user = action.payload.user as AuthUser;
+      console.log(state.user);
+
       state.token = action.payload.token;
       state.rememberMe = action.payload.rememberMe ?? false;
       persistToStorage(state);
@@ -73,10 +76,7 @@ const authSlice = createSlice({
       state.rememberMe = false;
       clearStorage();
     },
-    updateUser(
-      state,
-      action: PayloadAction<Partial<AuthUser>>,
-    ) {
+    updateUser(state, action: PayloadAction<Partial<AuthUser>>) {
       if (state.user) {
         Object.assign(state.user, action.payload);
         persistToStorage(state);
