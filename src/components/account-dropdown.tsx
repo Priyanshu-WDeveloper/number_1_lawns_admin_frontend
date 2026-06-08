@@ -22,7 +22,10 @@ import toast from 'react-hot-toast';
 import { ConfirmDialog } from './ui/confirm-dialog';
 import { useState } from 'react';
 import { ROUTES } from '@/constants';
-import { useLogoutMutation } from '@/API/api';
+import {
+  useGetAdminDetailsQuery,
+  useLogoutMutation,
+} from '@/API/api';
 import { format } from 'date-fns';
 import { ChangeAdminPasswordDialog } from '@/pages/admin/change-password';
 
@@ -35,15 +38,10 @@ export default function AccountDropdown({
 }) {
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.auth.user);
-  console.log(
-    '\n===================== 🟢 user =====================',
-  );
-  console.log(user);
-  console.log(user?.profileImage);
 
-  console.log('=================================================\n');
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const { data } = useGetAdminDetailsQuery();
   const [logout] = useLogoutMutation();
   const daysLeft = user?.validity
     ? Math.ceil(
@@ -66,6 +64,20 @@ export default function AccountDropdown({
     }
   };
 
+  // const getAdminDetails = async () => {
+  //   // const res = await getAdminDetailsData();
+  //   console.log(
+  //     '\n===================== 🟢 res =====================',
+  //   );
+  //   console.log(res);
+  //   console.log(
+  //     '=================================================\n',
+  //   );
+  // };
+
+  // useEffect(() => {
+  //   getAdminDetails();
+  // }, []);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -79,8 +91,10 @@ export default function AccountDropdown({
           <>
             <div className="flex sm:hidden items-center gap-2">
               <UserAvatar
-                name={user?.fullName ?? ''}
-                image={user?.profileImage}
+                name={data?.admin.fullName || user?.fullName || '-'}
+                image={
+                  data?.admin.fullName || user?.profileImage || ''
+                }
                 size="sm"
               />
               {/* <span className="text-sm font-medium text-[#6b7280]">

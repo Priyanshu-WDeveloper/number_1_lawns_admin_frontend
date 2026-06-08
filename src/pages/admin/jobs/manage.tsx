@@ -97,7 +97,7 @@ export default function ManageJobsPage() {
       accessorKey: 'address',
       header: 'Address',
       cell: (row: IParentJob) => (
-        <span className="text-[#6b7280]">{row.address}</span>
+        <span className="text-[#6b7280]">{row.address || '-'}</span>
       ),
     },
     {
@@ -167,7 +167,9 @@ export default function ManageJobsPage() {
           <button
             type="button"
             onClick={() =>
-              navigate(ROUTES.JOBS_VIEW_MANAGE.replace(':id', row._id ?? ''))
+              navigate(
+                ROUTES.JOBS_VIEW_MANAGE.replace(':id', row._id ?? ''),
+              )
             }
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-sm font-medium bg-[#f5f5f5] text-[#374151] hover:bg-[#e5e5e5] transition-colors"
           >

@@ -5,7 +5,7 @@ interface AuthUser {
   email: string;
   role: number;
   validity: Date;
-  profileImage?: string;
+  profileImage: string;
 }
 
 interface AuthState {
@@ -64,9 +64,9 @@ const authSlice = createSlice({
       }>,
     ) {
       state.user = action.payload.user as AuthUser;
-      console.log(state.user);
 
       state.token = action.payload.token;
+      // state.profileImage = action.payload.profileImage;
       state.rememberMe = action.payload.rememberMe ?? false;
       persistToStorage(state);
     },

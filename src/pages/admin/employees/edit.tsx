@@ -321,7 +321,7 @@ export default function EditEmployeePage() {
 
   const onSubmit = async (data: UpdateEmployeeFormData) => {
     if (!id || id === 'undefined' || id.length < 10) return;
-    console.log('onSubmit lat/lng:', data.latitude, data.longitude);
+    // console.log('onSubmit lat/lng:', data.latitude, data.longitude);
     try {
       let profileImageUrl = data.profileImage;
       let attachments:

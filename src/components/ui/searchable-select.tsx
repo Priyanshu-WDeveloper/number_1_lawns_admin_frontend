@@ -1,13 +1,13 @@
-import * as React from "react"
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react"
+import * as React from 'react';
+import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from '@/components/ui/popover';
 import {
   Command,
   CommandEmpty,
@@ -15,46 +15,57 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command"
+} from '@/components/ui/command';
+import { AssignAvatarCell } from '@/components/admin/assign-avatar-cell';
 
 interface SearchableItem {
-  _id: string
-  label: string
-  subtitle?: string
+  _id: string;
+  label: string;
+  subtitle?: string;
+  countryCode?: string;
+  phoneNumber?: string;
+  profileImage?: string;
+  address?: string;
+  customerId?: string;
+  employeeId?: string;
 }
 
 interface SearchableSelectProps {
-  data: SearchableItem[]
-  value: string
-  onChange: (value: string) => void
-  placeholder?: string
-  searchPlaceholder?: string
-  loading?: boolean
-  emptyMessage?: string
-  notFoundMessage?: string
-  disabled?: boolean
-  error?: string
+  data: SearchableItem[];
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  searchPlaceholder?: string;
+  loading?: boolean;
+  emptyMessage?: string;
+  notFoundMessage?: string;
+  disabled?: boolean;
+  error?: string;
 }
 
 export function SearchableSelect({
   data,
   value,
   onChange,
-  placeholder = "Select...",
-  searchPlaceholder = "Search...",
+  placeholder = 'Select...',
+  searchPlaceholder = 'Search...',
   loading = false,
-  emptyMessage = "No items found.",
-  notFoundMessage = "No results found.",
+  emptyMessage = 'No items found.',
+  notFoundMessage = 'No results found.',
   disabled = false,
   error,
 }: SearchableSelectProps) {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = React.useState(false);
 
   const selectedItem = React.useMemo(
     () => data.find((item) => item._id === value),
     [data, value],
-  )
-
+  );
+  console.log(
+    '\n===================== 🟢 data =====================',
+  );
+  console.log(data);
+  console.log('=================================================\n');
   return (
     <div className="space-y-1">
       <Popover open={open} onOpenChange={setOpen}>
@@ -65,9 +76,9 @@ export function SearchableSelect({
             aria-expanded={open}
             disabled={disabled}
             className={cn(
-              "h-12 w-full justify-between rounded-xl border-border bg-background px-4 text-sm font-normal hover:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-              !selectedItem && "text-muted-foreground",
-              error && "border-red-500",
+              'h-12 w-full justify-between rounded-xl border-border bg-background px-4 text-sm font-normal hover:bg-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+              !selectedItem && 'text-muted-foreground',
+              error && 'border-red-500',
             )}
           >
             {loading ? (
@@ -109,24 +120,37 @@ export function SearchableSelect({
                       key={item._id}
                       value={item._id}
                       onSelect={(currentValue: string) => {
-                        onChange(currentValue === value ? "" : currentValue)
-                        setOpen(false)
+                        onChange(
+                          currentValue === value ? '' : currentValue,
+                        );
+                        setOpen(false);
                       }}
                     >
-                      <div className="flex flex-1 flex-col">
-                        <span>{item.label}</span>
+                      <div className="flex flex-1 flex-col ">
+                        {/* <span>{item.label}</span>
                         {item.subtitle && (
                           <span className="text-xs text-muted-foreground">
                             {item.subtitle}
                           </span>
-                        )}
+                        )} */}
+                        <AssignAvatarCell
+                          name={item.label}
+                          email={item.subtitle}
+                          profileImage={item.profileImage}
+                          countryCode={item.countryCode}
+                          phoneNumber={item.phoneNumber}
+                          address={item.address}
+                          customId={
+                            item.customerId || item.employeeId
+                          }
+                        />
                       </div>
                       <Check
                         className={cn(
-                          "ml-auto h-4 w-4",
+                          'ml-auto h-4 w-4',
                           value === item._id
-                            ? "text-primary opacity-100"
-                            : "opacity-0",
+                            ? 'text-primary opacity-100'
+                            : 'opacity-0',
                         )}
                       />
                     </CommandItem>
@@ -139,5 +163,5 @@ export function SearchableSelect({
       </Popover>
       {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
-  )
+  );
 }

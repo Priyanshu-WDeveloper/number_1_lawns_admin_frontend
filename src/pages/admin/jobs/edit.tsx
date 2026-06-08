@@ -60,15 +60,16 @@ const editJobSchema = z
   .object({
     customer: z.string().min(1, 'Customer is required'),
     employee: z.string().optional(),
-    jobAddress: z.string().min(1, 'Job address is required'),
-    city: z.string().min(1, 'City is required'),
-    state: z.string().min(1, 'State is required'),
-    country: z.string().min(1, 'Country is required'),
-    postalCode: z.string().min(1, 'Postal code is required'),
+    jobAddress: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    country: z.string().optional(),
+    postalCode: z.string().optional(),
     countryIso: z.string().optional(),
     latitude: z.number().optional(),
     longitude: z.number().optional(),
     locationMode: z.enum(['map', 'manual']),
+    sameAsCustomer: z.boolean(),
     jobType: z.string().min(1, 'Job type is required'),
     jobDate: z.string().min(1, 'Job date is required'),
     frequencyValue: z.number().optional(),
@@ -79,12 +80,29 @@ const editJobSchema = z
     notes: z.string().optional(),
   })
   .superRefine((data, ctx) => {
+    if (!data.sameAsCustomer) {
+      if (!data.jobAddress || !data.jobAddress.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Job address is required', path: ['jobAddress'] });
+      }
+      if (!data.city || !data.city.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'City is required', path: ['city'] });
+      }
+      if (!data.state || !data.state.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'State is required', path: ['state'] });
+      }
+      if (!data.country || !data.country.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Country is required', path: ['country'] });
+      }
+      if (!data.postalCode || !data.postalCode.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Postal code is required', path: ['postalCode'] });
+      }
+    }
     if (data.countryIso) {
       const addrResult = validateAddress(
         data.countryIso,
-        data.state,
-        data.city,
-        data.postalCode,
+        data.state || '',
+        data.city || '',
+        data.postalCode || '',
       );
       if (!addrResult.valid && addrResult.error && addrResult.path) {
         ctx.addIssue({
@@ -123,7 +141,6 @@ export default function EditJobPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const [sameAsCustomer, setSameAsCustomer] = useState(false);
 
   const { data: jobData, isLoading: isFetching } = useGetJobByIdQuery(
     id ?? '',
@@ -190,6 +207,7 @@ export default function EditJobPage() {
           countryIso: (jobData as any).countryIso || '',
           latitude: jobData.location?.coordinates?.[1] ?? undefined,
           longitude: jobData.location?.coordinates?.[0] ?? undefined,
+          sameAsCustomer: false,
           locationMode: 'map',
           jobType: jobData.jobType ?? '',
           jobDate: jobData.jobDate
@@ -215,7 +233,7 @@ export default function EditJobPage() {
   );
 
   useEffect(() => {
-    if (!sameAsCustomer || !selectedCustomer) return;
+    if (!formValues.sameAsCustomer || !selectedCustomer) return;
     const opts = { shouldDirty: true };
     setValue('jobAddress', (selectedCustomer as any).address || '', opts);
     setValue('city', (selectedCustomer as any).city || '', opts);
@@ -228,13 +246,14 @@ export default function EditJobPage() {
         ((selectedCustomer as any).country || '').toLowerCase(),
     );
     setValue('countryIso', countryRecord?.isoCode ?? '', opts);
-  }, [formValues.customer, sameAsCustomer, selectedCustomer]);
+  }, [formValues.customer, formValues.sameAsCustomer, selectedCustomer]);
 
   useEffect(() => {
-    if (formValues.country && !formValues.countryIso) {
+    const country = formValues.country;
+    if (country && !formValues.countryIso) {
       const match = Country.getAllCountries().find(
         (c) =>
-          c.name.toLowerCase() === formValues.country.toLowerCase(),
+          c.name.toLowerCase() === country.toLowerCase(),
       );
       if (match) {
         setValue('countryIso', match.isoCode);
@@ -246,14 +265,16 @@ export default function EditJobPage() {
     let fieldsToValidate: (keyof EditJobFormData)[] = [];
 
     if (currentStep === 1) {
-      fieldsToValidate = [
-        'customer',
-        'jobAddress',
-        'state',
-        'city',
-        'postalCode',
-        'country',
-      ];
+      fieldsToValidate = formValues.sameAsCustomer
+        ? ['customer']
+        : [
+            'customer',
+            'jobAddress',
+            'state',
+            'city',
+            'postalCode',
+            'country',
+          ];
     } else if (currentStep === 2) {
       fieldsToValidate = ['jobType', 'jobDate', 'paymentType', 'price'];
     }
@@ -275,27 +296,31 @@ export default function EditJobPage() {
     try {
       const payload: Record<string, unknown> = {
         customerId: data.customer,
-        address: data.jobAddress,
-        city: data.city || undefined,
-        state: data.state || undefined,
-        country: data.country || undefined,
-        postalCode: data.postalCode || undefined,
+        ...(!formValues.sameAsCustomer
+          ? {
+              address: data.jobAddress,
+              city: data.city || undefined,
+              state: data.state || undefined,
+              country: data.country || undefined,
+              postalCode: data.postalCode || undefined,
+              location:
+                data.latitude && data.longitude
+                  ? ({
+                      type: 'Point' as const,
+                      coordinates: [data.longitude, data.latitude] as [
+                        number,
+                        number,
+                      ],
+                    } as const)
+                  : undefined,
+            }
+          : {}),
         jobType: data.jobType,
         jobDate: new Date(data.jobDate).toISOString(),
         paymentType: data.paymentType,
         price: data.price || undefined,
         description: data.description || undefined,
         notes: data.notes || undefined,
-        location:
-          data.latitude && data.longitude
-            ? ({
-                type: 'Point' as const,
-                coordinates: [data.longitude, data.latitude] as [
-                  number,
-                  number,
-                ],
-              } as const)
-            : undefined,
         frequency:
           data.jobType === 'recurring' &&
           data.frequencyValue &&
@@ -376,8 +401,8 @@ export default function EditJobPage() {
             <div className="space-y-5">
               <label className="flex items-center gap-3 cursor-pointer">
                 <Switch
-                  checked={sameAsCustomer}
-                  onCheckedChange={setSameAsCustomer}
+                  checked={formValues.sameAsCustomer || false}
+                  onCheckedChange={(v) => setValue('sameAsCustomer', v)}
                   disabled={!selectedCustomer}
                   size="default"
                 />
@@ -386,6 +411,8 @@ export default function EditJobPage() {
                 </span>
               </label>
 
+              {!formValues.sameAsCustomer && (
+                <>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
                   Job Address
@@ -398,7 +425,6 @@ export default function EditJobPage() {
                     <Textarea
                       placeholder="Enter job address"
                       {...field}
-                      disabled={sameAsCustomer}
                       className="min-h-[80px] rounded-xl border-border bg-background p-4"
                     />
                   )}
@@ -410,49 +436,39 @@ export default function EditJobPage() {
                 )}
               </div>
 
-              {sameAsCustomer ? (
-                <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2 text-sm">
-                  <p><span className="font-medium text-muted-foreground">Address: </span>{formValues.jobAddress || '-'}</p>
-                  <p><span className="font-medium text-muted-foreground">City: </span>{formValues.city || '-'}</p>
-                  <p><span className="font-medium text-muted-foreground">State: </span>{formValues.state || '-'}</p>
-                  <p><span className="font-medium text-muted-foreground">Country: </span>{formValues.country || '-'}</p>
-                  <p><span className="font-medium text-muted-foreground">Postal Code: </span>{formValues.postalCode || '-'}</p>
-                </div>
-              ) : (
-                <AddressInputs
-                  countryIso={formValues.countryIso || ''}
-                  country={formValues.country}
-                  state={formValues.state}
-                  city={formValues.city}
-                  postalCode={formValues.postalCode}
-                  onCountryChange={(name, iso) => {
-                    setValue('country', name, { shouldValidate: true });
-                    setValue('countryIso', iso, {
-                      shouldValidate: true,
-                    });
-                    setValue('state', '', { shouldValidate: true });
-                    setValue('city', '', { shouldValidate: true });
-                  }}
-                  onStateChange={(name, _iso) => {
-                    setValue('state', name, { shouldValidate: true });
-                    setValue('city', '', { shouldValidate: true });
-                  }}
-                  onCityChange={(name) =>
-                    setValue('city', name, { shouldValidate: true })
-                  }
-                  onPostalCodeChange={(val) =>
-                    setValue('postalCode', val, {
-                      shouldValidate: true,
-                    })
-                  }
-                  errors={{
-                    country: errors.country?.message,
-                    state: errors.state?.message,
-                    city: errors.city?.message,
-                    postalCode: errors.postalCode?.message,
-                  }}
-                />
-              )}
+              <AddressInputs
+                countryIso={formValues.countryIso || ''}
+                country={formValues.country || ''}
+                state={formValues.state || ''}
+                city={formValues.city || ''}
+                postalCode={formValues.postalCode || ''}
+                onCountryChange={(name, iso) => {
+                  setValue('country', name, { shouldValidate: true });
+                  setValue('countryIso', iso, {
+                    shouldValidate: true,
+                  });
+                  setValue('state', '', { shouldValidate: true });
+                  setValue('city', '', { shouldValidate: true });
+                }}
+                onStateChange={(name, _iso) => {
+                  setValue('state', name, { shouldValidate: true });
+                  setValue('city', '', { shouldValidate: true });
+                }}
+                onCityChange={(name) =>
+                  setValue('city', name, { shouldValidate: true })
+                }
+                onPostalCodeChange={(val) =>
+                  setValue('postalCode', val, {
+                    shouldValidate: true,
+                  })
+                }
+                errors={{
+                  country: errors.country?.message,
+                  state: errors.state?.message,
+                  city: errors.city?.message,
+                  postalCode: errors.postalCode?.message,
+                }}
+              />
 
               <LocationModeToggle
                 value={formValues.locationMode || 'map'}
@@ -477,6 +493,8 @@ export default function EditJobPage() {
                     setValue('longitude', lng);
                   }}
                 />
+              )}
+                </>
               )}
             </div>
           </div>
@@ -706,13 +724,17 @@ export default function EditJobPage() {
     const customerLocationFields = [
       { icon: <User className="h-3 w-3" />, label: 'Customer', value: customerName },
       ...(employeeName ? [{ icon: <Briefcase className="h-3 w-3" />, label: 'Employee', value: employeeName }] : []),
-      { icon: <MapPin className="h-3 w-3" />, label: 'Address', value: formValues.jobAddress || '-' },
-      { icon: <Building2 className="h-3 w-3" />, label: 'City', value: formValues.city || '-' },
-      { icon: <Map className="h-3 w-3" />, label: 'State', value: formValues.state || '-' },
-      { icon: <Globe className="h-3 w-3" />, label: 'Country', value: formValues.country || '-' },
-      { icon: <Hash className="h-3 w-3" />, label: 'Postal Code', value: formValues.postalCode || '-' },
-      ...(formValues.latitude && formValues.longitude
-        ? [{ icon: <Map className="h-3 w-3" />, label: 'Coordinates', value: `${formValues.latitude.toFixed(6)}, ${formValues.longitude.toFixed(6)}` }]
+      ...(!formValues.sameAsCustomer
+        ? [
+            { icon: <MapPin className="h-3 w-3" />, label: 'Address', value: formValues.jobAddress || '-' },
+            { icon: <Building2 className="h-3 w-3" />, label: 'City', value: formValues.city || '-' },
+            { icon: <Map className="h-3 w-3" />, label: 'State', value: formValues.state || '-' },
+            { icon: <Globe className="h-3 w-3" />, label: 'Country', value: formValues.country || '-' },
+            { icon: <Hash className="h-3 w-3" />, label: 'Postal Code', value: formValues.postalCode || '-' },
+            ...(formValues.latitude && formValues.longitude
+              ? [{ icon: <Map className="h-3 w-3" />, label: 'Coordinates', value: `${formValues.latitude.toFixed(6)}, ${formValues.longitude.toFixed(6)}` }]
+              : []),
+          ]
         : []),
     ];
 

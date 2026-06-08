@@ -58,11 +58,11 @@ const createJobSchema = z
   .object({
     customer: z.string().min(1, 'Customer is required'),
     employee: z.string().optional(),
-    jobAddress: z.string().min(1, 'Job address is required'),
-    city: z.string().min(1, 'City is required'),
-    state: z.string().min(1, 'State is required'),
-    country: z.string().min(1, 'Country is required'),
-    postalCode: z.string().min(1, 'Postal code is required'),
+    jobAddress: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    country: z.string().optional(),
+    postalCode: z.string().optional(),
     countryIso: z.string().optional(),
     latitude: z.number().optional(),
     longitude: z.number().optional(),
@@ -75,14 +75,52 @@ const createJobSchema = z
     paymentType: z.string().min(1, 'Payment type is required'),
     description: z.string().optional(),
     notes: z.string().optional(),
+    sameAsCustomer: z.boolean(),
   })
   .superRefine((data, ctx) => {
-    if (data.countryIso) {
+    if (!data.sameAsCustomer) {
+      if (!data.jobAddress) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Job address is required',
+          path: ['jobAddress'],
+        });
+      }
+      if (!data.city) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'City is required',
+          path: ['city'],
+        });
+      }
+      if (!data.state) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'State is required',
+          path: ['state'],
+        });
+      }
+      if (!data.country) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Country is required',
+          path: ['country'],
+        });
+      }
+      if (!data.postalCode) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Postal code is required',
+          path: ['postalCode'],
+        });
+      }
+    }
+    if (!data.sameAsCustomer && data.countryIso) {
       const addrResult = validateAddress(
         data.countryIso,
-        data.state,
-        data.city,
-        data.postalCode,
+        data.state || '',
+        data.city || '',
+        data.postalCode || '',
       );
       if (!addrResult.valid && addrResult.error && addrResult.path) {
         ctx.addIssue({
@@ -116,6 +154,7 @@ const initialFormData: CreateJobFormData = {
   jobDate: '',
   description: '',
   notes: '',
+  sameAsCustomer: false,
 };
 
 const steps = [
@@ -162,6 +201,11 @@ export default function CreateJobPage() {
         _id: c._id,
         label: c.fullName,
         subtitle: c.email,
+        profileImage: c.profileImage,
+        countryCode: c.countryCode,
+        phoneNumber: c.phoneNumber,
+        address: c.address,
+        customerId: c.customerId,
       })),
     [customers],
   );
@@ -172,11 +216,14 @@ export default function CreateJobPage() {
         _id: e._id,
         label: e.fullName,
         subtitle: e.email,
+        profileImage: e.profileImage,
+        countryCode: e.countryCode,
+        phoneNumber: e.phoneNumber,
+        address: e.address,
+        employeeId: e.employeeId,
       })),
     [employeesData],
   );
-
-  const [sameAsCustomer, setSameAsCustomer] = useState(false);
 
   const {
     register,
@@ -194,12 +241,13 @@ export default function CreateJobPage() {
   const formValues = watch();
 
   const selectedCustomer = useMemo(
-    () => customers.find((c) => c._id === formValues.customer) ?? null,
+    () =>
+      customers.find((c) => c._id === formValues.customer) ?? null,
     [customers, formValues.customer],
   );
 
   useEffect(() => {
-    if (!sameAsCustomer || !selectedCustomer) return;
+    if (!formValues.sameAsCustomer || !selectedCustomer) return;
     const opts = { shouldDirty: true };
     setValue('jobAddress', selectedCustomer.address || '', opts);
     setValue('city', selectedCustomer.city || '', opts);
@@ -213,28 +261,46 @@ export default function CreateJobPage() {
     );
     setValue('countryIso', countryRecord?.isoCode ?? '', opts);
     if (selectedCustomer.location?.coordinates) {
-      setValue('longitude', selectedCustomer.location.coordinates[0], opts);
-      setValue('latitude', selectedCustomer.location.coordinates[1], opts);
-    } else if (selectedCustomer.latitude != null && selectedCustomer.longitude != null) {
+      setValue(
+        'longitude',
+        selectedCustomer.location.coordinates[0],
+        opts,
+      );
+      setValue(
+        'latitude',
+        selectedCustomer.location.coordinates[1],
+        opts,
+      );
+    } else if (
+      selectedCustomer.latitude != null &&
+      selectedCustomer.longitude != null
+    ) {
       setValue('latitude', selectedCustomer.latitude, opts);
       setValue('longitude', selectedCustomer.longitude, opts);
     }
-  }, [formValues.customer, sameAsCustomer]);
+  }, [formValues.customer, formValues.sameAsCustomer]);
 
   const handleNext = async () => {
     let fieldsToValidate: (keyof CreateJobFormData)[] = [];
 
     if (currentStep === 1) {
-      fieldsToValidate = [
-        'customer',
-        'jobAddress',
-        'state',
-        'city',
-        'postalCode',
-        'country',
-      ];
+      fieldsToValidate = formValues.sameAsCustomer
+        ? ['customer']
+        : [
+            'customer',
+            'jobAddress',
+            'state',
+            'city',
+            'postalCode',
+            'country',
+          ];
     } else if (currentStep === 2) {
-      fieldsToValidate = ['jobType', 'jobDate', 'paymentType', 'price'];
+      fieldsToValidate = [
+        'jobType',
+        'jobDate',
+        'paymentType',
+        'price',
+      ];
     }
 
     const isValid = await trigger(fieldsToValidate);
@@ -251,35 +317,47 @@ export default function CreateJobPage() {
 
   const onSubmit = async (data: CreateJobFormData) => {
     try {
-      if (data.customer === 'undefined' || data.employee === 'undefined') {
-        console.error('[createJob] Invalid form state: customer or employee is literal "undefined"', { customer: data.customer, employee: data.employee });
-        toast.error('Invalid form state. Please re-select the customer/employee and try again.');
+      if (
+        data.customer === 'undefined' ||
+        data.employee === 'undefined'
+      ) {
+        console.error(
+          '[createJob] Invalid form state: customer or employee is literal "undefined"',
+          { customer: data.customer, employee: data.employee },
+        );
+        toast.error(
+          'Invalid form state. Please re-select the customer/employee and try again.',
+        );
         return;
       }
       const employeeId = data.employee;
       const payload: Record<string, unknown> = {
         customerId: data.customer,
-        address: data.jobAddress,
-        city: data.city || undefined,
-        state: data.state || undefined,
-        country: data.country || undefined,
-        postalCode: data.postalCode || undefined,
+        ...(!data.sameAsCustomer
+          ? {
+              address: data.jobAddress,
+              city: data.city || undefined,
+              state: data.state || undefined,
+              country: data.country || undefined,
+              postalCode: data.postalCode || undefined,
+              location:
+                data.latitude && data.longitude
+                  ? ({
+                      type: 'Point' as const,
+                      coordinates: [
+                        data.longitude,
+                        data.latitude,
+                      ] as [number, number],
+                    } as const)
+                  : undefined,
+            }
+          : {}),
         jobType: data.jobType,
         jobDate: new Date(data.jobDate).toISOString(),
         paymentType: data.paymentType,
         price: data.price || undefined,
         description: data.description || undefined,
         notes: data.notes || undefined,
-        location:
-          data.latitude && data.longitude
-            ? ({
-                type: 'Point' as const,
-                coordinates: [data.longitude, data.latitude] as [
-                  number,
-                  number,
-                ],
-              } as const)
-            : undefined,
         ...(data.jobType === 'recurring'
           ? {
               frequencyValue: data.frequencyValue,
@@ -290,7 +368,7 @@ export default function CreateJobPage() {
       if (employeeId) {
         payload.employeeId = employeeId;
       }
-      console.debug('[createJob] payload:', payload);
+      // console.debug('[createJob] payload:', payload);
       await createJob(payload).unwrap();
       toast.success('Job created successfully');
       navigate(ROUTES.JOBS);
@@ -298,16 +376,6 @@ export default function CreateJobPage() {
       toast.error(getErrorMessage(err, 'Failed to create job'));
     }
   };
-
-  const renderAddressReadonly = () => (
-    <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2 text-sm">
-      <p><span className="font-medium text-muted-foreground">Address: </span>{formValues.jobAddress || '-'}</p>
-      <p><span className="font-medium text-muted-foreground">City: </span>{formValues.city || '-'}</p>
-      <p><span className="font-medium text-muted-foreground">State: </span>{formValues.state || '-'}</p>
-      <p><span className="font-medium text-muted-foreground">Country: </span>{formValues.country || '-'}</p>
-      <p><span className="font-medium text-muted-foreground">Postal Code: </span>{formValues.postalCode || '-'}</p>
-    </div>
-  );
 
   const renderStepContent = () => {
     if (currentStep === 1) {
@@ -358,8 +426,10 @@ export default function CreateJobPage() {
             <div className="space-y-5">
               <label className="flex items-center gap-3 cursor-pointer">
                 <Switch
-                  checked={sameAsCustomer}
-                  onCheckedChange={setSameAsCustomer}
+                  checked={formValues.sameAsCustomer || false}
+                  onCheckedChange={(v) =>
+                    setValue('sameAsCustomer', v)
+                  }
                   disabled={!selectedCustomer}
                   size="default"
                 />
@@ -368,6 +438,8 @@ export default function CreateJobPage() {
                 </span>
               </label>
 
+              {!formValues.sameAsCustomer && (
+                <>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
                   Job Address
@@ -380,7 +452,6 @@ export default function CreateJobPage() {
                     <Textarea
                       placeholder="Enter job address"
                       {...field}
-                      disabled={sameAsCustomer}
                       className="min-h-[80px] rounded-xl border-border bg-background p-4"
                     />
                   )}
@@ -392,43 +463,41 @@ export default function CreateJobPage() {
                 )}
               </div>
 
-              {sameAsCustomer ? (
-                renderAddressReadonly()
-              ) : (
-                <AddressInputs
-                  countryIso={formValues.countryIso || ''}
-                  country={formValues.country}
-                  state={formValues.state}
-                  city={formValues.city}
-                  postalCode={formValues.postalCode}
-                  onCountryChange={(name, iso) => {
-                    setValue('country', name, { shouldValidate: true });
-                    setValue('countryIso', iso, {
-                      shouldValidate: true,
-                    });
-                    setValue('state', '', { shouldValidate: true });
-                    setValue('city', '', { shouldValidate: true });
-                  }}
-                  onStateChange={(name, _iso) => {
-                    setValue('state', name, { shouldValidate: true });
-                    setValue('city', '', { shouldValidate: true });
-                  }}
-                  onCityChange={(name) =>
-                    setValue('city', name, { shouldValidate: true })
-                  }
-                  onPostalCodeChange={(val) =>
-                    setValue('postalCode', val, {
-                      shouldValidate: true,
-                    })
-                  }
-                  errors={{
-                    country: errors.country?.message,
-                    state: errors.state?.message,
-                    city: errors.city?.message,
-                    postalCode: errors.postalCode?.message,
-                  }}
-                />
-              )}
+              <AddressInputs
+                countryIso={formValues.countryIso || ''}
+                country={formValues.country || ''}
+                state={formValues.state || ''}
+                city={formValues.city || ''}
+                postalCode={formValues.postalCode || ''}
+                onCountryChange={(name, iso) => {
+                  setValue('country', name, {
+                    shouldValidate: true,
+                  });
+                  setValue('countryIso', iso, {
+                    shouldValidate: true,
+                  });
+                  setValue('state', '', { shouldValidate: true });
+                  setValue('city', '', { shouldValidate: true });
+                }}
+                onStateChange={(name, _iso) => {
+                  setValue('state', name, { shouldValidate: true });
+                  setValue('city', '', { shouldValidate: true });
+                }}
+                onCityChange={(name) =>
+                  setValue('city', name, { shouldValidate: true })
+                }
+                onPostalCodeChange={(val) =>
+                  setValue('postalCode', val, {
+                    shouldValidate: true,
+                  })
+                }
+                errors={{
+                  country: errors.country?.message,
+                  state: errors.state?.message,
+                  city: errors.city?.message,
+                  postalCode: errors.postalCode?.message,
+                }}
+              />
 
               <LocationModeToggle
                 value={formValues.locationMode || 'map'}
@@ -453,6 +522,8 @@ export default function CreateJobPage() {
                     setValue('longitude', lng);
                   }}
                 />
+              )}
+                </>
               )}
             </div>
           </div>
@@ -639,38 +710,130 @@ export default function CreateJobPage() {
     }
 
     // Step 3: Review & Confirm
-    const customerName = selectedCustomer?.fullName ?? formValues.customer;
+    const customerName =
+      selectedCustomer?.fullName ?? formValues.customer;
     const employeeName = formValues.employee
-      ? employeeOptions.find((e) => e._id === formValues.employee)?.label ?? formValues.employee
+      ? (employeeOptions.find((e) => e._id === formValues.employee)
+          ?.label ?? formValues.employee)
       : null;
-    const jobTypeLabel = formValues.jobType === 'one_time' ? 'One Time' : formValues.jobType === 'recurring' ? 'Recurring' : '-';
+    const jobTypeLabel =
+      formValues.jobType === 'one_time'
+        ? 'One Time'
+        : formValues.jobType === 'recurring'
+          ? 'Recurring'
+          : '-';
     const paymentTypeLabel = formValues.paymentType
-      ? { bank_transfer: 'Bank Transfer', cash: 'Cash', drop_invoice: 'Drop Invoice' }[formValues.paymentType] ?? formValues.paymentType
+      ? ({
+          bank_transfer: 'Bank Transfer',
+          cash: 'Cash',
+          drop_invoice: 'Drop Invoice',
+        }[formValues.paymentType] ?? formValues.paymentType)
       : '-';
 
     const customerLocationFields = [
-      { icon: <User className="h-3 w-3" />, label: 'Customer', value: customerName },
-      ...(employeeName ? [{ icon: <Briefcase className="h-3 w-3" />, label: 'Employee', value: employeeName }] : []),
-      { icon: <MapPin className="h-3 w-3" />, label: 'Address', value: formValues.jobAddress || '-' },
-      { icon: <Building2 className="h-3 w-3" />, label: 'City', value: formValues.city || '-' },
-      { icon: <Map className="h-3 w-3" />, label: 'State', value: formValues.state || '-' },
-      { icon: <Globe className="h-3 w-3" />, label: 'Country', value: formValues.country || '-' },
-      { icon: <Hash className="h-3 w-3" />, label: 'Postal Code', value: formValues.postalCode || '-' },
-      ...(formValues.latitude && formValues.longitude
-        ? [{ icon: <Map className="h-3 w-3" />, label: 'Coordinates', value: `${formValues.latitude.toFixed(6)}, ${formValues.longitude.toFixed(6)}` }]
+      {
+        icon: <User className="h-3 w-3" />,
+        label: 'Customer',
+        value: customerName,
+      },
+      ...(employeeName
+        ? [
+            {
+              icon: <Briefcase className="h-3 w-3" />,
+              label: 'Employee',
+              value: employeeName,
+            },
+          ]
+        : []),
+      ...(!formValues.sameAsCustomer
+        ? [
+            {
+              icon: <MapPin className="h-3 w-3" />,
+              label: 'Address',
+              value: formValues.jobAddress || '-',
+            },
+            {
+              icon: <Building2 className="h-3 w-3" />,
+              label: 'City',
+              value: formValues.city || '-',
+            },
+            {
+              icon: <Map className="h-3 w-3" />,
+              label: 'State',
+              value: formValues.state || '-',
+            },
+            {
+              icon: <Globe className="h-3 w-3" />,
+              label: 'Country',
+              value: formValues.country || '-',
+            },
+            {
+              icon: <Hash className="h-3 w-3" />,
+              label: 'Postal Code',
+              value: formValues.postalCode || '-',
+            },
+            ...(formValues.latitude && formValues.longitude
+              ? [
+                  {
+                    icon: <Map className="h-3 w-3" />,
+                    label: 'Coordinates',
+                    value: `${formValues.latitude.toFixed(6)}, ${formValues.longitude.toFixed(6)}`,
+                  },
+                ]
+              : []),
+          ]
         : []),
     ];
 
     const scheduleFields = [
-      { icon: <Briefcase className="h-3 w-3" />, label: 'Job Type', value: jobTypeLabel },
-      { icon: <Calendar className="h-3 w-3" />, label: 'Job Date', value: formValues.jobDate || '-' },
-      ...(formValues.jobType === 'recurring' && formValues.frequencyValue
-        ? [{ icon: <Repeat className="h-3 w-3" />, label: 'Frequency', value: `Every ${formValues.frequencyValue} ${formValues.frequencyUnit}${formValues.frequencyValue && formValues.frequencyValue > 1 ? 's' : ''}` }]
+      {
+        icon: <Briefcase className="h-3 w-3" />,
+        label: 'Job Type',
+        value: jobTypeLabel,
+      },
+      {
+        icon: <Calendar className="h-3 w-3" />,
+        label: 'Job Date',
+        value: formValues.jobDate || '-',
+      },
+      ...(formValues.jobType === 'recurring' &&
+      formValues.frequencyValue
+        ? [
+            {
+              icon: <Repeat className="h-3 w-3" />,
+              label: 'Frequency',
+              value: `Every ${formValues.frequencyValue} ${formValues.frequencyUnit}${formValues.frequencyValue && formValues.frequencyValue > 1 ? 's' : ''}`,
+            },
+          ]
         : []),
-      { icon: <CreditCard className="h-3 w-3" />, label: 'Payment Type', value: paymentTypeLabel },
-      { icon: <DollarSign className="h-3 w-3" />, label: 'Price', value: `$${formValues.price || '0.00'}` },
-      ...(formValues.description ? [{ icon: <FileText className="h-3 w-3" />, label: 'Description', value: formValues.description }] : []),
-      ...(formValues.notes ? [{ icon: <StickyNote className="h-3 w-3" />, label: 'Notes', value: formValues.notes }] : []),
+      {
+        icon: <CreditCard className="h-3 w-3" />,
+        label: 'Payment Type',
+        value: paymentTypeLabel,
+      },
+      {
+        icon: <DollarSign className="h-3 w-3" />,
+        label: 'Price',
+        value: `$${formValues.price || '0.00'}`,
+      },
+      ...(formValues.description
+        ? [
+            {
+              icon: <FileText className="h-3 w-3" />,
+              label: 'Description',
+              value: formValues.description,
+            },
+          ]
+        : []),
+      ...(formValues.notes
+        ? [
+            {
+              icon: <StickyNote className="h-3 w-3" />,
+              label: 'Notes',
+              value: formValues.notes,
+            },
+          ]
+        : []),
     ];
 
     return (
@@ -679,13 +842,15 @@ export default function CreateJobPage() {
           {
             icon: <Users className="h-5 w-5 text-white" />,
             title: 'Customer & Location',
-            subtitle: 'Please verify the customer and location details below',
+            subtitle:
+              'Please verify the customer and location details below',
             fields: customerLocationFields,
           },
           {
             icon: <DollarSign className="h-5 w-5 text-white" />,
             title: 'Schedule & Pricing',
-            subtitle: 'Please verify the schedule and pricing details below',
+            subtitle:
+              'Please verify the schedule and pricing details below',
             fields: scheduleFields,
           },
         ]}

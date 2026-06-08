@@ -46,6 +46,7 @@ import { STATUS_CONFIG } from '@/constants/status-config';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import {
   useGetJobByIdQuery,
+  useGetCustomerByIdQuery,
   useGetChildJobsByParentIdQuery,
   useCancelJobMutation,
   useAssignJobEmployeeMutation,
@@ -54,7 +55,7 @@ import {
 import { getErrorMessage } from '@/lib/get-error-message';
 import { formatDate } from '@/lib/format-date';
 import { getToken } from '@/lib/auth';
-import type { IJob } from '@/types';
+import type { IJob, ICustomer } from '@/types';
 
 function getCustomerName(customer: IJob['customerId']): string {
   if (typeof customer === 'object' && customer) {
@@ -96,6 +97,10 @@ function getEmployeePhone(employee: IJob['employeeId']): string {
   if (typeof employee === 'object' && employee)
     return employee.phoneNumber;
   return '-';
+}
+
+function hasJobAddress(job: IJob): boolean {
+  return !!(job.address || job.city || job.state || job.country || job.postalCode || job.location?.coordinates);
 }
 
 function getEmployeeCode(employee: IJob['employeeId']): string {
@@ -169,6 +174,21 @@ export default function JobViewPage() {
   );
 
   const resolvedJob = job ?? passedJob;
+
+  const customer =
+    resolvedJob &&
+    typeof resolvedJob.customerId === 'object' &&
+    resolvedJob.customerId
+      ? resolvedJob.customerId
+      : null;
+
+  const jobCustomerId = customer?._id ?? (resolvedJob && typeof resolvedJob.customerId === 'string' ? resolvedJob.customerId : '');
+  const showCustomerAddress = resolvedJob ? !hasJobAddress(resolvedJob) : false;
+  const { data: customerData } = useGetCustomerByIdQuery(jobCustomerId, {
+    skip: !jobCustomerId || !showCustomerAddress,
+  });
+  const customerForAddress = (customerData ?? customer) as ICustomer | null;
+
   if (!resolvedJob) return null;
 
   const handleConfirmCancel = async () => {
@@ -640,76 +660,153 @@ export default function JobViewPage() {
                     Job Location
                   </h3>
                 </div>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm text-muted-foreground">
-                        Address
-                      </p>
-                      <p className="text-foreground font-medium">
-                        {resolvedJob.address || '-'}
-                      </p>
+                {showCustomerAddress && customerForAddress ? (
+                  <div className="space-y-4">
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 border border-amber-200">
+                      <MapPin className="h-3 w-3" />
+                      From Customer Address
                     </div>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        City
-                      </p>
-                      <p className="text-foreground font-medium">
-                        {resolvedJob.city || '-'}
-                      </p>
+                    <div className="flex items-start gap-3">
+                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm text-muted-foreground">
+                          Address
+                        </p>
+                        <p className="text-foreground font-medium">
+                          {customerForAddress.address || '-'}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        State
-                      </p>
-                      <p className="text-foreground font-medium">
-                        {resolvedJob.state || '-'}
-                      </p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          City
+                        </p>
+                        <p className="text-foreground font-medium">
+                          {customerForAddress.city || '-'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          State
+                        </p>
+                        <p className="text-foreground font-medium">
+                          {customerForAddress.state || '-'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          Postal Code
+                        </p>
+                        <p className="text-foreground font-medium">
+                          {customerForAddress.postalCode || '-'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          Country
+                        </p>
+                        <p className="text-foreground font-medium">
+                          {customerForAddress.country || '-'}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Postal Code
-                      </p>
-                      <p className="text-foreground font-medium">
-                        {resolvedJob.postalCode || '-'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Country
-                      </p>
-                      <p className="text-foreground font-medium">
-                        {resolvedJob.country || '-'}
-                      </p>
-                    </div>
-                  </div>
-                  {resolvedJob.location?.coordinates && (
-                    <>
-                      <div className="flex items-center gap-3">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">
-                            Coordinates
-                          </p>
-                          <p className="text-foreground font-medium">
-                            {resolvedJob.location.coordinates[1]},{' '}
-                            {resolvedJob.location.coordinates[0]}
-                          </p>
+                    {customerForAddress.location?.coordinates && (
+                      <>
+                        <div className="flex items-center gap-3">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">
+                              Coordinates
+                            </p>
+                            <p className="text-foreground font-medium">
+                              {customerForAddress.location.coordinates[1]},{' '}
+                              {customerForAddress.location.coordinates[0]}
+                            </p>
+                          </div>
                         </div>
+                        <div className="mt-4">
+                          <StaticMap
+                            lat={customerForAddress.location.coordinates[1]}
+                            lng={customerForAddress.location.coordinates[0]}
+                            height={300}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm text-muted-foreground">
+                          Address
+                        </p>
+                        <p className="text-foreground font-medium">
+                          {resolvedJob.address || '-'}
+                        </p>
                       </div>
-                      <div className="mt-4">
-                        <StaticMap
-                          lat={resolvedJob.location.coordinates[1]}
-                          lng={resolvedJob.location.coordinates[0]}
-                          height={300}
-                        />
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          City
+                        </p>
+                        <p className="text-foreground font-medium">
+                          {resolvedJob.city || '-'}
+                        </p>
                       </div>
-                    </>
-                  )}
-                </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          State
+                        </p>
+                        <p className="text-foreground font-medium">
+                          {resolvedJob.state || '-'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          Postal Code
+                        </p>
+                        <p className="text-foreground font-medium">
+                          {resolvedJob.postalCode || '-'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          Country
+                        </p>
+                        <p className="text-foreground font-medium">
+                          {resolvedJob.country || '-'}
+                        </p>
+                      </div>
+                    </div>
+                    {resolvedJob.location?.coordinates && (
+                      <>
+                        <div className="flex items-center gap-3">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">
+                              Coordinates
+                            </p>
+                            <p className="text-foreground font-medium">
+                              {resolvedJob.location.coordinates[1]},{' '}
+                              {resolvedJob.location.coordinates[0]}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-4">
+                          <StaticMap
+                            lat={resolvedJob.location.coordinates[1]}
+                            lng={resolvedJob.location.coordinates[0]}
+                            height={300}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
