@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Ellipsis, Eye, Check, Ban, User } from 'lucide-react';
+import { Ellipsis, Eye, Check, Ban, User, CalendarDays } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import type { ColumnDef } from '@/components/data-table/data-table';
@@ -57,6 +57,7 @@ export default function ScheduledJobsPage() {
   } = useDataTableQueryParams<ListQueryParams>({
     defaultLimit: 10,
     defaultStatus: 'pending',
+    defaultSort: 'jobDate',
     mapStatusToApi: (status) =>
       status.toLowerCase().replace(' ', '-') as
         | 'pending'
@@ -66,8 +67,13 @@ export default function ScheduledJobsPage() {
         | 'overdue',
   });
 
+  const queryParamsWithJobType = useMemo(
+    () => ({ ...queryParams, jobType: 'recurring' as const }),
+    [queryParams],
+  );
+
   const { data: apiData, isLoading } = useGetChildJobsQuery(
-    queryParams,
+    queryParamsWithJobType,
     {
       refetchOnMountOrArgChange: true,
     },
@@ -359,28 +365,6 @@ export default function ScheduledJobsPage() {
               </button> */}
             </>
           )}
-          {(statusFilter === 'pending' ||
-            statusFilter === 'upcoming') &&
-            (row.status === 'pending' ||
-              row.status === 'upcoming') && (
-              <button
-                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors"
-                onClick={() => {
-                  setSelectedDate(
-                    row.jobDate
-                      ? format(new Date(row.jobDate), 'yyyy-MM-dd')
-                      : undefined,
-                  );
-
-                  setConfirmAction({
-                    type: 'jobDateChange',
-                    jobId: row._id || '',
-                  });
-                }}
-              >
-                Change Date
-              </button>
-            )}
           {row.status !== 'completed' &&
             row.status !== 'cancelled' && (
               <DropdownMenu>
@@ -393,20 +377,37 @@ export default function ScheduledJobsPage() {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {row.status === 'pending' && (
+                  {(row.status === 'pending' || row.status === 'upcoming') && (
                     <>
-                      {(!row.employeeId ||
-                        typeof row.employeeId === 'string') && (
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setAssigningJobId(row._id ?? '');
-                            setAssignDialogOpen(true);
-                          }}
-                        >
-                          <User className="mr-2 h-4 w-4 text-blue-500" />
-                          <span>Assign Employee</span>
-                        </DropdownMenuItem>
-                      )}
+                      {row.status === 'pending' &&
+                        (!row.employeeId ||
+                          typeof row.employeeId === 'string') && (
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setAssigningJobId(row._id ?? '');
+                              setAssignDialogOpen(true);
+                            }}
+                          >
+                            <User className="mr-2 h-4 w-4 text-blue-500" />
+                            <span>Assign Employee</span>
+                          </DropdownMenuItem>
+                        )}
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSelectedDate(
+                            row.jobDate
+                              ? format(new Date(row.jobDate), 'yyyy-MM-dd')
+                              : undefined,
+                          );
+                          setConfirmAction({
+                            type: 'jobDateChange',
+                            jobId: row._id || '',
+                          });
+                        }}
+                      >
+                        <CalendarDays className="mr-2 h-4 w-4 text-green-600" />
+                        <span>Change Date</span>
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() =>
                           setConfirmAction({

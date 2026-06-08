@@ -81,7 +81,7 @@ const updateEmployeeSchema = z
       .regex(/^\d+$/, 'Invalid postal code'),
     country: z.string().min(1, 'Country is required'),
     countryIso: z.string(),
-    profileImage: z.string().min(1, 'Profile image is required'),
+    profileImage: z.string(),
     latitude: z.number(),
     longitude: z.number(),
     locationMode: z.enum(['map', 'manual']),
@@ -268,6 +268,7 @@ export default function EditEmployeePage() {
       const file = e.target.files?.[0];
       if (file) {
         profileImageFileRef.current = file;
+        setProfileImageError(false);
         const reader = new FileReader();
         reader.onloadend = () => {
           setValue('profileImage', reader.result as string, {
@@ -424,7 +425,6 @@ export default function EditEmployeePage() {
           <div>
             <h4 className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
               Profile Image
-              <span className="text-primary"> *</span>
             </h4>
             <div className="flex items-center gap-4">
               <div className="relative">

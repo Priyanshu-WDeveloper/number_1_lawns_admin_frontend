@@ -97,7 +97,7 @@ export function NamedDocumentUpload({
                     <input
                       type="file"
                       className="hidden"
-                      accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                      accept=".png,.jpg,.jpeg,.gif,.webp"
                       onChange={(e) =>
                         onFileChange(index, e.target.files?.[0] ?? null)
                       }

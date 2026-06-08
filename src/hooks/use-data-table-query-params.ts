@@ -6,6 +6,7 @@ interface UseDataTableQueryParamsOptions<TParams extends Record<string, unknown>
   defaultLimit?: number;
   debounceMs?: number;
   defaultStatus?: string;
+  defaultSort?: string;
   mapStatusToApi?: (
     statusValue: string,
   ) => TParams['status'] extends string | undefined
@@ -31,9 +32,9 @@ interface UseDataTableQueryParamsReturn<TParams> {
 export function useDataTableQueryParams<TParams extends Record<string, unknown>>(
   options: UseDataTableQueryParamsOptions<TParams> = {},
 ): UseDataTableQueryParamsReturn<TParams> {
-  const { defaultLimit, debounceMs, mapStatusToApi, defaultStatus } = options;
+  const { defaultLimit, debounceMs, mapStatusToApi, defaultStatus, defaultSort } = options;
 
-  const state = useDataTableState({ defaultLimit, debounceMs, defaultStatus });
+  const state = useDataTableState({ defaultLimit, debounceMs, defaultStatus, defaultSort });
 
   const queryParams = useMemo(() => {
     const params = {
