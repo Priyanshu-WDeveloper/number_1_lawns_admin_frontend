@@ -18,9 +18,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from '@/components/ui/sidebar';
-import { PanelLeftIcon } from 'lucide-react';
+
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import toast from 'react-hot-toast';
 import { ROUTES } from '@/constants';
@@ -70,8 +69,6 @@ export function DashboardSidebar() {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { toggleSidebar } = useSidebar();
-
   // const [confirmAction, setConfirmAction] = useState<{
   //   type: 'change-password';
   // } | null>(null);
@@ -101,13 +98,7 @@ export function DashboardSidebar() {
             />
             <h2 className="text-2xl font-bold">No. 1 Lawns</h2>
           </div>
-          {/* Mobile menu button */}
-          <button
-            onClick={toggleSidebar}
-            className="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors"
-          >
-            <PanelLeftIcon className="h-5 w-5 text-white" />
-          </button>
+
         </div>
       </SidebarHeader>
 

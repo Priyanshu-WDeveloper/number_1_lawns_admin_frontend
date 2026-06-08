@@ -1,10 +1,10 @@
-import { Bell } from 'lucide-react';
+import { Bell, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AccountDropdown from '@/components/account-dropdown';
 import { ROUTES } from '@/constants';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
-import { SidebarTrigger } from '@/components/ui/sidebar';
+import { useSidebar } from '@/components/ui/sidebar';
 import { useGetAdminDetailsQuery } from '@/API/api';
 
 interface NavbarProps {
@@ -27,14 +27,21 @@ export function Navbar({
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.auth.user);
 
+  const { toggleSidebar } = useSidebar();
+
   const welcomeText = user
     ? `Welcome back, ${roleLabels[user.role] || 'Admin'}`
     : 'Welcome back, Admin';
 
   return (
-    <div className=" px-2 sm:px-0  sm:px-5  flex items-center justify-between">
+    <div className="px-4 pb-1 sm:px-6 flex items-center justify-between">
       <div className="flex items-center gap-2 min-w-0">
-        <SidebarTrigger className="md:hidden h-9 w-9 rounded-lg bg-[#166534] text-white border-0 shadow-xs shrink-0 [&_svg]:text-white [&_svg]:h-[18px] [&_svg]:w-[18px]" />
+        <button
+          onClick={toggleSidebar}
+          className="md:hidden h-9 w-9 rounded-lg bg-[#166534] text-white border-0 shadow-xs shrink-0 flex items-center justify-center"
+        >
+          <Menu className="h-[18px] w-[18px]" />
+        </button>
         <div className="min-w-0">
           <div className="flex items-baseline gap-2 sm:block">
             <h2 className="text-[17px] sm:text-[22px] font-bold sm:font-semibold text-[#151515] truncate">

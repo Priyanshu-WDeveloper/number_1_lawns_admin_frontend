@@ -11,7 +11,7 @@ import {
   DollarSign,
   ArrowLeft,
   User,
-  FileText,
+
   CheckCircle2,
   Briefcase,
   Building2,
@@ -77,7 +77,6 @@ const editJobSchema = z
     frequencyUnit: z.string().optional(),
     price: z.number().min(0, 'Price must be at least 0'),
     paymentType: z.string().min(1, 'Payment type is required'),
-    description: z.string().optional(),
     notes: z.string().optional(),
   })
   .superRefine((data, ctx) => {
@@ -232,7 +231,6 @@ export default function EditJobPage() {
           frequencyUnit: jobData.frequency?.unit ?? 'week',
           price: jobData.price ?? 0,
           paymentType: jobData.paymentType ?? '',
-          description: jobData.description ?? '',
           notes: jobData.notes ?? '',
         }
       : undefined,
@@ -332,7 +330,6 @@ export default function EditJobPage() {
         jobDate: new Date(data.jobDate).toISOString(),
         paymentType: data.paymentType,
         price: data.price || undefined,
-        description: data.description || undefined,
         notes: data.notes || undefined,
         frequency:
           data.jobType === 'recurring' &&
@@ -710,16 +707,6 @@ export default function EditJobPage() {
             <div className="space-y-5">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
-                  Description
-                </label>
-                <Textarea
-                  placeholder="Enter job description..."
-                  {...register('description')}
-                  className="min-h-[80px] rounded-xl border-border bg-background p-4"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
                   Notes
                 </label>
                 <Textarea
@@ -769,7 +756,6 @@ export default function EditJobPage() {
         : []),
       { icon: <CreditCard className="h-3 w-3" />, label: 'Payment Type', value: paymentTypeLabel },
       { icon: <DollarSign className="h-3 w-3" />, label: 'Price', value: `$${formValues.price || '0.00'}` },
-      ...(formValues.description ? [{ icon: <FileText className="h-3 w-3" />, label: 'Description', value: formValues.description }] : []),
       ...(formValues.notes ? [{ icon: <StickyNote className="h-3 w-3" />, label: 'Notes', value: formValues.notes }] : []),
     ];
 

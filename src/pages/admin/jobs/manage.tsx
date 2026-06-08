@@ -97,7 +97,14 @@ export default function ManageJobsPage() {
       accessorKey: 'address',
       header: 'Address',
       cell: (row: IParentJob) => (
-        <span className="text-[#6b7280]">{row.address || '-'}</span>
+        <span className="text-[#6b7280]">
+          {/* {row.address || row.customerId?.address || '-'} */}
+          {row.address ||
+            (typeof row.customerId === 'object'
+              ? row.customerId?.address
+              : undefined) ||
+            '-'}
+        </span>
       ),
     },
     {

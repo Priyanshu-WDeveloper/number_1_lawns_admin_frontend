@@ -51,6 +51,7 @@ export interface IJob {
         phoneNumber: string;
         profileImage?: string;
         employeeId?: string;
+        address?: string;
       };
   employeeId?:
     | string
@@ -120,6 +121,16 @@ export interface IParentJob {
         lastName: string;
         email: string;
         fullName?: string;
+      };
+  customerId?:
+    | string
+    | {
+        _id: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+        fullName?: string;
+        address?: string;
       };
   jobType: string;
   frequencyValue?: number;

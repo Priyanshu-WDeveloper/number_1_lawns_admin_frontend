@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { FileText } from 'lucide-react';
+import { FileText, User } from 'lucide-react';
 import { DocumentRow } from './document-row';
 import { DocumentPreviewModal } from './document-preview-modal';
 import { ReviewField } from './review-field';
@@ -27,6 +27,7 @@ interface ReviewCardProps {
 
 export function ReviewCard({ sections }: ReviewCardProps) {
   const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [imgErrors, setImgErrors] = useState<Record<number, boolean>>({});
   const handlePreview = (doc: NamedDoc) => {
     if (doc.file) setPreviewFile(doc.file);
   };
@@ -70,11 +71,20 @@ export function ReviewCard({ sections }: ReviewCardProps) {
                         <p className="text-xs text-[#6b7280] mb-1.5">
                           {img.label}
                         </p>
-                        <img
-                          src={img.src}
-                          alt={img.alt}
-                          className="h-14 w-14 rounded-full object-cover border-2 border-border"
-                        />
+                        {imgErrors[ii] ? (
+                          <div className="h-14 w-14 rounded-full border-2 border-border bg-muted flex items-center justify-center">
+                            <User className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                        ) : (
+                          <img
+                            src={img.src}
+                            alt={img.alt}
+                            onError={() =>
+                              setImgErrors((prev) => ({ ...prev, [ii]: true }))
+                            }
+                            className="h-14 w-14 rounded-full object-cover border-2 border-border"
+                          />
+                        )}
                       </div>
                     ))}
                   </div>

@@ -1,5 +1,12 @@
 import { useState, useMemo } from 'react';
-import { Ellipsis, Eye, Check, Ban, User, CalendarDays } from 'lucide-react';
+import {
+  Ellipsis,
+  Eye,
+  Check,
+  Ban,
+  User,
+  CalendarDays,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import type { ColumnDef } from '@/components/data-table/data-table';
@@ -156,7 +163,10 @@ export default function ScheduledJobsPage() {
       return;
     }
     try {
-      await changeJobDate({ jobId: id, jobDate: selectedDate }).unwrap();
+      await changeJobDate({
+        jobId: id,
+        jobDate: selectedDate,
+      }).unwrap();
       toast.success('Job Date Changed successfully');
 
       setConfirmAction(null);
@@ -218,7 +228,14 @@ export default function ScheduledJobsPage() {
       accessorKey: 'address',
       header: 'Address',
       cell: (row: IJob) => (
-        <span className="text-[#6b7280]">{row.address}</span>
+        <span className="text-[#6b7280]">
+          {/* {row.address} */}
+          {row.address ||
+            (typeof row.customerId === 'object'
+              ? row.customerId?.address
+              : undefined) ||
+            '-'}
+        </span>
       ),
     },
     {
@@ -377,7 +394,8 @@ export default function ScheduledJobsPage() {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {(row.status === 'pending' || row.status === 'upcoming') && (
+                  {(row.status === 'pending' ||
+                    row.status === 'upcoming') && (
                     <>
                       {row.status === 'pending' &&
                         (!row.employeeId ||
@@ -396,7 +414,10 @@ export default function ScheduledJobsPage() {
                         onClick={() => {
                           setSelectedDate(
                             row.jobDate
-                              ? format(new Date(row.jobDate), 'yyyy-MM-dd')
+                              ? format(
+                                  new Date(row.jobDate),
+                                  'yyyy-MM-dd',
+                                )
                               : undefined,
                           );
                           setConfirmAction({
