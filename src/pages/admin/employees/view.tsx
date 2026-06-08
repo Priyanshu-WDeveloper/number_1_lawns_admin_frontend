@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
+import { StaticMap } from '@/components/google-maps/static-map';
 
 import {
   Dialog,
@@ -221,6 +222,36 @@ export default function EmployeeViewPage() {
             </div>
 
             <div className="space-y-6">
+
+              {employee.attachments &&
+                employee.attachments.length > 0 && (
+                  <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec]">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <FileText className="h-4 w-4 text-primary" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-foreground">
+                        Documents
+                      </h3>
+                    </div>
+                    <div className="space-y-3">
+                      {employee.attachments.map((doc, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => setSelectedDoc(doc)}
+                          className="w-full flex items-center justify-between p-3 rounded-lg bg-background hover:bg-primary/10 transition-colors group text-left"
+                        >
+                          <span className="text-sm font-medium text-foreground">
+                            {doc.key}
+                          </span>
+                          <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec]">
                   <div className="flex items-center gap-2 mb-4">
@@ -374,38 +405,19 @@ export default function EmployeeViewPage() {
                         </p>
                       </div>
                     </div>
+
+                    {employee.location?.coordinates && (
+                      <div className="mt-4">
+                        <StaticMap
+                          lat={employee.location.coordinates[1]}
+                          lng={employee.location.coordinates[0]}
+                          height={300}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-
-              {employee.attachments &&
-                employee.attachments.length > 0 && (
-                  <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec] md:col-span-2">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <FileText className="h-4 w-4 text-primary" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-foreground">
-                        Documents
-                      </h3>
-                    </div>
-                    <div className="space-y-3">
-                      {employee.attachments.map((doc, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          onClick={() => setSelectedDoc(doc)}
-                          className="w-full flex items-center justify-between p-3 rounded-lg bg-background hover:bg-primary/10 transition-colors group text-left"
-                        >
-                          <span className="text-sm font-medium text-foreground">
-                            {doc.key}
-                          </span>
-                          <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
               {/* Mobile Account Summary */}
               <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec] md:hidden">

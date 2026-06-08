@@ -69,21 +69,26 @@ export function AssignAvatarCell({
         <div className="font-medium text-[#151515]">
           {customId} - {name}
         </div>
-
-        <div className="text-sm text-[#4b5563]">
-          {countryCode} {phoneNumber}
+        <div className="flex flex-row flex-wrap items-center">
+          {(countryCode || phoneNumber) && (
+            <div className="text-sm text-[#4b5563]">
+              {countryCode} {phoneNumber}
+            </div>
+          )}
           {email && (
             <>
-              <span className="mx-2">•</span>
-              <span>{email}</span>
+              <div className="hidden md:flex flex-row flex-wrap items-center">
+                <span className="mx-2">•</span>
+                <div className="text-sm text-[#6b7280] ">
+                  <span>{email}</span>
+                </div>
+              </div>
             </>
           )}
         </div>
 
         {address && (
-          <div className="text-xs text-[#6b7280] truncate">
-            {address}
-          </div>
+          <div className="text-xs text-[#6b7280]">{address}</div>
         )}
       </div>
     </div>

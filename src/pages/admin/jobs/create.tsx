@@ -53,6 +53,7 @@ import {
 import { getErrorMessage } from '@/lib/get-error-message';
 import { AddressInputs } from '@/components/forms/address-inputs';
 import { validateAddress } from '@/lib/address-validation';
+import { useDebounce } from '@/hooks/use-debounce';
 
 const createJobSchema = z
   .object({
@@ -184,13 +185,20 @@ export default function CreateJobPage() {
   const [createJob, { isLoading: isCreating }] =
     useCreateJobMutation();
 
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [employeeSearch, setEmployeeSearch] = useState('');
+  const debouncedCustomerSearch = useDebounce(customerSearch, 500);
+  const debouncedEmployeeSearch = useDebounce(employeeSearch, 500);
+
   const { data: customersData } = useGetCustomersQuery({
-    limit: 500,
+    limit: 50,
     page: 1,
+    search: debouncedCustomerSearch || undefined,
   });
   const { data: employeesData } = useGetEmployeesQuery({
-    limit: 500,
+    limit: 50,
     page: 1,
+    search: debouncedEmployeeSearch || undefined,
   });
 
   const customers = customersData?.customers ?? [];
@@ -400,6 +408,8 @@ export default function CreateJobPage() {
                   searchPlaceholder="Search customers..."
                   loading={!customersData}
                   error={errors.customer?.message}
+                  variant="responsive"
+                  onSearch={setCustomerSearch}
                 />
               </div>
               <div className="space-y-2">
@@ -413,6 +423,9 @@ export default function CreateJobPage() {
                   placeholder="Choose an employee"
                   searchPlaceholder="Search employees..."
                   loading={!employeesData}
+                  variant="responsive"
+                  error={errors.employee?.message}
+                  onSearch={setEmployeeSearch}
                 />
               </div>
             </div>

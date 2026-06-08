@@ -25,6 +25,7 @@ import {
 
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
+import { StaticMap } from '@/components/google-maps/static-map';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { ROUTES } from '@/constants';
 
@@ -386,6 +387,38 @@ export default function CustomerViewPage() {
                       </p>
                     </div>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Latitude
+                      </p>
+
+                      <p className="font-medium text-foreground">
+                        {customer.location?.coordinates?.[1] ?? '-'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Longitude
+                      </p>
+
+                      <p className="font-medium text-foreground">
+                        {customer.location?.coordinates?.[0] ?? '-'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {customer.location?.coordinates && (
+                    <div className="mt-4">
+                      <StaticMap
+                        lat={customer.location.coordinates[1]}
+                        lng={customer.location.coordinates[0]}
+                        height={300}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

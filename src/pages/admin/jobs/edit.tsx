@@ -53,6 +53,7 @@ import Loader from '@/components/loader';
 import { getErrorMessage } from '@/lib/get-error-message';
 import { ReviewCard } from '@/components/admin/review-card';
 import { AddressInputs } from '@/components/forms/address-inputs';
+import { useDebounce } from '@/hooks/use-debounce';
 import { validateAddress } from '@/lib/address-validation';
 import { Country } from 'country-state-city';
 
@@ -142,17 +143,24 @@ export default function EditJobPage() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
 
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [employeeSearch, setEmployeeSearch] = useState('');
+  const debouncedCustomerSearch = useDebounce(customerSearch, 500);
+  const debouncedEmployeeSearch = useDebounce(employeeSearch, 500);
+
   const { data: jobData, isLoading: isFetching } = useGetJobByIdQuery(
     id ?? '',
     { skip: !id },
   );
   const { data: customersData } = useGetCustomersQuery({
-    limit: 500,
+    limit: 50,
     page: 1,
+    search: debouncedCustomerSearch || undefined,
   });
   const { data: employeesData } = useGetEmployeesQuery({
-    limit: 500,
+    limit: 50,
     page: 1,
+    search: debouncedEmployeeSearch || undefined,
   });
   const [updateJob, { isLoading: isUpdating }] =
     useUpdateJobMutation();
@@ -173,6 +181,11 @@ export default function EditJobPage() {
         _id: e._id,
         label: e.fullName,
         subtitle: e.email,
+        profileImage: e.profileImage,
+        countryCode: e.countryCode,
+        phoneNumber: e.phoneNumber,
+        address: e.address,
+        employeeId: e.employeeId,
       })),
     [employeesData],
   );
@@ -375,6 +388,8 @@ export default function EditJobPage() {
                   searchPlaceholder="Search customers..."
                   loading={!customersData}
                   error={errors.customer?.message}
+                  variant="responsive"
+                  onSearch={setCustomerSearch}
                 />
               </div>
               <div className="space-y-2">
@@ -388,6 +403,9 @@ export default function EditJobPage() {
                   placeholder="Choose an employee"
                   searchPlaceholder="Search employees..."
                   loading={!employeesData}
+                  variant="responsive"
+                  error={errors.employee?.message}
+                  onSearch={setEmployeeSearch}
                 />
               </div>
             </div>
@@ -524,6 +542,8 @@ export default function EditJobPage() {
                   searchPlaceholder="Search customers..."
                   loading={!customersData}
                   error={errors.customer?.message}
+                  variant="responsive"
+                  onSearch={setCustomerSearch}
                 />
               </div>
               <div className="space-y-2">
@@ -540,6 +560,9 @@ export default function EditJobPage() {
                   placeholder="Choose an employee"
                   searchPlaceholder="Search employees..."
                   loading={!employeesData}
+                  variant="responsive"
+                  error={errors.employee?.message}
+                  onSearch={setEmployeeSearch}
                 />
               </div>
               <div className="space-y-2">

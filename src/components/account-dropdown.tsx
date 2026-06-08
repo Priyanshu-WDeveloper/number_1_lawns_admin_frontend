@@ -30,10 +30,8 @@ import { format } from 'date-fns';
 import { ChangeAdminPasswordDialog } from '@/pages/admin/change-password';
 
 export default function AccountDropdown({
-  superAccess = false,
   variant = 'default',
 }: {
-  superAccess?: boolean;
   variant?: 'default' | 'navbar';
 }) {
   const navigate = useNavigate();
@@ -56,7 +54,7 @@ export default function AccountDropdown({
       toast.success('Logged out');
       setShowLogoutDialog(false);
       navigate(
-        superAccess ? ROUTES.SUPER_ADMIN_LOGIN : ROUTES.LOGIN,
+        ROUTES.LOGIN,
         { replace: true },
       );
     } catch (error) {
@@ -100,11 +98,7 @@ export default function AccountDropdown({
               {/* <span className="text-sm font-medium text-[#6b7280]">
                 {user?.role === 1
                   ? 'Super Admin'
-                  : user?.role === 2
-                    ? 'Admin'
-                    : superAccess
-                      ? 'Super Admin'
-                      : 'Admin'}
+                  : 'Admin'}
               </span> */}
             </div>
             <div className="hidden sm:flex items-center gap-3">
@@ -114,8 +108,7 @@ export default function AccountDropdown({
                 size="sm"
               />
               <span className="text-sm font-semibold">
-                {user?.fullName ||
-                  `${superAccess ? 'Super Admin' : 'Admin'}`}
+                {user?.fullName || 'Admin'}
               </span>
               <ChevronDown className="ml-3 h-5 w-5 text-muted-foreground" />
             </div>
@@ -123,14 +116,13 @@ export default function AccountDropdown({
         ) : (
           <>
             <UserAvatar
-              name={user?.fullName ?? ''}
-              image={user?.profileImage}
+              name={data?.admin.fullName || user?.fullName || ''}
+              image={data?.admin.profileImage || user?.profileImage}
               size="sm"
             />
 
             <span className="text-sm font-semibold">
-              {user?.fullName ||
-                `${superAccess ? 'Super Admin' : 'Admin'}`}
+              {user?.fullName || 'Admin'}
             </span>
 
             <ChevronDown className="ml-3 h-5 w-5 text-muted-foreground" />
@@ -162,7 +154,7 @@ export default function AccountDropdown({
             </div>
           </div>
 
-          {!superAccess && daysLeft !== null && daysLeft <= 7 && (
+          {daysLeft !== null && daysLeft <= 7 && (
             <div
               className={`flex items-start justify-between rounded-xl px-4 py-3 ${
                 daysLeft <= 3 ? 'bg-red-50' : 'bg-amber-50'

@@ -11,7 +11,6 @@ interface NavbarProps {
   title: string;
   subtitle?: string;
   showWelcome?: boolean;
-  superAccess?: boolean;
 }
 
 const roleLabels: Record<number, string> = {
@@ -23,7 +22,6 @@ export function Navbar({
   title,
   subtitle = "Here's what's happening with your system today.",
   showWelcome = true,
-  superAccess = false,
 }: NavbarProps) {
   useGetAdminDetailsQuery();
   const navigate = useNavigate();
@@ -31,7 +29,7 @@ export function Navbar({
 
   const welcomeText = user
     ? `Welcome back, ${roleLabels[user.role] || 'Admin'}`
-    : `Welcome back, ${superAccess ? 'Super Admin' : 'Admin'}`;
+    : 'Welcome back, Admin';
 
   return (
     <div className=" px-2 sm:px-0  sm:px-5  flex items-center justify-between">
@@ -70,7 +68,7 @@ export function Navbar({
           <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 rounded-full bg-[#166534]" />
         </button>
 
-        <AccountDropdown superAccess={superAccess} variant="navbar" />
+        <AccountDropdown variant="navbar" />
       </div>
     </div>
   );
