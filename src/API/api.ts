@@ -90,7 +90,8 @@ export const api = createApi({
   endpoints: (builder) => ({
     // Auth endpoints
     login: builder.mutation({
-      query: (credentials) => ({
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      query: ({ rememberMe, ...credentials }) => ({
         url: API_ROUTES.AUTH.LOGIN,
         method: 'POST',
         body: {
@@ -99,7 +100,7 @@ export const api = createApi({
           deviceToken: getDeviceToken(),
         },
       }),
-      async onQueryStarted(_, { queryFulfilled, dispatch }) {
+      async onQueryStarted({ rememberMe }, { queryFulfilled, dispatch }) {
         try {
           const { data } = await queryFulfilled;
           if (data?.user) {
@@ -107,7 +108,7 @@ export const api = createApi({
               setAuth({
                 user: data.user,
                 token: data.token,
-                rememberMe: true,
+                rememberMe: rememberMe ?? true,
               }),
             );
           }
@@ -117,7 +118,8 @@ export const api = createApi({
       },
     }),
     superLogin: builder.mutation({
-      query: (credentials) => ({
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      query: ({ rememberMe, ...credentials }) => ({
         url: API_ROUTES.AUTH.SUPER_LOGIN,
         method: 'POST',
         body: {
@@ -126,7 +128,7 @@ export const api = createApi({
           deviceToken: getDeviceToken(),
         },
       }),
-      async onQueryStarted(_, { queryFulfilled, dispatch }) {
+      async onQueryStarted({ rememberMe }, { queryFulfilled, dispatch }) {
         try {
           const { data } = await queryFulfilled;
           if (data?.user) {
@@ -134,7 +136,7 @@ export const api = createApi({
               setAuth({
                 user: data.user,
                 token: data.token,
-                rememberMe: true,
+                rememberMe: rememberMe ?? true,
               }),
             );
           }

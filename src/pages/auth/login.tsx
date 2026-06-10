@@ -49,17 +49,10 @@ const Login = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const res = await login(data).unwrap();
+      const res = await login({ ...data, rememberMe }).unwrap();
 
       if (res.user) {
         toast.success('Welcome back Admin!');
-        if (!rememberMe) {
-          const authData = localStorage.getItem('auth_state');
-          if (authData) {
-            sessionStorage.setItem('auth_state', authData);
-            localStorage.removeItem('auth_state');
-          }
-        }
         navigate(ROUTES.DASHBOARD);
       }
     } catch (error) {

@@ -67,7 +67,7 @@ const authSlice = createSlice({
 
       state.token = action.payload.token;
       // state.profileImage = action.payload.profileImage;
-      state.rememberMe = action.payload.rememberMe ?? false;
+      state.rememberMe = action.payload.rememberMe ?? state.rememberMe;
       persistToStorage(state);
     },
     clearAuth(state) {
