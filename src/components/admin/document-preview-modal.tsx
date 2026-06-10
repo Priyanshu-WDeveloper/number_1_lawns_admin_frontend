@@ -13,22 +13,14 @@ export function DocumentPreviewModal({
   onClose,
 }: DocumentPreviewModalProps) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
-  const [prevFile, setPrevFile] = useState<File | null>(null);
-  const [prevIsOpen, setPrevIsOpen] = useState(false);
-
-  if (file !== prevFile || isOpen !== prevIsOpen) {
-    setPrevFile(file);
-    setPrevIsOpen(isOpen);
-    if (!isOpen || !file) {
-      setBlobUrl(null);
-    }
-  }
 
   useEffect(() => {
     if (file && isOpen) {
       const url = URL.createObjectURL(file);
-      setBlobUrl(url);
+      setBlobUrl(url); // eslint-disable-line react-hooks/set-state-in-effect
       return () => URL.revokeObjectURL(url);
+    } else {
+      setBlobUrl(null);
     }
   }, [file, isOpen]);
 

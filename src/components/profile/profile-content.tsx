@@ -9,10 +9,15 @@ import {
   X,
 } from 'lucide-react';
 import type { IAdminUser } from '@/types';
-import { useUpdateProfileMutation, useUploadDocumentMutation } from '@/API/api';
+import {
+  useUpdateProfileMutation,
+  useUploadDocumentMutation,
+} from '@/API/api';
 import ProfileHero from './profile-hero';
 import ProfileSectionCard from './profile-section-card';
 import ProfileField from './profile-field';
+import { PhoneInput } from '@/components/forms/phone-input';
+import toast from 'react-hot-toast';
 
 interface ProfileContentProps {
   admin: IAdminUser;
@@ -31,7 +36,8 @@ export default function ProfileContent({
     useUpdateProfileMutation();
   const [uploadDocument] = useUploadDocumentMutation();
   const profileImageFileRef = useRef<File | null>(null);
-  const [profileImagePreview, setProfileImagePreview] = useState<string>('');
+  const [profileImagePreview, setProfileImagePreview] =
+    useState<string>('');
 
   const fullName =
     admin.fullName || `${admin.firstName} ${admin.lastName}`;
@@ -43,6 +49,7 @@ export default function ProfileContent({
         lastName: admin.lastName || '',
         email: admin.email || '',
         phoneNumber: admin.phoneNumber || '',
+        countryCode: admin.countryCode || '+64',
         address: admin.address || '',
         city: admin.city || '',
         state: admin.state || '',
@@ -79,11 +86,20 @@ export default function ProfileContent({
       if (profileImageFileRef.current) {
         const fd = new FormData();
         fd.append('file', profileImageFileRef.current);
-        const res = await uploadDocument(fd).unwrap() as any;
+        const res = (await uploadDocument(fd).unwrap()) as {
+          file: { url: string };
+        };
         payload = { ...payload, profileImage: res.file.url };
       }
 
-      await updateProfile(payload).unwrap();
+      const res = await updateProfile(payload).unwrap();
+
+      if (res.admin) {
+        const successMsg =
+          (res as any)?.message ??
+          'Admin profile updated successfully';
+        toast.success(successMsg);
+      }
       setIsEditing(false);
       setProfileImagePreview('');
       profileImageFileRef.current = null;
@@ -149,18 +165,31 @@ export default function ProfileContent({
               onChange={(v) => handleChange('email', v)}
               value={isEditing ? formData.email : admin.email}
             />
-            <ProfileField
-              label="Phone"
-              value={
-                isEditing
-                  ? formData.phoneNumber
-                  : admin.countryCode
+            {isEditing ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Phone Number
+                </label>
+                <PhoneInput
+                  value={formData.phoneNumber}
+                  onChange={(val: string) => handleChange('phoneNumber', val)}
+                  countryCode={formData.countryCode}
+                  onCountryCodeChange={(code: string) =>
+                    handleChange('countryCode', code)
+                  }
+                />
+              </div>
+            ) : (
+              <ProfileField
+                label="Phone"
+                value={
+                  admin.countryCode
                     ? `${admin.countryCode} ${admin.phoneNumber}`
                     : admin.phoneNumber
-              }
-              editing={isEditing}
-              onChange={(v) => handleChange('phoneNumber', v)}
-            />
+                }
+                editing={false}
+              />
+            )}
           </div>
         </ProfileSectionCard>
 

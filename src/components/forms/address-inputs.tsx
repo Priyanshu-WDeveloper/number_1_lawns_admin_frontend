@@ -13,7 +13,7 @@ import { getPostalCodeExample } from '@/lib/address-validation';
 
 interface AddressInputsProps {
   countryIso: string;
-  country: string;
+  country?: string;
   state: string;
   city: string;
   postalCode: string;

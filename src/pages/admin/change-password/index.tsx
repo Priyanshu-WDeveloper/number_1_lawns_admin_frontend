@@ -111,10 +111,12 @@ export function ChangeAdminPasswordDialog({
       setSubmitted(false);
 
       onOpenChange(false);
-    } catch (error: any) {
-      toast.error(
-        error?.data?.message || 'Failed to update password',
-      );
+    } catch (error: unknown) {
+      const message =
+        error && typeof error === 'object' && 'data' in error
+          ? (error as { data: { message?: string } }).data?.message
+          : undefined;
+      toast.error(message || 'Failed to update password');
     } finally {
       setLoading(false);
     }

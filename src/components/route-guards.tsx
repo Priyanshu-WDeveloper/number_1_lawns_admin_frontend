@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { ROLES, ROUTES } from '@/constants';
 import { useSelector, useDispatch } from 'react-redux';
@@ -68,6 +68,16 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
   }, [adminDetails, token, role, dispatch]);
 
+  const validity = adminDetails?.admin?.validity ?? user?.validity;
+  const daysLeft = useMemo(() => {
+    if (!validity) return null;
+    // eslint-disable-next-line react-hooks/purity
+    const now = Date.now();
+    return Math.ceil(
+      (new Date(validity).getTime() - now) / (1000 * 60 * 60 * 24),
+    );
+  }, [validity]);
+
   if (!token) {
     return <Navigate to={ROUTES.LOGIN} replace />;
   }
@@ -84,14 +94,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
       </div>
     );
   }
-
-  const validity = adminDetails?.admin?.validity ?? user?.validity;
-  const daysLeft = validity
-    ? Math.ceil(
-        (new Date(validity).getTime() - Date.now()) /
-          (1000 * 60 * 60 * 24),
-      )
-    : null;
 
   const isExpired = daysLeft === null || daysLeft <= 0;
 

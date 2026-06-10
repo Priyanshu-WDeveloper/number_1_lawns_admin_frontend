@@ -114,7 +114,7 @@ const updateEmployeeSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: addrResult.error,
-          path: [addrResult.path as any],
+          path: [addrResult.path],
         });
       }
     }
@@ -220,7 +220,7 @@ export default function EditEmployeePage() {
       setValue('country', emp.country ?? '');
       if (emp.country) {
         const match = Country.getAllCountries().find(
-          (c: any) =>
+          (c: { name: string; isoCode: string }) =>
             c.name.toLowerCase() === emp.country.toLowerCase(),
         );
         if (match) setValue('countryIso', match.isoCode);
@@ -247,7 +247,7 @@ export default function EditEmployeePage() {
       setValue('country', emp.country ?? '');
       if (emp.country) {
         const match = Country.getAllCountries().find(
-          (c: any) =>
+          (c: { name: string; isoCode: string }) =>
             c.name.toLowerCase() === emp.country.toLowerCase(),
         );
         if (match) setValue('countryIso', match.isoCode);
@@ -261,7 +261,7 @@ export default function EditEmployeePage() {
         setExistingAttachments(emp.attachments);
       }
     }
-  }, [employeeData, locationState, setValue]); /* eslint-disable-line react-hooks/exhaustive-deps — location.state from React Router correctly triggers re-renders on navigation; removing it would break form population from navigation state */
+  }, [employeeData, locationState, setValue]);
 
   const handleProfileImageChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -332,7 +332,7 @@ export default function EditEmployeePage() {
           ? [...existingAttachments]
           : undefined;
 
-      const uploads: Promise<any>[] = [];
+      const uploads: Promise<void>[] = [];
 
       if (profileImageFileRef.current) {
         const fd = new FormData();
@@ -340,7 +340,7 @@ export default function EditEmployeePage() {
         uploads.push(
           uploadDocument(fd)
             .unwrap()
-            .then((res: any) => {
+            .then((res: { file: { url: string } }) => {
               profileImageUrl = res.file.url;
             }),
         );
@@ -356,7 +356,7 @@ export default function EditEmployeePage() {
           uploads.push(
             uploadDocument(fd)
               .unwrap()
-              .then((res: any) => {
+              .then((res: { file: { url: string } }) => {
                 attachments!.push({ key: name, value: res.file.url });
               }),
           );
@@ -385,7 +385,7 @@ export default function EditEmployeePage() {
       await updateEmployee(payload).unwrap();
       toast.success('Employee updated successfully');
       navigate(ROUTES.EMPLOYEES);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       toast.error(
         getErrorMessage(error, 'Failed to update employee'),
@@ -618,7 +618,7 @@ export default function EditEmployeePage() {
                   setValue('state', '', { shouldValidate: true });
                   setValue('city', '', { shouldValidate: true });
                 }}
-                onStateChange={(name, _iso) => {
+                onStateChange={(name) => {
                   setValue('state', name, { shouldValidate: true });
                   setValue('city', '', { shouldValidate: true });
                 }}

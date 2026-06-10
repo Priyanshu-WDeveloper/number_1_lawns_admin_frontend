@@ -56,6 +56,7 @@ import { AddressInputs } from '@/components/forms/address-inputs';
 import { useDebounce } from '@/hooks/use-debounce';
 import { validateAddress } from '@/lib/address-validation';
 import { Country } from 'country-state-city';
+import type { IJob } from '@/types';
 
 const editJobSchema = z
   .object({
@@ -108,7 +109,7 @@ const editJobSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: addrResult.error,
-          path: [addrResult.path as any],
+          path: [addrResult.path],
         });
       }
     }
@@ -164,14 +165,15 @@ export default function EditJobPage() {
   const [updateJob, { isLoading: isUpdating }] =
     useUpdateJobMutation();
 
+  const customers = useMemo(() => customersData?.customers ?? [], [customersData]);
   const customerOptions = useMemo(
     () =>
-      (customersData?.customers ?? []).map((c) => ({
+      customers.map((c) => ({
         _id: c._id,
         label: c.fullName,
         subtitle: c.email,
       })),
-    [customersData],
+    [customers],
   );
 
   const employeeOptions = useMemo(
@@ -216,10 +218,14 @@ export default function EditJobPage() {
           state: jobData.state ?? '',
           country: jobData.country ?? '',
           postalCode: jobData.postalCode ?? '',
-          countryIso: (jobData as any).countryIso || '',
+          countryIso: (jobData as IJob & { countryIso?: string }).countryIso || '',
           latitude: jobData.location?.coordinates?.[1] ?? undefined,
           longitude: jobData.location?.coordinates?.[0] ?? undefined,
-          sameAsCustomer: false,
+          sameAsCustomer: !jobData.address && !!(
+            typeof jobData.customerId === 'object'
+              ? jobData.customerId?._id
+              : jobData.customerId
+          ),
           locationMode: 'map',
           jobType: jobData.jobType ?? '',
           jobDate: jobData.jobDate
@@ -239,25 +245,25 @@ export default function EditJobPage() {
   const formValues = watch();
 
   const selectedCustomer = useMemo(
-    () => customerOptions.find((c) => c._id === formValues.customer) ?? null,
-    [customerOptions, formValues.customer],
+    () => customers.find((c) => c._id === formValues.customer) ?? null,
+    [customers, formValues.customer],
   );
 
   useEffect(() => {
     if (!formValues.sameAsCustomer || !selectedCustomer) return;
     const opts = { shouldDirty: true };
-    setValue('jobAddress', (selectedCustomer as any).address || '', opts);
-    setValue('city', (selectedCustomer as any).city || '', opts);
-    setValue('state', (selectedCustomer as any).state || '', opts);
-    setValue('country', (selectedCustomer as any).country || '', opts);
-    setValue('postalCode', (selectedCustomer as any).postalCode || '', opts);
+    setValue('jobAddress', selectedCustomer.address || '', opts);
+    setValue('city', selectedCustomer.city || '', opts);
+    setValue('state', selectedCustomer.state || '', opts);
+    setValue('country', selectedCustomer.country || '', opts);
+    setValue('postalCode', selectedCustomer.postalCode || '', opts);
     const countryRecord = Country.getAllCountries().find(
       (ctry) =>
         ctry.name.toLowerCase() ===
-        ((selectedCustomer as any).country || '').toLowerCase(),
+        (selectedCustomer.country || '').toLowerCase(),
     );
     setValue('countryIso', countryRecord?.isoCode ?? '', opts);
-  }, [formValues.customer, formValues.sameAsCustomer, selectedCustomer]);
+  }, [formValues.customer, formValues.sameAsCustomer, selectedCustomer, setValue]);
 
   useEffect(() => {
     const country = formValues.country;
@@ -270,7 +276,7 @@ export default function EditJobPage() {
         setValue('countryIso', match.isoCode);
       }
     }
-  }, [!!jobData]);
+  }, [jobData, formValues.country, formValues.countryIso, setValue]);
 
   const handleNext = async () => {
     let fieldsToValidate: (keyof EditJobFormData)[] = [];
@@ -465,7 +471,7 @@ export default function EditJobPage() {
                   setValue('state', '', { shouldValidate: true });
                   setValue('city', '', { shouldValidate: true });
                 }}
-                onStateChange={(name, _iso) => {
+                onStateChange={(name) => {
                   setValue('state', name, { shouldValidate: true });
                   setValue('city', '', { shouldValidate: true });
                 }}
@@ -722,7 +728,7 @@ export default function EditJobPage() {
     }
 
     // Step 3: Review & Confirm
-    const customerName = selectedCustomer?.label ?? formValues.customer;
+    const customerName = selectedCustomer?.fullName ?? formValues.customer;
     const employeeName = formValues.employee
       ? employeeOptions.find((e) => e._id === formValues.employee)?.label ?? formValues.employee
       : null;

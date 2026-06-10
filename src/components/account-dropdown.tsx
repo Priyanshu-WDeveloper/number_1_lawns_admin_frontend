@@ -19,7 +19,7 @@ import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import toast from 'react-hot-toast';
 import { ConfirmDialog } from './ui/confirm-dialog';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ROUTES } from '@/constants';
 import {
   useGetAdminDetailsQuery,
@@ -40,12 +40,14 @@ export default function AccountDropdown({
   const [showChangePassword, setShowChangePassword] = useState(false);
   const { data } = useGetAdminDetailsQuery();
   const [logout] = useLogoutMutation();
-  const daysLeft = user?.validity
-    ? Math.ceil(
-        (new Date(user.validity).getTime() - Date.now()) /
-          (1000 * 60 * 60 * 24),
-      )
-    : null;
+  const daysLeft = useMemo(() => {
+    if (!user?.validity) return null;
+    // eslint-disable-next-line react-hooks/purity
+    const now = Date.now();
+    return Math.ceil(
+      (new Date(user.validity).getTime() - now) / (1000 * 60 * 60 * 24),
+    );
+  }, [user]);
 
   const handleLogout = async () => {
     try {

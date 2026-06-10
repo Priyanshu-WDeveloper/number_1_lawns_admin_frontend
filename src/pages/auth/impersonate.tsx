@@ -52,7 +52,7 @@ const ImpersonateHandler = () => {
     };
 
     exchange();
-  }, []);
+  }, [dispatch, navigate, searchParams]);
 
   return <Loader />;
 };

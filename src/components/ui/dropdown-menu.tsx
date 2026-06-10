@@ -74,16 +74,18 @@ function DropdownMenuTrigger({
   };
 
   if (asChild && React.isValidElement(children)) {
-    const child = children as React.ReactElement<any>;
+    const child = children as React.ReactElement<{
+      onClick?: React.MouseEventHandler<HTMLElement>;
+    }>;
 
-    return React.cloneElement(child, {
-      ref: triggerRef,
-      onClick: (e: React.MouseEvent<HTMLElement>) => {
+    return React.cloneElement(
+      child as React.ReactElement<Record<string, unknown>>,
+      { ref: triggerRef, onClick: (e: React.MouseEvent<HTMLElement>) => {
         child.props.onClick?.(e);
 
         handleClick(e);
-      },
-    });
+      } },
+    );
   }
 
   return (

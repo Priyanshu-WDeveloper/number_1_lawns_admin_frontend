@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
 import { MapPin, Crosshair, Search, X } from 'lucide-react';
 import { MockMapPicker } from '@/components/forms/mock-map-picker';
 
@@ -39,8 +39,8 @@ export function GoogleMapPicker({
 
   useEffect(() => {
     if (!searchQuery.trim() || searchQuery.trim().length < 2) {
-      setShowResults(false);
-      setSearchResults([]);
+      if (showResults) setShowResults(false); // eslint-disable-line react-hooks/set-state-in-effect
+      if (searchResults.length > 0) setSearchResults([]);
       return;
     }
 
@@ -72,12 +72,15 @@ export function GoogleMapPicker({
     return () => {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     };
-  }, [searchQuery]);
+  }, [searchQuery, showResults, searchResults]);
 
-  const initialCenter = useRef<{ lat: number; lng: number }>({
-    lat: latitude || 20.5937,
-    lng: longitude || 78.9629,
-  });
+  const initialCenter = useMemo<{ lat: number; lng: number }>(
+    () => ({
+      lat: latitude || 20.5937,
+      lng: longitude || 78.9629,
+    }),
+    [latitude, longitude],
+  );
 
   const handleSearch = useCallback(async () => {
     if (!searchQuery.trim()) return;
@@ -221,7 +224,7 @@ export function GoogleMapPicker({
           onPick={onPick}
           onControllerReady={handleControllerReady}
           apiKey={apiKey}
-          initialCenter={initialCenter.current}
+          initialCenter={initialCenter}
         />
       </Suspense>
 

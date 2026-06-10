@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 import { AppLayout } from '@/components/layout/app-layout';
 import { Navbar } from '@/components/layout/navbar';
@@ -126,12 +126,14 @@ export default function DashboardPage() {
 
   const activities = analytics?.recentActivities ?? [];
 
-  const daysLeft = user?.validity
-    ? Math.ceil(
-        (new Date(user.validity).getTime() - Date.now()) /
-          (1000 * 60 * 60 * 24),
-      )
-    : null;
+  const daysLeft = useMemo(() => {
+    if (!user?.validity) return null;
+    // eslint-disable-next-line react-hooks/purity
+    const now = Date.now();
+    return Math.ceil(
+      (new Date(user.validity).getTime() - now) / (1000 * 60 * 60 * 24),
+    );
+  }, [user]);
 
   if (isLoading) {
     return (

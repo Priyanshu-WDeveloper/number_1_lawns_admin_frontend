@@ -21,6 +21,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type DataTableData = Record<string, any>;
 
 export interface ColumnDef<T extends DataTableData> {
@@ -36,8 +37,6 @@ export interface ColumnDef<T extends DataTableData> {
 interface DataTableProps<T extends DataTableData> {
   data: T[];
   columns: ColumnDef<T>[];
-  title: string;
-  description: string;
   addButtonLabel?: string;
   onAddClick?: () => void;
   searchPlaceholder?: string;
@@ -56,7 +55,6 @@ interface DataTableProps<T extends DataTableData> {
     totalPages: number;
   };
   onPageChange?: (page: number) => void;
-  onLimitChange?: (limit: number) => void;
   // Controlled mode for server-side filtering
   searchValue?: string;
   onSearchChange?: (value: string) => void;
@@ -68,6 +66,11 @@ interface DataTableProps<T extends DataTableData> {
   sortValue?: string;
   onSortChange?: (sort: string) => void;
   serverSideSorting?: boolean;
+  // Consumer-facing props (unused by component but accepted for compatibility)
+  title?: string;
+  description?: string;
+  defaultLimit?: number;
+  onLimitChange?: (limit: number) => void;
 }
 
 // interface ActionButtonProps extends React.ComponentProps<
@@ -222,8 +225,6 @@ const getVisiblePages = (
 export default function DataTable<T extends DataTableData>({
   data,
   columns,
-  title: _title,
-  description: _description,
   addButtonLabel = 'Add Item',
   onAddClick,
   searchPlaceholder = 'Search...',
@@ -233,7 +234,6 @@ export default function DataTable<T extends DataTableData>({
   loading = false,
   pagination,
   onPageChange,
-  onLimitChange: _onLimitChange,
   // Controlled mode props
   searchValue,
   onSearchChange,
@@ -241,6 +241,11 @@ export default function DataTable<T extends DataTableData>({
   onFilterChange,
   serverSideFiltering = false,
   showAllOption = true,
+  // Unused props (kept for consumer compatibility)
+  title: _title,
+  description: _description,
+  defaultLimit: _defaultLimit,
+  onLimitChange: _onLimitChange,
   // Sorting props (unused - kept for future use)
   // sortValue,
   // onSortChange,

@@ -106,7 +106,7 @@ const createEmployeeSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: addrResult.error,
-          path: [addrResult.path as any],
+          path: [addrResult.path],
         });
       }
     }
@@ -274,7 +274,7 @@ export default function CreateEmployeePage() {
         | Array<{ key: string; value: string }>
         | undefined;
 
-      const uploads: Promise<any>[] = [];
+      const uploads: Promise<void>[] = [];
 
       if (profileImageFileRef.current) {
         const fd = new FormData();
@@ -282,7 +282,7 @@ export default function CreateEmployeePage() {
         uploads.push(
           uploadDocument(fd)
             .unwrap()
-            .then((res: any) => {
+            .then((res: { file: { url: string } }) => {
               profileImageUrl = res.file.url;
             }),
         );
@@ -298,7 +298,7 @@ export default function CreateEmployeePage() {
           uploads.push(
             uploadDocument(fd)
               .unwrap()
-              .then((res: any) => {
+              .then((res: { file: { url: string } }) => {
                 results.push({ key: name, value: res.file.url });
               }),
           );
@@ -330,7 +330,7 @@ export default function CreateEmployeePage() {
       }).unwrap();
       toast.success('Employee created successfully');
       navigate(ROUTES.EMPLOYEES);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(
         getErrorMessage(error, 'Failed to create employee'),
       );
@@ -563,7 +563,7 @@ export default function CreateEmployeePage() {
                   setValue('state', '', { shouldValidate: true });
                   setValue('city', '', { shouldValidate: true });
                 }}
-                onStateChange={(name, _iso) => {
+                onStateChange={(name) => {
                   setValue('state', name, { shouldValidate: true });
                   setValue('city', '', { shouldValidate: true });
                 }}

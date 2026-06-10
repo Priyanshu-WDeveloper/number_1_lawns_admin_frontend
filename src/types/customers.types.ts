@@ -19,7 +19,7 @@ export interface ICustomer {
   profileImage?: string;
   balance?: number;
   createdAt?: string;
-
+  updatedAt?: string;
 
   location?: { type: 'Point'; coordinates: [number, number] };
   latitude?: number;

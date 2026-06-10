@@ -225,11 +225,10 @@ export const api = createApi({
     toggleCustomerStatus: builder.mutation({
       query: ({ id, status }) => ({
         url: API_ROUTES.CUSTOMERS.STATUS(id),
-
         method: 'PATCH',
-
         body: {
-          status,
+          active: status === 'active',
+          status: status === 'active' ? 'Active' : 'Inactive',
         },
       }),
       invalidatesTags: (_result, _error, { id }) => [
@@ -288,7 +287,10 @@ export const api = createApi({
       query: ({ id, status }) => ({
         url: API_ROUTES.EMPLOYEES.STATUS(id),
         method: 'PATCH',
-        body: { status },
+        body: {
+          active: status === 'active',
+          status: status === 'active' ? 'Active' : 'Inactive',
+        },
       }),
       invalidatesTags: (_result, _error, { id }) => [
         'Employees',

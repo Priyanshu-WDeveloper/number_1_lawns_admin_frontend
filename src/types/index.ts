@@ -29,6 +29,11 @@ export interface IAdminUser {
   validity?: string;
 }
 
+export interface IAdminUserResponse {
+  message?: string;
+  admin: IAdminUser[];
+}
+
 export interface IAdminStats {
   totalCustomers: number;
   activeCustomers: number;

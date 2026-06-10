@@ -73,7 +73,7 @@ export default function CustomerViewPage() {
     );
   }
 
-  const customer = passedCustomer ?? (data as any)?.customer ?? data;
+  const customer = passedCustomer ?? (data as { customer?: ICustomer })?.customer ?? data;
 
   const handleStatusChange = async (
     status: 'active' | 'inactive',
@@ -158,13 +158,13 @@ export default function CustomerViewPage() {
                 <div className="flex items-center justify-between gap-3 border-t pt-4 lg:border-t-0 lg:pt-0">
                   <div className="text-right">
                     <span
-                      className={`text-lg font-semibold ${
-                        customer.balance < 0
+                      className={                      `text-lg font-semibold ${
+                        (customer.balance ?? 0) < 0
                           ? 'text-red-500'
                           : 'text-primary'
                       }`}
                     >
-                      {customer.balance < 0 ? '-' : ''}$
+                      {(customer.balance ?? 0) < 0 ? '-' : ''}$
                       {Math.abs(customer.balance || 0).toFixed(2)}
                     </span>
 

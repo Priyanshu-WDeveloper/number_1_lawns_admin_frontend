@@ -7,9 +7,9 @@ interface ProfileHeroProps {
   profileImage?: string;
   fullName: string;
   email: string;
-  status: string;
   role: number;
   balance: number;
+  status?: string;
   onBack: () => void;
   isEditing?: boolean;
   onEditClick?: () => void;
@@ -20,9 +20,9 @@ export default function ProfileHero({
   profileImage,
   fullName,
   email,
-
-  status: _status,
   role,
+  status: _status,
+  balance: _balance,
   onBack,
   isEditing,
   onEditClick,

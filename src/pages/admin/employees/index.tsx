@@ -1,5 +1,4 @@
 import {
-  Calendar,
   Ellipsis,
   Eye,
   Key,
@@ -24,7 +23,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   useGetEmployeesQuery,
-  useDeleteEmployeeMutation,
   useToggleEmployeeStatusMutation,
   useDeleteEmployeeValidityMutation,
 } from '@/API/api';
@@ -45,7 +43,6 @@ import { formatDate } from '@/lib/format-date';
 
 export default function EmployeeManagementPage() {
   const navigate = useNavigate();
-  const [_deleteEmployee] = useDeleteEmployeeMutation();
   const [toggleEmployeeStatus] = useToggleEmployeeStatusMutation();
   const [deleteEmployeeValidity] =
     useDeleteEmployeeValidityMutation();
@@ -238,13 +235,13 @@ export default function EmployeeManagementPage() {
                   Set Active
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem
+              {/* <DropdownMenuItem
                 onClick={() => setValidityEmployee(row)}
                 className="truncate"
               >
                 <Calendar className="mr-2 h-4 w-4" />
                 {row.validity ? 'Change Validity' : 'Set Validity'}
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuItem
                 onClick={() => setResetPasswordEmployee(row)}
                 className="truncate"

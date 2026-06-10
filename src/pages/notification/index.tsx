@@ -110,6 +110,7 @@ export default function NotificationsPage() {
   });
 
   const apiRows: Notification[] = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (apiNotifications?.notifications ?? []).map((n: any) => ({
       id: n._id || n.id,
       title: n.title,

@@ -102,7 +102,7 @@ const editCustomerSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: addrResult.error,
-          path: [addrResult.path as any],
+          path: [addrResult.path],
         });
       }
     }
@@ -160,7 +160,7 @@ export default function CustomerEditPage() {
 
   const { data, isLoading: isLoadingCustomer } =
     useGetCustomerByIdQuery(id!);
-  const customer = (data as any)?.customer ?? data ?? passedCustomer;
+  const customer = (data as { customer?: ICustomer })?.customer ?? data ?? passedCustomer;
 
   const {
     register,
@@ -184,7 +184,7 @@ export default function CustomerEditPage() {
           state: customer.state,
           postalCode: customer.postalCode,
           country: customer.country,
-          countryIso: (customer as any).countryIso || '',
+          countryIso: (customer as { countryIso?: string }).countryIso || '',
           location: customer.location?.coordinates
             ? `${customer.location.coordinates[1]}, ${customer.location.coordinates[0]}`
             : '',
@@ -299,7 +299,7 @@ export default function CustomerEditPage() {
 
       toast.success('Customer updated successfully');
       navigate(ROUTES.CUSTOMERS);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(
         getErrorMessage(error, 'Failed to update customer'),
       );

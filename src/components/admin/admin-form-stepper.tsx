@@ -8,7 +8,6 @@ interface AdminFormStepperProps {
     icon: React.ReactNode;
   }[];
   currentStep: number;
-  onStepClick: (step: number) => void;
   children: React.ReactNode;
   onPrevious: () => void;
   onNext: () => void;
@@ -16,15 +15,15 @@ interface AdminFormStepperProps {
   isSubmitting: boolean;
   isLastStep: boolean;
   isFirstStep: boolean;
-  allowStepNavigation?: boolean;
   submitLabel?: string;
   formRef?: React.RefObject<HTMLFormElement | null>;
+  onStepClick?: (step: number) => void;
+  allowStepNavigation?: boolean;
 }
 
 export function AdminFormStepper({
   steps,
   currentStep,
-  onStepClick: _onStepClick,
   children,
   onPrevious,
   onNext,
@@ -32,9 +31,10 @@ export function AdminFormStepper({
   isSubmitting,
   isLastStep,
   isFirstStep,
-  allowStepNavigation: _allowStepNavigation = false,
   submitLabel,
   formRef,
+  onStepClick: _onStepClick,
+  allowStepNavigation: _allowStepNavigation,
 }: AdminFormStepperProps) {
   const submittingLabel = submitLabel
     ? submitLabel.replace(/^Create/, 'Creating').replace(/^Edit/, 'Editing') + '...'

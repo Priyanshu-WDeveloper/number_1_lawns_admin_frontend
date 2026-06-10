@@ -126,7 +126,7 @@ const createJobSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: addrResult.error,
-          path: [addrResult.path as any],
+          path: [addrResult.path],
         });
       }
     }
@@ -199,7 +199,7 @@ export default function CreateJobPage() {
     search: debouncedEmployeeSearch || undefined,
   });
 
-  const customers = customersData?.customers ?? [];
+  const customers = useMemo(() => customersData?.customers ?? [], [customersData]);
 
   const customerOptions = useMemo(
     () =>
@@ -284,7 +284,7 @@ export default function CreateJobPage() {
       setValue('latitude', selectedCustomer.latitude, opts);
       setValue('longitude', selectedCustomer.longitude, opts);
     }
-  }, [formValues.customer, formValues.sameAsCustomer]);
+  }, [formValues.customer, formValues.sameAsCustomer, customers, selectedCustomer, setValue]);
 
   const handleNext = async () => {
     let fieldsToValidate: (keyof CreateJobFormData)[] = [];
@@ -489,7 +489,7 @@ export default function CreateJobPage() {
                   setValue('state', '', { shouldValidate: true });
                   setValue('city', '', { shouldValidate: true });
                 }}
-                onStateChange={(name, _iso) => {
+                onStateChange={(name) => {
                   setValue('state', name, { shouldValidate: true });
                   setValue('city', '', { shouldValidate: true });
                 }}

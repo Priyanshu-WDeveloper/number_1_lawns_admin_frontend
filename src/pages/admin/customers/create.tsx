@@ -98,7 +98,7 @@ const createCustomerSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: addrResult.error,
-          path: [addrResult.path as any],
+          path: [addrResult.path],
         });
       }
     }
@@ -253,7 +253,7 @@ export default function CreateCustomerPage() {
 
       toast.success('Customer created successfully');
       navigate(ROUTES.CUSTOMERS);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(
         getErrorMessage(error, 'Failed to create customer'),
       );

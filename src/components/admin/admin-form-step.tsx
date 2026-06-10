@@ -9,22 +9,24 @@ import { Country } from 'country-state-city';
 import { AddressInputs } from '@/components/forms/address-inputs';
 // import { validatePhone } from '@/lib/phone-validation';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface AdminFormStepProps {
   step: number;
   register: any;
   watch: any;
   setValue: any;
-  errors: Record<string, { message?: string }>;
-  trigger?: (...args: any[]) => Promise<boolean>;
+  errors: any;
+  trigger?: any;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function AdminFormStep({
   step,
   register,
   watch,
   setValue,
   errors,
-  // trigger,
+  trigger: _trigger,
 }: AdminFormStepProps) {
   // const formValues = watch();
 
@@ -214,9 +216,9 @@ export function AdminFormStep({
   }
 
   if (step === 2) {
-    const locationMode = watch('locationMode') || 'manual';
-    const latitude = watch('latitude');
-    const longitude = watch('longitude');
+    const locationMode = (watch('locationMode') || 'manual') as 'map' | 'manual';
+    const latitude = watch('latitude') as number;
+    const longitude = watch('longitude') as number;
 
     const handleModeChange = (mode: 'map' | 'manual') => {
       setValue('locationMode', mode);
@@ -280,7 +282,7 @@ export function AdminFormStep({
                   shouldDirty: true,
                 });
               }}
-              onStateChange={(name, _iso) => {
+              onStateChange={(name) => {
                 setValue('state', name, {
                   shouldValidate: true,
                   shouldDirty: true,
@@ -304,10 +306,10 @@ export function AdminFormStep({
                 })
               }
               errors={{
-                country: errors.country?.message,
-                state: errors.state?.message,
-                city: errors.city?.message,
-                postalCode: errors.postalCode?.message,
+                country: errors.country?.message as string | undefined,
+                state: errors.state?.message as string | undefined,
+                city: errors.city?.message as string | undefined,
+                postalCode: errors.postalCode?.message as string | undefined,
               }}
             />
 
