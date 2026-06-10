@@ -35,6 +35,7 @@ import { getErrorMessage } from '@/lib/get-error-message';
 import { getToken } from '@/lib/auth';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useDataTableQueryParams } from '@/hooks/use-data-table-query-params';
+import { useResponsiveLimit } from '@/hooks/use-responsive-limit';
 import type { IJob } from '@/types';
 import type { ListQueryParams } from '@/types/api.types';
 
@@ -52,7 +53,7 @@ export default function JobManagementPage() {
     setSort,
     queryParams,
   } = useDataTableQueryParams<ListQueryParams>({
-    defaultLimit: 10,
+    defaultLimit: useResponsiveLimit(),
     defaultStatus: 'pending',
     mapStatusToApi: (status) =>
       status.toLowerCase().replace(' ', '-') as

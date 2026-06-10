@@ -425,7 +425,7 @@ export default function DataTable<T extends DataTableData>({
   );
 
   return (
-    <Card className="rounded-2xl w-full bg-white shadow-sm flex flex-col flex-1">
+    <Card className="rounded-2xl w-full bg-white shadow-sm flex flex-col flex-1 pb-1 pt-3 mb-1">
       <CardContent className="px-6 flex-1 flex flex-col  ">
         {/* Filter Row */}
         <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
@@ -481,7 +481,9 @@ export default function DataTable<T extends DataTableData>({
                 onClick={onAddClick}
               >
                 <Plus className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">{addButtonLabel}</span>
+                <span className="hidden sm:inline">
+                  {addButtonLabel}
+                </span>
               </Button>
             )}
           </div>
@@ -521,7 +523,7 @@ export default function DataTable<T extends DataTableData>({
                 filteredData.map((row: T) => (
                   <tr
                     key={row._id}
-                    className="border-b border-border transition-colors hover:bg-muted"
+                    className="border-b border-border transition-colors hover:bg-muted last:border-b-0"
                   >
                     {columns.map((column) => (
                       <td
@@ -556,7 +558,7 @@ export default function DataTable<T extends DataTableData>({
 
         {/* Pagination */}
         {pagination && pagination.totalPages > 1 && (
-          <div className="flex items-center justify-end gap-3 px-6 pt-2 pb-0  border-border">
+          <div className="flex items-center justify-end gap-3 px-6 pt-2  pb-0  border-border">
             <p className="text-[13px] text-muted-foreground whitespace-nowrap">
               {pagination.total} results
             </p>

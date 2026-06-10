@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useDataTableQueryParams } from '@/hooks/use-data-table-query-params';
+import { useResponsiveLimit } from '@/hooks/use-responsive-limit';
 import type { IParentJob } from '@/types';
 import type { ListQueryParams } from '@/types/api.types';
 
@@ -38,7 +39,7 @@ export default function ManageJobsPage() {
     setSort,
     queryParams,
   } = useDataTableQueryParams<ListQueryParams>({
-    defaultLimit: 10,
+    defaultLimit: useResponsiveLimit(),
     defaultStatus: 'All',
     mapStatusToApi: (status) =>
       status === 'All'
@@ -232,14 +233,14 @@ export default function ManageJobsPage() {
   return (
     <AppLayout>
       <div className="flex flex-1 flex-col">
-        <div className="flex-1 w-full px-2 sm:px-5 py-1 sm:py-4 min-h-0 flex flex-col">
+        <div className="flex-1 w-full px-2 sm:px-5 py-1 sm:pt-3 min-h-0 flex flex-col">
           <div className="flex w-full flex-col flex-1">
             <Navbar
               title="Manage Jobs"
               subtitle="View and manage recurring parent jobs."
               showWelcome={false}
             />
-            <div className="flex-1 min-h-0 mt-4 flex flex-col">
+            <div className="flex-1 min-h-0 mt-3 flex flex-col">
               <DataTable<IParentJob>
                 data={parentJobs}
                 loading={isLoading}

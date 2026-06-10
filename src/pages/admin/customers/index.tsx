@@ -19,6 +19,7 @@ import {
   useToggleCustomerStatusMutation,
 } from '@/API/api';
 import { useDataTableQueryParams } from '@/hooks/use-data-table-query-params';
+import { useResponsiveLimit } from '@/hooks/use-responsive-limit';
 import type { GetCustomersParams } from '@/types/api.types';
 import type { ICustomer } from '@/types';
 import { StatusBadge } from '@/components/data-table/status-badge';
@@ -47,7 +48,7 @@ export default function CustomerManagementPage() {
     setSort,
     queryParams,
   } = useDataTableQueryParams<GetCustomersParams>({
-    defaultLimit: 8,
+    defaultLimit: useResponsiveLimit(),
     mapStatusToApi: (status) =>
       status.toLowerCase() as 'active' | 'inactive' | 'expired',
   });

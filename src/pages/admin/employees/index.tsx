@@ -30,6 +30,7 @@ import {
 } from '@/API/api';
 import type { ListQueryParams } from '@/types/common.types';
 import { useDataTableQueryParams } from '@/hooks/use-data-table-query-params';
+import { useResponsiveLimit } from '@/hooks/use-responsive-limit';
 import { AvatarCell } from '@/components/data-table/avatar-cell';
 import { StatusBadge } from '@/components/data-table/status-badge';
 import { STATUS_CONFIG } from '@/constants/status-config';
@@ -64,7 +65,7 @@ export default function EmployeeManagementPage() {
     setSort,
     queryParams,
   } = useDataTableQueryParams<ListQueryParams>({
-    defaultLimit: 8,
+    defaultLimit: useResponsiveLimit(),
     mapStatusToApi: (status) =>
       status.toLowerCase() as 'active' | 'inactive' | 'expired',
   });

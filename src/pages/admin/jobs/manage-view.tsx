@@ -861,7 +861,7 @@ export default function JobViewPage() {
                     <RefreshCw className="h-4 w-4 text-primary" />
                   </div>
                   <h3 className="text-lg font-semibold text-foreground">
-                    Child Jobs
+                    Job History
                   </h3>
                 </div>
 
@@ -871,7 +871,7 @@ export default function JobViewPage() {
                   </div>
                 ) : childJobs.length === 0 ? (
                   <p className="text-sm text-muted-foreground py-4 text-center">
-                    No child jobs found.
+                    No Job History found.
                   </p>
                 ) : (
                   <>

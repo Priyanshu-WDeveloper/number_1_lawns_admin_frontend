@@ -43,6 +43,7 @@ import { CompleteJobDialog } from '@/components/admin/complete-job-dialog';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Button } from '@/components/ui/button';
 import { useDataTableQueryParams } from '@/hooks/use-data-table-query-params';
+import { useResponsiveLimit } from '@/hooks/use-responsive-limit';
 import type { IJob } from '@/types';
 import type { ListQueryParams } from '@/types/api.types';
 import { Calendar } from '@/components/ui/calendar';
@@ -62,7 +63,7 @@ export default function ScheduledJobsPage() {
     setSort,
     queryParams,
   } = useDataTableQueryParams<ListQueryParams>({
-    defaultLimit: 10,
+    defaultLimit: useResponsiveLimit(),
     defaultStatus: 'pending',
     defaultSort: 'jobDate',
     mapStatusToApi: (status) =>
@@ -324,7 +325,10 @@ export default function ScheduledJobsPage() {
           <button
             type="button"
             onClick={() =>
-              navigate(ROUTES.JOBS_VIEW.replace(':id', row._id ?? ''), { state: { from: ROUTES.SCHEDULED_JOBS } })
+              navigate(
+                ROUTES.JOBS_VIEW.replace(':id', row._id ?? ''),
+                { state: { from: ROUTES.SCHEDULED_JOBS } },
+              )
             }
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-sm font-medium bg-[#f5f5f5] text-[#374151] hover:bg-[#e5e5e5] transition-colors"
           >
@@ -453,7 +457,7 @@ export default function ScheduledJobsPage() {
   return (
     <AppLayout>
       <div className="flex flex-1 flex-col">
-        <div className="flex-1 w-full px-2 sm:px-5 py-1 sm:py-4 min-h-0 flex flex-col">
+        <div className="flex-1 w-full px-2 sm:px-5 py-1 sm:pt-4 min-h-0 flex flex-col">
           <div className="flex w-full flex-col flex-1">
             <Navbar
               title="Scheduled Jobs"

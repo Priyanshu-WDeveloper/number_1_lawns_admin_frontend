@@ -26,7 +26,7 @@ interface UseDataTableStateReturn {
 export function useDataTableState(
   options: UseDataTableStateOptions = {},
 ): UseDataTableStateReturn {
-  const { defaultLimit = 10, debounceMs = 300 } = options;
+  const { defaultLimit = 9, debounceMs = 300 } = options;
   const defaultSort = options.defaultSort ?? 'createdAt';
   const defaultStatus = options.defaultStatus ?? 'All';
 

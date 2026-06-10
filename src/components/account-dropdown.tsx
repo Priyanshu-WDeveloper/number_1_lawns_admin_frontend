@@ -3,7 +3,6 @@ import {
   CircleDot,
   CreditCard,
   LogOut,
-  Mail,
   User,
 } from 'lucide-react';
 
@@ -53,10 +52,7 @@ export default function AccountDropdown({
       await logout().unwrap();
       toast.success('Logged out');
       setShowLogoutDialog(false);
-      navigate(
-        ROUTES.LOGIN,
-        { replace: true },
-      );
+      navigate(ROUTES.LOGIN, { replace: true });
     } catch (error) {
       console.error(error);
     }
@@ -214,10 +210,10 @@ export default function AccountDropdown({
           </DropdownMenuItem>
         </div>
 
-        <DropdownMenuItem className="flex cursor-pointer items-center gap-3 px-4 py-3 text-sm">
+        {/* <DropdownMenuItem className="flex cursor-pointer items-center gap-3 px-4 py-3 text-sm">
           <Mail className="h-4 w-4 text-slate-700" />
           Support
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
 
         <DropdownMenuItem
           onClick={() => setShowLogoutDialog(true)}
