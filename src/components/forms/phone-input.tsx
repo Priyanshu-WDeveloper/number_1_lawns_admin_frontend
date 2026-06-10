@@ -57,20 +57,24 @@ export function PhoneInput({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  useEffect(() => {
-    if (!open || !ref.current) return;
+  const updateDropdownPosition = () => {
+    if (!ref.current) return;
     const rect = ref.current.getBoundingClientRect();
     const spaceBelow = window.innerHeight - rect.bottom;
-    const dropdownHeight = 320;
-    setDropdownPosition(spaceBelow >= dropdownHeight ? 'bottom' : 'top');
-  }, [open]);
+    setDropdownPosition(spaceBelow >= 320 ? 'bottom' : 'top');
+  };
 
   return (
     <div ref={ref} className="relative">
       <div className="flex h-12 items-center rounded-xl border border-border bg-background px-3 transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-ring/20">
         <button
           type="button"
-          onClick={() => !disabledCountryCode && setOpen(!open)}
+          onClick={() => {
+            if (!disabledCountryCode) {
+              setOpen((prev) => !prev);
+              updateDropdownPosition();
+            }
+          }}
           disabled={disabledCountryCode}
           className={cn(
             'flex items-center gap-1.5 shrink-0 pr-3',

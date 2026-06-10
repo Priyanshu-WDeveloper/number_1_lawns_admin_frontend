@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { MapPin, Crosshair, Search, X } from 'lucide-react';
 import { MockMapPicker } from '@/components/forms/mock-map-picker';
 
-const containerStyle = {
-  width: '100%',
-  height: '100%',
-};
+const MapSection = lazy(() => import('./map-section'));
+
+interface MapController {
+  panTo: (lat: number, lng: number) => void;
+  setZoom: (zoom: number) => void;
+}
 
 interface GoogleMapPickerProps {
   latitude: number | undefined;
@@ -28,7 +29,7 @@ export function GoogleMapPicker({
   onPick,
 }: GoogleMapPickerProps) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  const mapRef = useRef<google.maps.Map | null>(null);
+  const controllerRef = useRef<MapController | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -73,10 +74,6 @@ export function GoogleMapPicker({
     };
   }, [searchQuery]);
 
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: apiKey || '',
-  });
-
   const initialCenter = useRef<{ lat: number; lng: number }>({
     lat: latitude || 20.5937,
     lng: longitude || 78.9629,
@@ -113,8 +110,8 @@ export function GoogleMapPicker({
   const handleSelectResult = (result: NominatimResult) => {
     const lat = parseFloat(result.lat);
     const lng = parseFloat(result.lon);
-    mapRef.current?.panTo({ lat, lng });
-    mapRef.current?.setZoom(15);
+    controllerRef.current?.panTo(lat, lng);
+    controllerRef.current?.setZoom(15);
     onPick(
       Math.round(lat * 10000) / 10000,
       Math.round(lng * 10000) / 10000,
@@ -124,16 +121,9 @@ export function GoogleMapPicker({
     setSearchError(null);
   };
 
-  const handleMapClick = useCallback(
-    (e: google.maps.MapMouseEvent) => {
-      if (!e.latLng) return;
-      const lat = Math.round(e.latLng.lat() * 10000) / 10000;
-      const lng = Math.round(e.latLng.lng() * 10000) / 10000;
-      setSearchError(null);
-      onPick(lat, lng);
-    },
-    [onPick],
-  );
+  const handleControllerReady = useCallback((controller: MapController) => {
+    controllerRef.current = controller;
+  }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -142,24 +132,13 @@ export function GoogleMapPicker({
     }
   };
 
-  if (!apiKey || loadError) {
+  if (!apiKey) {
     return (
       <MockMapPicker
         latitude={latitude}
         longitude={longitude}
         onPick={onPick}
       />
-    );
-  }
-
-  if (!isLoaded) {
-    return (
-      <div className="relative h-56 rounded-xl overflow-hidden border border-border bg-[#e8f0e4] flex items-center justify-center">
-        <div className="text-center">
-          <MapPin className="h-10 w-10 text-primary/20 mx-auto" />
-          <p className="text-xs text-primary/40 mt-1">Loading map...</p>
-        </div>
-      </div>
     );
   }
 
@@ -226,28 +205,25 @@ export function GoogleMapPicker({
         <p className="text-xs text-red-500">{searchError}</p>
       )}
 
-      <div className="relative h-56 rounded-xl overflow-hidden border border-border">
-        <GoogleMap
-          mapContainerStyle={containerStyle}
-          center={initialCenter.current}
-          zoom={12}
-          options={{
-            disableDefaultUI: true,
-            zoomControl: true,
-            mapTypeControl: false,
-            streetViewControl: false,
-            fullscreenControl: false,
-          }}
-          onClick={handleMapClick}
-          onLoad={(map) => {
-            mapRef.current = map;
-          }}
-        >
-          {latitude && longitude && (
-            <Marker position={{ lat: latitude, lng: longitude }} />
-          )}
-        </GoogleMap>
-      </div>
+      <Suspense
+        fallback={
+          <div className="relative h-56 rounded-xl overflow-hidden border border-border bg-[#e8f0e4] flex items-center justify-center">
+            <div className="text-center">
+              <MapPin className="h-10 w-10 text-primary/20 mx-auto" />
+              <p className="text-xs text-primary/40 mt-1">Loading map...</p>
+            </div>
+          </div>
+        }
+      >
+        <MapSection
+          latitude={latitude}
+          longitude={longitude}
+          onPick={onPick}
+          onControllerReady={handleControllerReady}
+          apiKey={apiKey}
+          initialCenter={initialCenter.current}
+        />
+      </Suspense>
 
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground flex items-center gap-1">

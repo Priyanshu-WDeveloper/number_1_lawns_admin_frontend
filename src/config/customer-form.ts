@@ -26,7 +26,7 @@ export const customerFields: FormFieldConfig[] = [
     name: 'location',
     label: 'Location',
     type: 'location',
-    required: true,
+    required: false,
   },
   {
     name: 'address',

@@ -222,7 +222,6 @@ export default function EmployeeViewPage() {
             </div>
 
             <div className="space-y-6">
-
               {employee.attachments &&
                 employee.attachments.length > 0 && (
                   <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec]">
@@ -235,9 +234,9 @@ export default function EmployeeViewPage() {
                       </h3>
                     </div>
                     <div className="space-y-3">
-                      {employee.attachments.map((doc, index) => (
+                      {employee.attachments.map((doc) => (
                         <button
-                          key={index}
+                          key={doc.key}
                           type="button"
                           onClick={() => setSelectedDoc(doc)}
                           className="w-full flex items-center justify-between p-3 rounded-lg bg-background hover:bg-primary/10 transition-colors group text-left"

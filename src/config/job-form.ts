@@ -32,7 +32,7 @@ export const jobFields: FormFieldConfig[] = [
     name: 'jobLocation',
     label: 'Job Address Lat/Lng',
     type: 'location',
-    required: true,
+    required: false,
   },
   {
     name: 'jobType',

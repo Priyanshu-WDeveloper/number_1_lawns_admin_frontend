@@ -34,9 +34,10 @@ export function Navbar({
     : 'Welcome back, Admin';
 
   return (
-    <div className="px-4 pb-1 sm:px-6 flex items-center justify-between">
+    <div className="px-4 py-4 sm:py-0 sm:pb-1 sm:px-6 flex items-center justify-between">
       <div className="flex items-center gap-2 min-w-0">
         <button
+          type="button"
           onClick={toggleSidebar}
           className="md:hidden h-9 w-9 rounded-lg bg-[#166534] text-white border-0 shadow-xs shrink-0 flex items-center justify-center"
         >
@@ -68,6 +69,7 @@ export function Navbar({
 
       <div className="flex items-center gap-1">
         <button
+          type="button"
           className="relative mr-2 flex h-9 w-9 items-center justify-center"
           onClick={() => navigate(ROUTES.NOTIFICATIONS)}
         >

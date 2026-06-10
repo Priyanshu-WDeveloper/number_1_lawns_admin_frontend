@@ -29,6 +29,7 @@ function AvatarImage({
   return (
     <img
       data-slot="avatar-image"
+      alt=""
       className={cn(
         "aspect-square size-full rounded-full object-cover",
         className

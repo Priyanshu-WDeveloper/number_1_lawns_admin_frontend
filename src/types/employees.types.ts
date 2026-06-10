@@ -59,8 +59,8 @@ export interface CreateEmployeePayload {
   city: string;
   state: string;
   country: string;
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
   attachments?: Array<{ key: string; value: string }>;
 }
 export interface UpdateEmployeePayload extends Partial<CreateEmployeePayload> {

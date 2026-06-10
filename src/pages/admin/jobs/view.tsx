@@ -76,7 +76,8 @@ function getCustomerEmail(customer: IJob['customerId']): string {
 
 function getCustomerPhone(customer: IJob['customerId']): string {
   if (typeof customer === 'object' && customer)
-    return customer.phoneNumber;
+    // return customer.phoneNumber;
+    return `${customer.countryCode || ''} ${customer.phoneNumber}`;
   return '-';
 }
 
@@ -97,12 +98,20 @@ function getEmployeeEmail(employee: IJob['employeeId']): string {
 
 function getEmployeePhone(employee: IJob['employeeId']): string {
   if (typeof employee === 'object' && employee)
-    return employee.phoneNumber;
+    // return employee.phoneNumber;
+    return `${employee.countryCode || ''} ${employee.phoneNumber}`;
   return '-';
 }
 
 function hasJobAddress(job: IJob): boolean {
-  return !!(job.address || job.city || job.state || job.country || job.postalCode || job.location?.coordinates);
+  return !!(
+    job.address ||
+    job.city ||
+    job.state ||
+    job.country ||
+    job.postalCode ||
+    job.location?.coordinates
+  );
 }
 
 function getEmployeeCode(employee: IJob['employeeId']): string {
@@ -162,12 +171,22 @@ export default function JobViewPage() {
       ? resolvedJob.customerId
       : null;
 
-  const jobCustomerId = customer?._id ?? (resolvedJob && typeof resolvedJob.customerId === 'string' ? resolvedJob.customerId : '');
-  const showCustomerAddress = resolvedJob ? !hasJobAddress(resolvedJob) : false;
-  const { data: customerData } = useGetCustomerByIdQuery(jobCustomerId, {
-    skip: !jobCustomerId || !showCustomerAddress,
-  });
-  const customerForAddress = (customerData ?? customer) as ICustomer | null;
+  const jobCustomerId =
+    customer?._id ??
+    (resolvedJob && typeof resolvedJob.customerId === 'string'
+      ? resolvedJob.customerId
+      : '');
+  const showCustomerAddress = resolvedJob
+    ? !hasJobAddress(resolvedJob)
+    : false;
+  const { data: customerData } = useGetCustomerByIdQuery(
+    jobCustomerId,
+    {
+      skip: !jobCustomerId || !showCustomerAddress,
+    },
+  );
+  const customerForAddress = (customerData ??
+    customer) as ICustomer | null;
 
   if (!resolvedJob) return null;
 
@@ -224,7 +243,9 @@ export default function JobViewPage() {
           <div className="mx-auto">
             <Button
               variant="ghost"
-              onClick={() => navigate(-1)}
+              onClick={() =>
+                navigate(location.state?.from || ROUTES.MANAGE_JOBS)
+              }
               className="mb-4 text-muted-foreground hover:text-primary hover:bg-primary/10"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -722,15 +743,28 @@ export default function JobViewPage() {
                               Coordinates
                             </p>
                             <p className="text-foreground font-medium">
-                              {customerForAddress.location.coordinates[1]},{' '}
-                              {customerForAddress.location.coordinates[0]}
+                              {
+                                customerForAddress.location
+                                  .coordinates[1]
+                              }
+                              ,{' '}
+                              {
+                                customerForAddress.location
+                                  .coordinates[0]
+                              }
                             </p>
                           </div>
                         </div>
                         <div className="mt-4">
                           <StaticMap
-                            lat={customerForAddress.location.coordinates[1]}
-                            lng={customerForAddress.location.coordinates[0]}
+                            lat={
+                              customerForAddress.location
+                                .coordinates[1]
+                            }
+                            lng={
+                              customerForAddress.location
+                                .coordinates[0]
+                            }
                             height={300}
                           />
                         </div>

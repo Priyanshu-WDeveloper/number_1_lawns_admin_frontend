@@ -51,7 +51,9 @@ export interface IJob {
         phoneNumber: string;
         profileImage?: string;
         employeeId?: string;
+        customerId?: string;
         address?: string;
+        countryCode?: string;
       };
   employeeId?:
     | string
@@ -64,6 +66,7 @@ export interface IJob {
         phoneNumber: string;
         profileImage?: string;
         employeeId?: string;
+        countryCode?: string;
       };
   adminId?:
     | string

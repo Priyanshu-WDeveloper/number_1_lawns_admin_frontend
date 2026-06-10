@@ -180,6 +180,7 @@ export function ChangeAdminPasswordDialog({
 
             {/* Close Button */}
             <button
+              type="button"
               onClick={() => onOpenChange(false)}
               className="
                   mb-7

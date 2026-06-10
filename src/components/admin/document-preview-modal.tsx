@@ -13,6 +13,16 @@ export function DocumentPreviewModal({
   onClose,
 }: DocumentPreviewModalProps) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [prevFile, setPrevFile] = useState<File | null>(null);
+  const [prevIsOpen, setPrevIsOpen] = useState(false);
+
+  if (file !== prevFile || isOpen !== prevIsOpen) {
+    setPrevFile(file);
+    setPrevIsOpen(isOpen);
+    if (!isOpen || !file) {
+      setBlobUrl(null);
+    }
+  }
 
   useEffect(() => {
     if (file && isOpen) {
@@ -20,7 +30,6 @@ export function DocumentPreviewModal({
       setBlobUrl(url);
       return () => URL.revokeObjectURL(url);
     }
-    setBlobUrl(null);
   }, [file, isOpen]);
 
   if (!isOpen || !file || !blobUrl) return null;

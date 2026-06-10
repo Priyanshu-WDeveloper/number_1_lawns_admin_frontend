@@ -63,6 +63,7 @@ export function SearchableSelect({
   onSearch,
 }: SearchableSelectProps) {
   const [open, setOpen] = React.useState(false);
+  const listId = React.useId();
   const isMobile = useIsMobile();
 
   const selectedItem = React.useMemo(
@@ -76,6 +77,7 @@ export function SearchableSelect({
       type="button"
       role="combobox"
       aria-expanded={open}
+      aria-controls={listId}
       disabled={disabled}
       onClick={onClick}
       className={cn(
@@ -114,7 +116,7 @@ export function SearchableSelect({
         placeholder={searchPlaceholder}
         onValueChange={onSearch}
       />
-      <CommandList className={commandListClassName}>
+      <CommandList id={listId} className={commandListClassName}>
         <CommandEmpty>{notFoundMessage}</CommandEmpty>
         {data.length === 0 && !loading ? (
           <div className="py-6 text-center text-sm text-muted-foreground">

@@ -152,7 +152,7 @@ const steps = [
 export default function EditEmployeePage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const location = useLocation();
+  const { state: locationState } = useLocation();
   const { data: employeeData, isLoading: isLoadingEmployee } =
     useGetEmployeeByIdQuery(id ?? '', { skip: !id });
   const [updateEmployee, { isLoading: isUpdating }] =
@@ -206,8 +206,8 @@ export default function EditEmployeePage() {
   const formValues = watch();
 
   useEffect(() => {
-    if (location.state?.employee) {
-      const emp = location.state.employee;
+    if (locationState?.employee) {
+      const emp = locationState.employee;
       setValue('firstName', emp.firstName ?? '');
       setValue('lastName', emp.lastName ?? '');
       setValue('email', emp.email ?? '');
@@ -261,7 +261,7 @@ export default function EditEmployeePage() {
         setExistingAttachments(emp.attachments);
       }
     }
-  }, [employeeData, location.state, setValue]);
+  }, [employeeData, locationState, setValue]); /* eslint-disable-line react-hooks/exhaustive-deps — location.state from React Router correctly triggers re-renders on navigation; removing it would break form population from navigation state */
 
   const handleProfileImageChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -316,6 +316,7 @@ export default function EditEmployeePage() {
   const handlePrevious = () => {
     if (currentStep > 1) {
       setCurrentStep((prev) => prev - 1);
+      if (currentStep === 2) setProfileImageError(false);
     }
   };
 
@@ -693,7 +694,7 @@ export default function EditEmployeePage() {
 
                   return (
                     <div
-                      key={i}
+                      key={att.key}
                       className="flex items-start gap-3 rounded-xl border border-border bg-background p-3"
                     >
                       <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-white">
@@ -958,7 +959,10 @@ export default function EditEmployeePage() {
           <AdminFormStepper
             steps={steps}
             currentStep={currentStep}
-            onStepClick={setCurrentStep}
+            onStepClick={(step) => {
+              setCurrentStep(step);
+              if (step === 1) setProfileImageError(false);
+            }}
             onPrevious={handlePrevious}
             onNext={handleNext}
             onSubmit={handleSubmit(onSubmit)}

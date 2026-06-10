@@ -259,6 +259,7 @@ export default function CustomerEditPage() {
   const handlePrevious = () => {
     if (currentStep > 1) {
       setCurrentStep((prev) => prev - 1);
+      if (currentStep === 2) setProfileImageError(false);
     }
   };
 
@@ -608,7 +609,10 @@ export default function CustomerEditPage() {
           <AdminFormStepper
             steps={steps}
             currentStep={currentStep}
-            onStepClick={setCurrentStep}
+            onStepClick={(step) => {
+              setCurrentStep(step);
+              if (step === 1) setProfileImageError(false);
+            }}
             onPrevious={handlePrevious}
             onNext={handleNext}
             onSubmit={handleSubmit(onSubmit)}

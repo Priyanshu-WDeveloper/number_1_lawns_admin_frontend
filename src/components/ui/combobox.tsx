@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useId } from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -46,6 +46,7 @@ export function Combobox({
   className,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
+  const listId = useId();
   const selectedOption = options.find((o) => o.value === value);
 
   return (
@@ -57,6 +58,7 @@ export function Combobox({
             variant="outline"
             role="combobox"
             aria-expanded={open}
+            aria-controls={listId}
             disabled={disabled}
             className={cn(
               'h-12 w-full justify-between rounded-xl border bg-background px-3 text-sm font-normal hover:bg-background',
@@ -88,7 +90,7 @@ export function Combobox({
         >
           <Command>
             <CommandInput placeholder={searchPlaceholder} />
-            <CommandList>
+            <CommandList id={listId}>
               <CommandEmpty>{emptyText}</CommandEmpty>
               <CommandGroup>
                 {options.map((option) => (

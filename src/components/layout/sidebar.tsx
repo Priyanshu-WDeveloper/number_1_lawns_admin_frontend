@@ -156,6 +156,7 @@ export function DashboardSidebar() {
         </button> */}
 
         <button
+          type="button"
           className="w-full rounded-2xl bg-white/10 p-4 text-left backdrop-blur transition hover:bg-white/20"
           onClick={() => setShowLogoutDialog(true)}
         >

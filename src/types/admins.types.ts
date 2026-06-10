@@ -27,7 +27,7 @@ export interface IAdmins {
   postalCode: string;
   country: string;
 
-  location: {
+  location?: {
     type: 'Point';
     coordinates: [number, number];
   };

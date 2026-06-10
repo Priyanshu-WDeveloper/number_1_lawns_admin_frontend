@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Eye } from 'lucide-react';
+import { Eye, Ellipsis, Pencil, Ban } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import type { ColumnDef } from '@/components/data-table/data-table';
@@ -14,6 +14,12 @@ import {
 } from '@/API/api';
 import { getErrorMessage } from '@/lib/get-error-message';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useDataTableQueryParams } from '@/hooks/use-data-table-query-params';
 import type { IParentJob } from '@/types';
 import type { ListQueryParams } from '@/types/api.types';
@@ -183,7 +189,7 @@ export default function ManageJobsPage() {
             <Eye className="h-3.5 w-3.5" />
             View
           </button>
-          {/* <DropdownMenu>
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
@@ -193,24 +199,31 @@ export default function ManageJobsPage() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() =>
+                  navigate(
+                    ROUTES.JOBS_EDIT.replace(':id', row._id ?? ''),
+                  )
+                }
+              >
+                <Pencil className="mr-2 h-4 w-4 text-amber-500" />
+                <span>Edit Job</span>
+              </DropdownMenuItem>
               {row.status === 'pending' && (
-                <>
-                  <DropdownMenuItem
-                    onClick={() =>
-                      setConfirmAction({
-                        type: 'cancel',
-                        jobId: row._id ?? '',
-                      })
-                    }
-                  >
-                    <Ban className="mr-2 h-4 w-4 text-red-500" />
-                    <span>Cancel Job</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </>
+                <DropdownMenuItem
+                  onClick={() =>
+                    setConfirmAction({
+                      type: 'cancel',
+                      jobId: row._id ?? '',
+                    })
+                  }
+                >
+                  <Ban className="mr-2 h-4 w-4 text-red-500" />
+                  <span>Cancel Job</span>
+                </DropdownMenuItem>
               )}
             </DropdownMenuContent>
-          </DropdownMenu> */}
+          </DropdownMenu>
         </div>
       ),
     },

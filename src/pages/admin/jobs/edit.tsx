@@ -793,9 +793,7 @@ export default function EditJobPage() {
             <div className="mt-4 flex items-center gap-2">
               <Button
                 variant="ghost"
-                onClick={() =>
-                  navigate(ROUTES.JOBS_VIEW.replace(':id', id!))
-                }
+                onClick={() => navigate(-1)}
                 className="text-[#6b7280] hover:text-foreground"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />

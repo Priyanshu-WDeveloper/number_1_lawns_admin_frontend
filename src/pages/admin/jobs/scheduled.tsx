@@ -324,7 +324,7 @@ export default function ScheduledJobsPage() {
           <button
             type="button"
             onClick={() =>
-              navigate(ROUTES.JOBS_VIEW.replace(':id', row._id ?? ''))
+              navigate(ROUTES.JOBS_VIEW.replace(':id', row._id ?? ''), { state: { from: ROUTES.SCHEDULED_JOBS } })
             }
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-sm font-medium bg-[#f5f5f5] text-[#374151] hover:bg-[#e5e5e5] transition-colors"
           >
