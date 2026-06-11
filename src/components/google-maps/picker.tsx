@@ -50,7 +50,7 @@ export function GoogleMapPicker({
       setIsSearching(true);
       setSearchError(null);
       fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&countrycodes=in,nz&limit=5`,
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&countrycodes=nz&limit=5`,
         { headers: { 'User-Agent': 'No1LawnsAdmin/1.0' } },
       )
         .then((res) => {
@@ -76,8 +76,8 @@ export function GoogleMapPicker({
 
   const initialCenter = useMemo<{ lat: number; lng: number }>(
     () => ({
-      lat: latitude || 20.5937,
-      lng: longitude || 78.9629,
+      lat: latitude || -41.2865,
+      lng: longitude || 174.7762,
     }),
     [latitude, longitude],
   );
@@ -92,7 +92,7 @@ export function GoogleMapPicker({
 
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&countrycodes=in,nz&limit=5`,
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&countrycodes=nz&limit=5`,
         { headers: { 'User-Agent': 'No1LawnsAdmin/1.0' } },
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
