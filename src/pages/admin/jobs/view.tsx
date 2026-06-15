@@ -70,7 +70,7 @@ function getCustomerName(customer: IJob['customerId']): string {
 }
 
 function getCustomerEmail(customer: IJob['customerId']): string {
-  if (typeof customer === 'object' && customer) return customer.email;
+  if (typeof customer === 'object' && customer) return customer.email || '-';
   return '-';
 }
 

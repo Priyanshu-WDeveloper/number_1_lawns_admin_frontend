@@ -52,7 +52,7 @@ export interface IJob {
         firstName: string;
         lastName: string;
         fullName: string;
-        email: string;
+        email?: string;
         phoneNumber: string;
         profileImage?: string;
         employeeId?: string;
@@ -136,7 +136,7 @@ export interface IParentJob {
         _id: string;
         firstName: string;
         lastName: string;
-        email: string;
+        email?: string;
         fullName?: string;
         address?: string;
       };
@@ -185,7 +185,7 @@ export interface IPopulatedCustomer {
   _id: string;
   firstName: string;
   lastName: string;
-  email: string;
+  email?: string;
   phoneNumber: string;
   address: string;
   fullName: string;

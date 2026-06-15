@@ -172,7 +172,9 @@ export default function ProfileContent({
                 </label>
                 <PhoneInput
                   value={formData.phoneNumber}
-                  onChange={(val: string) => handleChange('phoneNumber', val)}
+                  onChange={(val: string) =>
+                    handleChange('phoneNumber', val)
+                  }
                   countryCode={formData.countryCode}
                   onCountryCodeChange={(code: string) =>
                     handleChange('countryCode', code)

@@ -55,10 +55,6 @@ export interface CreateEmployeePayload {
   countryCode: string;
   phoneNumber: string;
   address: string;
-  postalCode: string;
-  city: string;
-  state: string;
-  country: string;
   latitude?: number;
   longitude?: number;
   attachments?: Array<{ key: string; value: string }>;

@@ -4,12 +4,7 @@ import { PhoneInput } from '@/components/forms/phone-input';
 import { LocationModeToggle } from '@/components/forms/location-mode-toggle';
 import { GoogleMapPicker } from '@/components/google-maps/picker';
 import { ManualCoordinates } from '@/components/forms/manual-coordinates';
-import { useEffect } from 'react';
-import { Country } from 'country-state-city';
-import { AddressInputs } from '@/components/forms/address-inputs';
-// import { validatePhone } from '@/lib/phone-validation';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface AdminFormStepProps {
   step: number;
   register: any;
@@ -19,7 +14,6 @@ interface AdminFormStepProps {
   trigger?: any;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function AdminFormStep({
   step,
   register,
@@ -28,66 +22,11 @@ export function AdminFormStep({
   errors,
   trigger: _trigger,
 }: AdminFormStepProps) {
-  // const formValues = watch();
 
-  // const country = watch('country');
-  // const countryIso = watch('countryIso');
-  // const phoneNumber = watch('phoneNumber')
   const formValues = {
     phoneNumber: watch('phoneNumber'),
     countryCode: watch('countryCode'),
-    country: watch('country'),
-    countryIso: watch('countryIso'),
-    state: watch('state'),
-    city: watch('city'),
-    postalCode: watch('postalCode'),
   };
-
-  // useEffect(() => {
-  //   if (!formValues.countryIso && formValues.country) {
-  //     const match = Country.getAllCountries().find(
-  //       (c) =>
-  //         c.name.toLowerCase() === formValues.country.toLowerCase(),
-  //     );
-
-  //     if (match) {
-  //       setValue('countryIso', match.isoCode, {
-  //         shouldValidate: true,
-  //       });
-  //     }
-  //   }
-  // }, [formValues.country, formValues.countryIso, setValue]);
-
-  useEffect(() => {
-    // Sync country -> countryIso
-    if (formValues.country && !formValues.countryIso) {
-      const allCountries = Country.getAllCountries();
-      const query = formValues.country.trim().toLowerCase();
-      const match =
-        allCountries.find((c) => c.name.toLowerCase() === query) ||
-        allCountries.find((c) => c.name.toLowerCase().startsWith(query)) ||
-        allCountries.find((c) => c.name.toLowerCase().includes(query));
-
-      if (match) {
-        setValue('countryIso', match.isoCode, {
-          shouldValidate: false,
-        });
-      }
-    }
-
-    // Sync countryIso -> country
-    if (formValues.countryIso && !formValues.country) {
-      const match = Country.getAllCountries().find(
-        (c) => c.isoCode === formValues.countryIso,
-      );
-
-      if (match) {
-        setValue('country', match.name, {
-          shouldValidate: false,
-        });
-      }
-    }
-  }, [formValues.country, formValues.countryIso, setValue]);
 
   if (step === 1) {
     return (
@@ -134,7 +73,6 @@ export function AdminFormStep({
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">
                 Email Address
-                <span className="text-primary"> *</span>
               </label>
               <Input
                 type="email"
@@ -154,45 +92,6 @@ export function AdminFormStep({
                 Phone Number
                 <span className="text-primary"> *</span>
               </label>
-              {/* <PhoneInput
-                value={formValues.phoneNumber ?? ''}
-                onChange={(val) =>
-                  setValue('phoneNumber', val, {
-                    shouldValidate: true,
-                    shouldDirty: true,
-                  })
-                }
-                countryCode={formValues.countryCode}
-                onCountryCodeChange={(code) =>
-                  setValue('countryCode', code, {
-                    shouldValidate: true,
-                  })
-                }
-                error={errors.phoneNumber?.message}
-                onValidate={(err) => {
-                  if (err) {
-                    setValue('phoneNumber', formValues.phoneNumber, {
-                      shouldValidate: true,
-                    });
-                    const result = validatePhone(
-                      formValues.phoneNumber,
-                      formValues.countryCode,
-                    );
-                    // if (!result.valid && result.error) {
-                    //   setValue('phoneNumber', undefined, {
-                    //     shouldValidate: true,
-                    //   });
-                    // }
-                    // if (!result.valid && result.error) {
-                    //   setValue('phoneNumber', '', {
-                    //     shouldValidate: true,
-                    //     shouldDirty: true,
-                    //   });
-                    // }
-                  }
-                  trigger?.('phoneNumber');
-                }}
-              /> */}
               <PhoneInput
                 value={formValues.phoneNumber ?? ''}
                 onChange={(val) =>
@@ -224,9 +123,12 @@ export function AdminFormStep({
       setValue('locationMode', mode);
     };
 
-    const handleCoordinatePick = (lat: number, lng: number) => {
+    const handleCoordinatePick = (lat: number, lng: number, address?: string) => {
       setValue('latitude', lat, { shouldValidate: true });
       setValue('longitude', lng, { shouldValidate: true });
+      if (address) {
+        setValue('address', address, { shouldValidate: true, shouldDirty: true });
+      }
     };
 
     return (
@@ -252,66 +154,6 @@ export function AdminFormStep({
                 </p>
               )}
             </div>
-
-            <AddressInputs
-              // countryIso={watch('countryIso') || ''}
-              countryIso={formValues.countryIso || ''}
-              country={formValues.country}
-              state={formValues.state}
-              city={formValues.city}
-              postalCode={formValues.postalCode}
-              onCountryChange={(name, iso) => {
-                // setValue('country', name);
-                // setValue('countryIso', iso);
-                setValue('country', name, {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                });
-
-                setValue('countryIso', iso, {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                });
-                setValue('state', '', {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                });
-
-                setValue('city', '', {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                });
-              }}
-              onStateChange={(name) => {
-                setValue('state', name, {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                });
-                setValue('city', '', {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                });
-              }}
-              onCityChange={(name) =>
-                // setValue('city', name)
-                setValue('city', name, {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                })
-              }
-              onPostalCodeChange={(val) =>
-                setValue('postalCode', val, {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                })
-              }
-              errors={{
-                country: errors.country?.message as string | undefined,
-                state: errors.state?.message as string | undefined,
-                city: errors.city?.message as string | undefined,
-                postalCode: errors.postalCode?.message as string | undefined,
-              }}
-            />
 
             <LocationModeToggle
               value={locationMode}

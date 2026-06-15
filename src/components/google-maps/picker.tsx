@@ -12,7 +12,7 @@ interface MapController {
 interface GoogleMapPickerProps {
   latitude: number | undefined;
   longitude: number | undefined;
-  onPick: (lat: number, lng: number) => void;
+  onPick: (lat: number, lng: number, address?: string) => void;
 }
 
 interface NominatimResult {
@@ -36,10 +36,12 @@ export function GoogleMapPicker({
   const [searchResults, setSearchResults] = useState<NominatimResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSearchRef = useRef(0);
+  const searchInFlightRef = useRef(false);
 
   useEffect(() => {
     if (!searchQuery.trim() || searchQuery.trim().length < 2) {
-      if (showResults) setShowResults(false); // eslint-disable-line react-hooks/set-state-in-effect
+      if (showResults) setShowResults(false);
       if (searchResults.length > 0) setSearchResults([]);
       return;
     }
@@ -47,8 +49,12 @@ export function GoogleMapPicker({
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
 
     searchTimerRef.current = setTimeout(() => {
+      if (searchInFlightRef.current) return;
+      if (Date.now() - lastSearchRef.current < 1100) return;
+
       setIsSearching(true);
       setSearchError(null);
+      searchInFlightRef.current = true;
       fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&countrycodes=nz&limit=5`,
         { headers: { 'User-Agent': 'No1LawnsAdmin/1.0' } },
@@ -61,12 +67,16 @@ export function GoogleMapPicker({
           setSearchResults(data);
           setShowResults(data.length > 0);
           if (data.length === 0) setSearchError('No results found. Try a different search.');
+          lastSearchRef.current = Date.now();
         })
         .catch((err) => {
           setSearchError('Search failed. Please try again.');
           console.error('Nominatim search error:', err);
         })
-        .finally(() => setIsSearching(false));
+        .finally(() => {
+          setIsSearching(false);
+          searchInFlightRef.current = false;
+        });
     }, 500);
 
     return () => {
@@ -86,9 +96,13 @@ export function GoogleMapPicker({
     if (!searchQuery.trim()) return;
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
 
+    if (searchInFlightRef.current) return;
+    if (Date.now() - lastSearchRef.current < 1100) return;
+
     setIsSearching(true);
     setSearchError(null);
     setShowResults(false);
+    searchInFlightRef.current = true;
 
     try {
       const res = await fetch(
@@ -102,11 +116,13 @@ export function GoogleMapPicker({
       if (data.length === 0) {
         setSearchError('No results found. Try a different search.');
       }
+      lastSearchRef.current = Date.now();
     } catch (err) {
       setSearchError('Search failed. Please try again.');
       console.error('Nominatim search error:', err);
     } finally {
       setIsSearching(false);
+      searchInFlightRef.current = false;
     }
   }, [searchQuery]);
 
@@ -118,6 +134,7 @@ export function GoogleMapPicker({
     onPick(
       Math.round(lat * 10000) / 10000,
       Math.round(lng * 10000) / 10000,
+      result.display_name,
     );
     setSearchQuery(result.display_name);
     setShowResults(false);

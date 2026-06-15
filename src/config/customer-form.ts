@@ -12,7 +12,7 @@ export const customerFields: FormFieldConfig[] = [
     name: 'email',
     label: 'Email',
     type: 'email',
-    required: true,
+    required: false,
     placeholder: 'Enter email address',
   },
   {

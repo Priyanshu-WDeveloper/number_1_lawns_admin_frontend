@@ -119,10 +119,6 @@ export interface CreateEmployeePayload {
   phoneNumber: string;
   countryCode: string;
   address: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
   latitude?: number;
   longitude?: number;
   profileImage?: string;

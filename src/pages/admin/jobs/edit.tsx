@@ -11,13 +11,9 @@ import {
   DollarSign,
   ArrowLeft,
   User,
-
   CheckCircle2,
   Briefcase,
-  Building2,
   Map,
-  Hash,
-  Globe,
   Repeat,
   StickyNote,
 } from 'lucide-react';
@@ -52,22 +48,13 @@ import {
 import Loader from '@/components/loader';
 import { getErrorMessage } from '@/lib/get-error-message';
 import { ReviewCard } from '@/components/admin/review-card';
-import { AddressInputs } from '@/components/forms/address-inputs';
 import { useDebounce } from '@/hooks/use-debounce';
-import { validateAddress } from '@/lib/address-validation';
-import { Country } from 'country-state-city';
-import type { IJob } from '@/types';
 
 const editJobSchema = z
   .object({
     customer: z.string().min(1, 'Customer is required'),
     employee: z.string().optional(),
     jobAddress: z.string().optional(),
-    city: z.string().optional(),
-    state: z.string().optional(),
-    country: z.string().optional(),
-    postalCode: z.string().optional(),
-    countryIso: z.string().optional(),
     latitude: z.number().optional(),
     longitude: z.number().optional(),
     locationMode: z.enum(['map', 'manual']),
@@ -84,33 +71,6 @@ const editJobSchema = z
     if (!data.sameAsCustomer) {
       if (!data.jobAddress || !data.jobAddress.trim()) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Job address is required', path: ['jobAddress'] });
-      }
-      if (!data.city || !data.city.trim()) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'City is required', path: ['city'] });
-      }
-      if (!data.state || !data.state.trim()) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'State is required', path: ['state'] });
-      }
-      if (!data.country || !data.country.trim()) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Country is required', path: ['country'] });
-      }
-      if (!data.postalCode || !data.postalCode.trim()) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Postal code is required', path: ['postalCode'] });
-      }
-    }
-    if (data.countryIso) {
-      const addrResult = validateAddress(
-        data.countryIso,
-        data.state || '',
-        data.city || '',
-        data.postalCode || '',
-      );
-      if (!addrResult.valid && addrResult.error && addrResult.path) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: addrResult.error,
-          path: [addrResult.path],
-        });
       }
     }
   });
@@ -214,11 +174,6 @@ export default function EditJobPage() {
                 ? jobData.employeeId
                 : undefined) ?? '',
           jobAddress: jobData.address ?? '',
-          city: jobData.city ?? '',
-          state: jobData.state ?? '',
-          country: jobData.country ?? '',
-          postalCode: jobData.postalCode ?? '',
-          countryIso: (jobData as IJob & { countryIso?: string }).countryIso || '',
           latitude: jobData.location?.coordinates?.[1] ?? undefined,
           longitude: jobData.location?.coordinates?.[0] ?? undefined,
           sameAsCustomer: !jobData.address && !!(
@@ -253,30 +208,7 @@ export default function EditJobPage() {
     if (!formValues.sameAsCustomer || !selectedCustomer) return;
     const opts = { shouldDirty: true };
     setValue('jobAddress', selectedCustomer.address || '', opts);
-    setValue('city', selectedCustomer.city || '', opts);
-    setValue('state', selectedCustomer.state || '', opts);
-    setValue('country', selectedCustomer.country || '', opts);
-    setValue('postalCode', selectedCustomer.postalCode || '', opts);
-    const countryRecord = Country.getAllCountries().find(
-      (ctry) =>
-        ctry.name.toLowerCase() ===
-        (selectedCustomer.country || '').toLowerCase(),
-    );
-    setValue('countryIso', countryRecord?.isoCode ?? '', opts);
   }, [formValues.customer, formValues.sameAsCustomer, selectedCustomer, setValue]);
-
-  useEffect(() => {
-    const country = formValues.country;
-    if (country && !formValues.countryIso) {
-      const match = Country.getAllCountries().find(
-        (c) =>
-          c.name.toLowerCase() === country.toLowerCase(),
-      );
-      if (match) {
-        setValue('countryIso', match.isoCode);
-      }
-    }
-  }, [jobData, formValues.country, formValues.countryIso, setValue]);
 
   const handleNext = async () => {
     let fieldsToValidate: (keyof EditJobFormData)[] = [];
@@ -287,10 +219,6 @@ export default function EditJobPage() {
         : [
             'customer',
             'jobAddress',
-            'state',
-            'city',
-            'postalCode',
-            'country',
           ];
     } else if (currentStep === 2) {
       fieldsToValidate = ['jobType', 'jobDate', 'paymentType', 'price'];
@@ -316,10 +244,6 @@ export default function EditJobPage() {
         ...(!formValues.sameAsCustomer
           ? {
               address: data.jobAddress,
-              city: data.city || undefined,
-              state: data.state || undefined,
-              country: data.country || undefined,
-              postalCode: data.postalCode || undefined,
               location:
                 data.latitude && data.longitude
                   ? ({
@@ -457,40 +381,6 @@ export default function EditJobPage() {
                 )}
               </div>
 
-              <AddressInputs
-                countryIso={formValues.countryIso || ''}
-                country={formValues.country || ''}
-                state={formValues.state || ''}
-                city={formValues.city || ''}
-                postalCode={formValues.postalCode || ''}
-                onCountryChange={(name, iso) => {
-                  setValue('country', name, { shouldValidate: true });
-                  setValue('countryIso', iso, {
-                    shouldValidate: true,
-                  });
-                  setValue('state', '', { shouldValidate: true });
-                  setValue('city', '', { shouldValidate: true });
-                }}
-                onStateChange={(name) => {
-                  setValue('state', name, { shouldValidate: true });
-                  setValue('city', '', { shouldValidate: true });
-                }}
-                onCityChange={(name) =>
-                  setValue('city', name, { shouldValidate: true })
-                }
-                onPostalCodeChange={(val) =>
-                  setValue('postalCode', val, {
-                    shouldValidate: true,
-                  })
-                }
-                errors={{
-                  country: errors.country?.message,
-                  state: errors.state?.message,
-                  city: errors.city?.message,
-                  postalCode: errors.postalCode?.message,
-                }}
-              />
-
               <LocationModeToggle
                 value={formValues.locationMode || 'map'}
                 onChange={(mode) => setValue('locationMode', mode)}
@@ -500,9 +390,10 @@ export default function EditJobPage() {
                 <GoogleMapPicker
                   latitude={formValues.latitude || 0}
                   longitude={formValues.longitude || 0}
-                  onPick={(lat, lng) => {
+                  onPick={(lat, lng, address) => {
                     setValue('latitude', lat);
                     setValue('longitude', lng);
+                    if (address) setValue('jobAddress', address, { shouldValidate: true, shouldDirty: true });
                   }}
                 />
               ) : (
@@ -743,10 +634,6 @@ export default function EditJobPage() {
       ...(!formValues.sameAsCustomer
         ? [
             { icon: <MapPin className="h-3 w-3" />, label: 'Address', value: formValues.jobAddress || '-' },
-            { icon: <Building2 className="h-3 w-3" />, label: 'City', value: formValues.city || '-' },
-            { icon: <Map className="h-3 w-3" />, label: 'State', value: formValues.state || '-' },
-            { icon: <Globe className="h-3 w-3" />, label: 'Country', value: formValues.country || '-' },
-            { icon: <Hash className="h-3 w-3" />, label: 'Postal Code', value: formValues.postalCode || '-' },
             ...(formValues.latitude && formValues.longitude
               ? [{ icon: <Map className="h-3 w-3" />, label: 'Coordinates', value: `${formValues.latitude.toFixed(6)}, ${formValues.longitude.toFixed(6)}` }]
               : []),

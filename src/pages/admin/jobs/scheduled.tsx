@@ -345,7 +345,7 @@ export default function ScheduledJobsPage() {
               View Receipt
             </button>
           )} */}
-          {statusFilter === 'pending' && row.status === 'pending' && (
+          {row.status === 'pending' && (
             <>
               <button
                 type="button"
@@ -399,7 +399,8 @@ export default function ScheduledJobsPage() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {(row.status === 'pending' ||
-                    row.status === 'upcoming') && (
+                    row.status === 'upcoming' ||
+                    row.status === 'overdue') && (
                     <>
                       {row.status === 'pending' &&
                         (!row.employeeId ||

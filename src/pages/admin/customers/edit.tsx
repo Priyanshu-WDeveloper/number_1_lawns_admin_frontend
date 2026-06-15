@@ -17,10 +17,7 @@ import {
   Mail,
   Phone,
   MapPin,
-  Building2,
   Map,
-  Hash,
-  Globe,
   Camera,
   X,
 } from 'lucide-react';
@@ -39,10 +36,6 @@ import { ReviewCard } from '@/components/admin/review-card';
 import Loader from '@/components/loader';
 import type { ICustomer } from '@/types';
 import { validatePhone } from '@/lib/phone-validation';
-import {
-  validateAddress,
-  getCountryIsoFromPhoneCode,
-} from '@/lib/address-validation';
 
 const editCustomerSchema = z
   .object({
@@ -50,24 +43,15 @@ const editCustomerSchema = z
     lastName: z.string().min(1, 'Last name is required'),
     email: z
       .string()
-      .min(1, 'Email is required')
-      .email('Invalid email address'),
+      .email('Invalid email address')
+      .or(z.literal(''))
+      .optional(),
     phoneNumber: z
       .string()
       .min(1, 'Phone number is required')
       .regex(/^\d+$/, 'Phone number must be numeric'),
     countryCode: z.string().min(1, 'Country code is required'),
     address: z.string().min(1, 'Address is required'),
-    city: z.string().min(1, 'City is required'),
-    state: z.string().min(1, 'State is required'),
-    postalCode: z
-      .string()
-      .min(1, 'Postal code is required')
-      .min(3)
-      .max(10)
-      .regex(/^\d+$/, 'Invalid postal code'),
-    country: z.string().min(1, 'Country is required'),
-    countryIso: z.string(),
     location: z.string(),
     profileImage: z.string().optional(),
     latitude: z.number().optional(),
@@ -87,25 +71,6 @@ const editCustomerSchema = z
       });
     }
 
-    const iso =
-      data.countryIso ||
-      getCountryIsoFromPhoneCode(data.countryCode) ||
-      '';
-    if (iso && data.country) {
-      const addrResult = validateAddress(
-        iso,
-        data.state,
-        data.city,
-        data.postalCode,
-      );
-      if (!addrResult.valid && addrResult.error && addrResult.path) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: addrResult.error,
-          path: [addrResult.path],
-        });
-      }
-    }
   });
 
 type EditCustomerFormData = z.infer<typeof editCustomerSchema>;
@@ -160,7 +125,10 @@ export default function CustomerEditPage() {
 
   const { data, isLoading: isLoadingCustomer } =
     useGetCustomerByIdQuery(id!);
-  const customer = (data as { customer?: ICustomer })?.customer ?? data ?? passedCustomer;
+  const customer =
+    (data as { customer?: ICustomer })?.customer ??
+    data ??
+    passedCustomer;
 
   const {
     register,
@@ -176,15 +144,10 @@ export default function CustomerEditPage() {
       ? {
           firstName: customer.firstName,
           lastName: customer.lastName,
-          email: customer.email,
+          email: customer.email ?? '',
           phoneNumber: customer.phoneNumber,
           countryCode: customer.countryCode,
           address: customer.address,
-          city: customer.city,
-          state: customer.state,
-          postalCode: customer.postalCode,
-          country: customer.country,
-          countryIso: (customer as { countryIso?: string }).countryIso || '',
           location: customer.location?.coordinates
             ? `${customer.location.coordinates[1]}, ${customer.location.coordinates[0]}`
             : '',
@@ -234,7 +197,6 @@ export default function CustomerEditPage() {
       fieldsToValidate = [
         'firstName',
         'lastName',
-        'email',
         'phoneNumber',
       ];
     }
@@ -242,10 +204,6 @@ export default function CustomerEditPage() {
     if (currentStep === 2) {
       fieldsToValidate = [
         'address',
-        'city',
-        'state',
-        'postalCode',
-        'country',
       ];
     }
 
@@ -287,10 +245,6 @@ export default function CustomerEditPage() {
         phoneNumber: data.phoneNumber,
         countryCode: data.countryCode,
         address: data.address,
-        city: data.city,
-        state: data.state,
-        postalCode: data.postalCode,
-        country: data.country,
         profileImage: profileImageUrl,
         latitude: data.latitude != null ? data.latitude : undefined,
         longitude:
@@ -438,7 +392,7 @@ export default function CustomerEditPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
                     Email
-                    <span className="text-primary"> *</span>
+                    {/* <span className="text-primary"> *</span> */}
                   </label>
                   <input
                     type="email"
@@ -511,11 +465,15 @@ export default function CustomerEditPage() {
                     label: 'Last Name',
                     value: formValues.lastName,
                   },
-                  {
-                    icon: <Mail className="h-3 w-3" />,
-                    label: 'Email',
-                    value: formValues.email,
-                  },
+                  ...(formValues.email
+                    ? [
+                        {
+                          icon: <Mail className="h-3 w-3" />,
+                          label: 'Email',
+                          value: formValues.email,
+                        },
+                      ]
+                    : []),
                   {
                     icon: <Phone className="h-3 w-3" />,
                     label: 'Phone Number',
@@ -525,26 +483,6 @@ export default function CustomerEditPage() {
                     icon: <MapPin className="h-3 w-3" />,
                     label: 'Address',
                     value: formValues.address,
-                  },
-                  {
-                    icon: <Building2 className="h-3 w-3" />,
-                    label: 'City',
-                    value: formValues.city,
-                  },
-                  {
-                    icon: <Map className="h-3 w-3" />,
-                    label: 'State',
-                    value: formValues.state,
-                  },
-                  {
-                    icon: <Hash className="h-3 w-3" />,
-                    label: 'Postal Code',
-                    value: formValues.postalCode,
-                  },
-                  {
-                    icon: <Globe className="h-3 w-3" />,
-                    label: 'Country',
-                    value: formValues.country,
                   },
                   ...(formValues.latitude != null &&
                   formValues.longitude != null

@@ -1,9 +1,10 @@
+import { useRef } from 'react';
 import { MapPin, Crosshair } from 'lucide-react';
 
 interface MockMapPickerProps {
   latitude: number | undefined;
   longitude: number | undefined;
-  onPick: (lat: number, lng: number) => void;
+  onPick: (lat: number, lng: number, address?: string) => void;
 }
 
 const DEFAULT_LAT = 20.5937;
@@ -12,6 +13,10 @@ const LAT_RANGE = 10;
 const LNG_RANGE = 12;
 
 export function MockMapPicker({ latitude, longitude, onPick }: MockMapPickerProps) {
+  const lastNominatimRef = useRef(0);
+  const geocodingRef = useRef(false);
+  const lastAddressRef = useRef('');
+
   const displayLat = latitude != null ? latitude : DEFAULT_LAT;
   const displayLng = longitude != null ? longitude : DEFAULT_LNG;
 
@@ -24,7 +29,7 @@ export function MockMapPicker({ latitude, longitude, onPick }: MockMapPickerProp
     Math.max(5, ((DEFAULT_LAT + LAT_RANGE - displayLat) / (LAT_RANGE * 2)) * 100)
   );
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleClick = async (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
@@ -32,10 +37,32 @@ export function MockMapPicker({ latitude, longitude, onPick }: MockMapPickerProp
     const lng = (DEFAULT_LNG - LNG_RANGE) + (x / 100) * (LNG_RANGE * 2);
     const lat = (DEFAULT_LAT + LAT_RANGE) - (y / 100) * (LAT_RANGE * 2);
 
-    onPick(
-      Math.round(lat * 10000) / 10000,
-      Math.round(lng * 10000) / 10000
-    );
+    if (geocodingRef.current) return;
+
+    const now = Date.now();
+    if (now - lastNominatimRef.current < 1100) {
+      onPick(lat, lng, lastAddressRef.current || undefined);
+      return;
+    }
+
+    geocodingRef.current = true;
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+        { headers: { 'User-Agent': 'No1LawnsAdmin/1.0' } },
+      );
+      if (res.ok) {
+        const data = await res.json();
+        lastNominatimRef.current = Date.now();
+        lastAddressRef.current = data.display_name;
+        geocodingRef.current = false;
+        onPick(lat, lng, data.display_name);
+        return;
+      }
+    } catch {
+    }
+    geocodingRef.current = false;
+    onPick(lat, lng, lastAddressRef.current || undefined);
   };
 
   return (

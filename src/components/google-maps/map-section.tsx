@@ -10,7 +10,7 @@ const containerStyle = {
 interface MapSectionProps {
   latitude: number | undefined;
   longitude: number | undefined;
-  onPick: (lat: number, lng: number) => void;
+  onPick: (lat: number, lng: number, address?: string) => void;
   onControllerReady: (controller: MapController) => void;
   apiKey: string;
   initialCenter: { lat: number; lng: number };
@@ -30,17 +30,44 @@ export default function MapSection({
   initialCenter,
 }: MapSectionProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
+  const lastNominatimRef = useRef(0);
+  const geocodingRef = useRef(false);
+  const lastAddressRef = useRef('');
 
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: apiKey || '',
   });
 
   const handleMapClick = useCallback(
-    (e: google.maps.MapMouseEvent) => {
-      if (!e.latLng) return;
+    async (e: google.maps.MapMouseEvent) => {
+      if (!e.latLng || geocodingRef.current) return;
       const lat = Math.round(e.latLng.lat() * 10000) / 10000;
       const lng = Math.round(e.latLng.lng() * 10000) / 10000;
-      onPick(lat, lng);
+
+      const now = Date.now();
+      if (now - lastNominatimRef.current < 1100) {
+        onPick(lat, lng, lastAddressRef.current || undefined);
+        return;
+      }
+
+      geocodingRef.current = true;
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+          { headers: { 'User-Agent': 'No1LawnsAdmin/1.0' } },
+        );
+        if (res.ok) {
+          const data = await res.json();
+          lastNominatimRef.current = Date.now();
+          lastAddressRef.current = data.display_name;
+          geocodingRef.current = false;
+          onPick(lat, lng, data.display_name);
+          return;
+        }
+      } catch {
+      }
+      geocodingRef.current = false;
+      onPick(lat, lng, lastAddressRef.current || undefined);
     },
     [onPick],
   );

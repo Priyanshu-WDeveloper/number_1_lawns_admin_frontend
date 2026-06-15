@@ -17,13 +17,9 @@ import {
   Camera,
   User,
   Phone,
-  Building2,
   ExternalLink,
   Eye,
-  // ImageIcon,
   Map,
-  Hash,
-  Globe,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -46,16 +42,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { PhoneInput } from '@/components/forms/phone-input';
-import { Country } from 'country-state-city';
-import { AddressInputs } from '@/components/forms/address-inputs';
 import { LocationModeToggle } from '@/components/forms/location-mode-toggle';
 import { GoogleMapPicker } from '@/components/google-maps/picker';
 import { ManualCoordinates } from '@/components/forms/manual-coordinates';
 import { validatePhone } from '@/lib/phone-validation';
-import {
-  validateAddress,
-  getCountryIsoFromPhoneCode,
-} from '@/lib/address-validation';
 
 const updateEmployeeSchema = z
   .object({
@@ -71,16 +61,6 @@ const updateEmployeeSchema = z
       .regex(/^\d+$/, 'Phone number must be numeric'),
     countryCode: z.string().min(1, 'Country code is required'),
     address: z.string().min(1, 'Address is required'),
-    city: z.string().min(1, 'City is required'),
-    state: z.string().min(1, 'State is required'),
-    postalCode: z
-      .string()
-      .min(1, 'Postal code is required')
-      .min(3)
-      .max(10)
-      .regex(/^\d+$/, 'Invalid postal code'),
-    country: z.string().min(1, 'Country is required'),
-    countryIso: z.string(),
     profileImage: z.string(),
     latitude: z.number(),
     longitude: z.number(),
@@ -99,25 +79,6 @@ const updateEmployeeSchema = z
       });
     }
 
-    const iso =
-      data.countryIso ||
-      getCountryIsoFromPhoneCode(data.countryCode) ||
-      '';
-    if (iso && data.country) {
-      const addrResult = validateAddress(
-        iso,
-        data.state,
-        data.city,
-        data.postalCode,
-      );
-      if (!addrResult.valid && addrResult.error && addrResult.path) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: addrResult.error,
-          path: [addrResult.path],
-        });
-      }
-    }
   });
 
 type UpdateEmployeeFormData = z.infer<typeof updateEmployeeSchema>;
@@ -191,11 +152,6 @@ export default function EditEmployeePage() {
       phoneNumber: '',
       countryCode: '+64',
       address: '',
-      city: '',
-      state: '',
-      postalCode: '',
-      country: '',
-      countryIso: '',
       profileImage: '',
       latitude: 5.8485,
       longitude: 14.7633,
@@ -214,17 +170,6 @@ export default function EditEmployeePage() {
       setValue('phoneNumber', emp.phoneNumber ?? '');
       setValue('countryCode', emp.countryCode ?? '+64');
       setValue('address', emp.address ?? '');
-      setValue('city', emp.city ?? '');
-      setValue('state', emp.state ?? '');
-      setValue('postalCode', emp.postalCode ?? '');
-      setValue('country', emp.country ?? '');
-      if (emp.country) {
-        const match = Country.getAllCountries().find(
-          (c: { name: string; isoCode: string }) =>
-            c.name.toLowerCase() === emp.country.toLowerCase(),
-        );
-        if (match) setValue('countryIso', match.isoCode);
-      }
       setValue('profileImage', emp.profileImage ?? '');
       const coords1 = emp.location?.coordinates;
       setValue('latitude', coords1 ? coords1[1] : 5.8485);
@@ -241,17 +186,6 @@ export default function EditEmployeePage() {
       setValue('phoneNumber', emp.phoneNumber ?? '');
       setValue('countryCode', emp.countryCode ?? '+64');
       setValue('address', emp.address ?? '');
-      setValue('city', emp.city ?? '');
-      setValue('state', emp.state ?? '');
-      setValue('postalCode', emp.postalCode ?? '');
-      setValue('country', emp.country ?? '');
-      if (emp.country) {
-        const match = Country.getAllCountries().find(
-          (c: { name: string; isoCode: string }) =>
-            c.name.toLowerCase() === emp.country.toLowerCase(),
-        );
-        if (match) setValue('countryIso', match.isoCode);
-      }
       setValue('profileImage', emp.profileImage ?? '');
       const coords2 = emp.location?.coordinates;
       setValue('latitude', coords2 ? coords2[1] : 5.8485);
@@ -296,11 +230,6 @@ export default function EditEmployeePage() {
     if (currentStep === 2) {
       fieldsToValidate = [
         'address',
-        'city',
-        'state',
-        'postalCode',
-        'country',
-        'countryIso',
         'latitude',
         'longitude',
       ];
@@ -373,10 +302,6 @@ export default function EditEmployeePage() {
         phoneNumber: data.phoneNumber,
         countryCode: data.countryCode,
         address: data.address,
-        city: data.city,
-        state: data.state,
-        postalCode: data.postalCode,
-        country: data.country,
         profileImage: profileImageUrl,
         latitude: data.latitude,
         longitude: data.longitude,
@@ -413,9 +338,12 @@ export default function EditEmployeePage() {
     );
   };
 
-  const handleCoordinatePick = (lat: number, lng: number) => {
+  const handleCoordinatePick = (lat: number, lng: number, address?: string) => {
     setValue('latitude', lat, { shouldValidate: true });
     setValue('longitude', lng, { shouldValidate: true });
+    if (address) {
+      setValue('address', address, { shouldValidate: true, shouldDirty: true });
+    }
   };
 
   const renderStepContent = () => {
@@ -603,40 +531,6 @@ export default function EditEmployeePage() {
                   </p>
                 )}
               </div>
-
-              <AddressInputs
-                countryIso={formValues.countryIso || ''}
-                country={formValues.country}
-                state={formValues.state}
-                city={formValues.city}
-                postalCode={formValues.postalCode}
-                onCountryChange={(name, iso) => {
-                  setValue('country', name, { shouldValidate: true });
-                  setValue('countryIso', iso, {
-                    shouldValidate: true,
-                  });
-                  setValue('state', '', { shouldValidate: true });
-                  setValue('city', '', { shouldValidate: true });
-                }}
-                onStateChange={(name) => {
-                  setValue('state', name, { shouldValidate: true });
-                  setValue('city', '', { shouldValidate: true });
-                }}
-                onCityChange={(name) =>
-                  setValue('city', name, { shouldValidate: true })
-                }
-                onPostalCodeChange={(val) =>
-                  setValue('postalCode', val, {
-                    shouldValidate: true,
-                  })
-                }
-                errors={{
-                  country: errors.country?.message,
-                  state: errors.state?.message,
-                  city: errors.city?.message,
-                  postalCode: errors.postalCode?.message,
-                }}
-              />
 
               <LocationModeToggle
                 value={locationMode}
@@ -871,26 +765,6 @@ export default function EditEmployeePage() {
                   icon: <MapPin className="h-3 w-3" />,
                   label: 'Address',
                   value: formValues.address,
-                },
-                {
-                  icon: <Building2 className="h-3 w-3" />,
-                  label: 'City',
-                  value: formValues.city,
-                },
-                {
-                  icon: <Map className="h-3 w-3" />,
-                  label: 'State',
-                  value: formValues.state,
-                },
-                {
-                  icon: <Hash className="h-3 w-3" />,
-                  label: 'Postal Code',
-                  value: formValues.postalCode,
-                },
-                {
-                  icon: <Globe className="h-3 w-3" />,
-                  label: 'Country',
-                  value: formValues.country,
                 },
                 ...(formValues.latitude != null &&
                 formValues.longitude != null

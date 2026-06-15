@@ -5,7 +5,7 @@ export interface ICustomer {
   firstName: string;
   lastName: string;
   fullName: string;
-  email: string;
+  email?: string;
   status: 'active' | 'inactive' | 'expired';
 
   countryCode: string;

@@ -10,10 +10,7 @@ import {
   ArrowLeft,
   User,
   Phone,
-  Building2,
   Map,
-  Hash,
-  Globe,
   Camera,
   X,
 } from 'lucide-react';
@@ -34,10 +31,6 @@ import { ReviewCard } from '@/components/admin/review-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { validatePhone } from '@/lib/phone-validation';
-import {
-  validateAddress,
-  getCountryIsoFromPhoneCode,
-} from '@/lib/address-validation';
 import { PhoneInput } from '@/components/forms/phone-input';
 
 const createCustomerSchema = z
@@ -46,24 +39,15 @@ const createCustomerSchema = z
     lastName: z.string().min(1, 'Last name is required'),
     email: z
       .string()
-      .min(1, 'Email is required')
-      .email('Invalid email address'),
+      .email('Invalid email address')
+      .or(z.literal(''))
+      .optional(),
     phoneNumber: z
       .string()
       .min(1, 'Phone number is required')
       .regex(/^\d+$/, 'Phone number must be numeric'),
     countryCode: z.string().min(1, 'Country code is required'),
     address: z.string().min(1, 'Address is required'),
-    city: z.string().min(1, 'City is required'),
-    state: z.string().min(1, 'State is required'),
-    postalCode: z
-      .string()
-      .min(1, 'Postal code is required')
-      .min(3)
-      .max(10)
-      .regex(/^\d+$/, 'Invalid postal code'),
-    country: z.string().min(1, 'Country is required'),
-    countryIso: z.string(),
     location: z.string().optional(),
     latitude: z.number().optional(),
     longitude: z.number().optional(),
@@ -83,25 +67,6 @@ const createCustomerSchema = z
       });
     }
 
-    const iso =
-      data.countryIso ||
-      getCountryIsoFromPhoneCode(data.countryCode) ||
-      '';
-    if (iso && data.country) {
-      const addrResult = validateAddress(
-        iso,
-        data.state,
-        data.city,
-        data.postalCode,
-      );
-      if (!addrResult.valid && addrResult.error && addrResult.path) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: addrResult.error,
-          path: [addrResult.path],
-        });
-      }
-    }
   });
 
 type CreateCustomerFormData = z.infer<typeof createCustomerSchema>;
@@ -113,11 +78,6 @@ const initialFormData: CreateCustomerFormData = {
   phoneNumber: '',
   countryCode: '+64',
   address: '',
-  city: '',
-  state: '',
-  postalCode: '',
-  country: '',
-  countryIso: 'NZ',
   location: '',
   latitude: 40.7128,
   longitude: -74.006,
@@ -197,7 +157,6 @@ export default function CreateCustomerPage() {
       fieldsToValidate = [
         'firstName',
         'lastName',
-        'email',
         'phoneNumber',
       ];
     }
@@ -205,10 +164,6 @@ export default function CreateCustomerPage() {
     if (currentStep === 2) {
       fieldsToValidate = [
         'address',
-        'city',
-        'state',
-        'postalCode',
-        'country',
       ];
     }
 
@@ -241,11 +196,7 @@ export default function CreateCustomerPage() {
         email: data.email,
         phoneNumber: data.phoneNumber,
         countryCode: data.countryCode,
-        city: data.city,
         address: data.address,
-        state: data.state,
-        postalCode: data.postalCode,
-        country: data.country,
         latitude: data.latitude,
         longitude: data.longitude,
         profileImage: profileImageUrl || undefined,
@@ -414,7 +365,7 @@ export default function CreateCustomerPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">
                 Email Address
-                <span className="text-primary"> *</span>
+                {/* <span className="text-primary"> *</span> */}
               </label>
               <Input
                 type="email"
@@ -484,11 +435,15 @@ export default function CreateCustomerPage() {
                     label: 'Last Name',
                     value: formValues.lastName,
                   },
-                  {
-                    icon: <Mail className="h-3 w-3" />,
-                    label: 'Email',
-                    value: formValues.email,
-                  },
+                  ...(formValues.email
+                    ? [
+                        {
+                          icon: <Mail className="h-3 w-3" />,
+                          label: 'Email',
+                          value: formValues.email,
+                        },
+                      ]
+                    : []),
                   {
                     icon: <Phone className="h-3 w-3" />,
                     label: 'Phone Number',
@@ -498,26 +453,6 @@ export default function CreateCustomerPage() {
                     icon: <MapPin className="h-3 w-3" />,
                     label: 'Address',
                     value: formValues.address,
-                  },
-                  {
-                    icon: <Building2 className="h-3 w-3" />,
-                    label: 'City',
-                    value: formValues.city,
-                  },
-                  {
-                    icon: <Map className="h-3 w-3" />,
-                    label: 'State',
-                    value: formValues.state,
-                  },
-                  {
-                    icon: <Hash className="h-3 w-3" />,
-                    label: 'Postal Code',
-                    value: formValues.postalCode,
-                  },
-                  {
-                    icon: <Globe className="h-3 w-3" />,
-                    label: 'Country',
-                    value: formValues.country,
                   },
                   ...(formValues.latitude != null &&
                   formValues.longitude != null

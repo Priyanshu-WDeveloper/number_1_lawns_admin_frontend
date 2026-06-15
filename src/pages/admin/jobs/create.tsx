@@ -11,18 +11,13 @@ import {
   User,
   Briefcase,
   MapPin,
-  Building2,
   Map,
-  Hash,
-  Globe,
   Calendar,
   Repeat,
   CreditCard,
-
   StickyNote,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Country } from 'country-state-city';
 
 import { AppLayout } from '@/components/layout/app-layout';
 import { Navbar } from '@/components/layout/navbar';
@@ -46,25 +41,30 @@ import { GoogleMapPicker } from '@/components/google-maps/picker';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { DatePicker } from '@/components/ui/date-picker';
 import {
+  useCreateCustomerMutation,
   useCreateJobMutation,
   useGetCustomersQuery,
   useGetEmployeesQuery,
 } from '@/API/api';
 import { getErrorMessage } from '@/lib/get-error-message';
-import { AddressInputs } from '@/components/forms/address-inputs';
-import { validateAddress } from '@/lib/address-validation';
 import { useDebounce } from '@/hooks/use-debounce';
+import { PhoneInput } from '@/components/forms/phone-input';
 
 const createJobSchema = z
   .object({
-    customer: z.string().min(1, 'Customer is required'),
+    customerMode: z.enum(['existing', 'new']),
+    customer: z.string().optional(),
     employee: z.string().optional(),
+    newCustomerFirstName: z.string().optional(),
+    newCustomerLastName: z.string().optional(),
+    newCustomerPhoneNumber: z.string().optional(),
+    newCustomerCountryCode: z.string().optional(),
+    newCustomerEmail: z.string().optional(),
+    customerAddress: z.string().optional(),
+    customerLatitude: z.number().optional(),
+    customerLongitude: z.number().optional(),
+    customerLocationMode: z.enum(['map', 'manual']),
     jobAddress: z.string().optional(),
-    city: z.string().optional(),
-    state: z.string().optional(),
-    country: z.string().optional(),
-    postalCode: z.string().optional(),
-    countryIso: z.string().optional(),
     latitude: z.number().optional(),
     longitude: z.number().optional(),
     locationMode: z.enum(['map', 'manual']),
@@ -78,6 +78,37 @@ const createJobSchema = z
     sameAsCustomer: z.boolean(),
   })
   .superRefine((data, ctx) => {
+    if (data.customerMode === 'existing') {
+      if (!data.customer) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Customer is required',
+          path: ['customer'],
+        });
+      }
+    } else {
+      if (!data.newCustomerFirstName) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'First name is required',
+          path: ['newCustomerFirstName'],
+        });
+      }
+      if (!data.newCustomerLastName) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Last name is required',
+          path: ['newCustomerLastName'],
+        });
+      }
+      if (!data.newCustomerPhoneNumber) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Phone number is required',
+          path: ['newCustomerPhoneNumber'],
+        });
+      }
+    }
     if (!data.sameAsCustomer) {
       if (!data.jobAddress) {
         ctx.addIssue({
@@ -86,63 +117,25 @@ const createJobSchema = z
           path: ['jobAddress'],
         });
       }
-      if (!data.city) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'City is required',
-          path: ['city'],
-        });
-      }
-      if (!data.state) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'State is required',
-          path: ['state'],
-        });
-      }
-      if (!data.country) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Country is required',
-          path: ['country'],
-        });
-      }
-      if (!data.postalCode) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Postal code is required',
-          path: ['postalCode'],
-        });
-      }
-    }
-    if (!data.sameAsCustomer && data.countryIso) {
-      const addrResult = validateAddress(
-        data.countryIso,
-        data.state || '',
-        data.city || '',
-        data.postalCode || '',
-      );
-      if (!addrResult.valid && addrResult.error && addrResult.path) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: addrResult.error,
-          path: [addrResult.path],
-        });
-      }
     }
   });
 
 type CreateJobFormData = z.infer<typeof createJobSchema>;
 
 const initialFormData: CreateJobFormData = {
+  customerMode: 'existing',
   customer: '',
   employee: '',
+  newCustomerFirstName: '',
+  newCustomerLastName: '',
+  newCustomerPhoneNumber: '',
+  newCustomerCountryCode: '+64',
+  newCustomerEmail: '',
+  customerAddress: '',
+  customerLatitude: undefined,
+  customerLongitude: undefined,
+  customerLocationMode: 'map',
   jobAddress: '',
-  city: '',
-  state: '',
-  country: '',
-  postalCode: '',
-  countryIso: '',
   latitude: undefined,
   longitude: undefined,
   locationMode: 'map',
@@ -182,6 +175,7 @@ export default function CreateJobPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [createJob, { isLoading: isCreating }] =
     useCreateJobMutation();
+  const [createCustomer] = useCreateCustomerMutation();
 
   const [customerSearch, setCustomerSearch] = useState('');
   const [employeeSearch, setEmployeeSearch] = useState('');
@@ -248,58 +242,58 @@ export default function CreateJobPage() {
 
   const selectedCustomer = useMemo(
     () =>
-      customers.find((c) => c._id === formValues.customer) ?? null,
-    [customers, formValues.customer],
+      formValues.customerMode === 'existing'
+        ? customers.find((c) => c._id === formValues.customer) ?? null
+        : null,
+    [customers, formValues.customer, formValues.customerMode],
   );
 
   useEffect(() => {
-    if (!formValues.sameAsCustomer || !selectedCustomer) return;
+    if (!formValues.sameAsCustomer) return;
     const opts = { shouldDirty: true };
-    setValue('jobAddress', selectedCustomer.address || '', opts);
-    setValue('city', selectedCustomer.city || '', opts);
-    setValue('state', selectedCustomer.state || '', opts);
-    setValue('country', selectedCustomer.country || '', opts);
-    setValue('postalCode', selectedCustomer.postalCode || '', opts);
-    const countryRecord = Country.getAllCountries().find(
-      (ctry) =>
-        ctry.name.toLowerCase() ===
-        (selectedCustomer.country || '').toLowerCase(),
-    );
-    setValue('countryIso', countryRecord?.isoCode ?? '', opts);
-    if (selectedCustomer.location?.coordinates) {
-      setValue(
-        'longitude',
-        selectedCustomer.location.coordinates[0],
-        opts,
-      );
-      setValue(
-        'latitude',
-        selectedCustomer.location.coordinates[1],
-        opts,
-      );
-    } else if (
-      selectedCustomer.latitude != null &&
-      selectedCustomer.longitude != null
-    ) {
-      setValue('latitude', selectedCustomer.latitude, opts);
-      setValue('longitude', selectedCustomer.longitude, opts);
+    if (formValues.customerMode === 'existing') {
+      if (!selectedCustomer) return;
+      setValue('jobAddress', selectedCustomer.address || '', opts);
+      if (selectedCustomer.location?.coordinates) {
+        setValue(
+          'longitude',
+          selectedCustomer.location.coordinates[0],
+          opts,
+        );
+        setValue(
+          'latitude',
+          selectedCustomer.location.coordinates[1],
+          opts,
+        );
+      } else if (
+        selectedCustomer.latitude != null &&
+        selectedCustomer.longitude != null
+      ) {
+        setValue('latitude', selectedCustomer.latitude, opts);
+        setValue('longitude', selectedCustomer.longitude, opts);
+      }
+    } else {
+      setValue('jobAddress', formValues.customerAddress || '', opts);
+      if (formValues.customerLatitude != null && formValues.customerLongitude != null) {
+        setValue('latitude', formValues.customerLatitude, opts);
+        setValue('longitude', formValues.customerLongitude, opts);
+      }
     }
-  }, [formValues.customer, formValues.sameAsCustomer, customers, selectedCustomer, setValue]);
+  }, [formValues.customer, formValues.sameAsCustomer, formValues.customerMode, formValues.customerAddress, formValues.customerLatitude, formValues.customerLongitude, customers, selectedCustomer, setValue]);
 
   const handleNext = async () => {
     let fieldsToValidate: (keyof CreateJobFormData)[] = [];
 
     if (currentStep === 1) {
-      fieldsToValidate = formValues.sameAsCustomer
-        ? ['customer']
-        : [
-            'customer',
-            'jobAddress',
-            'state',
-            'city',
-            'postalCode',
-            'country',
-          ];
+      if (formValues.customerMode === 'existing') {
+        fieldsToValidate = formValues.sameAsCustomer
+          ? ['customer']
+          : ['customer', 'jobAddress'];
+      } else {
+        fieldsToValidate = formValues.sameAsCustomer
+          ? ['newCustomerFirstName', 'newCustomerLastName', 'newCustomerPhoneNumber', 'customerAddress']
+          : ['newCustomerFirstName', 'newCustomerLastName', 'newCustomerPhoneNumber', 'customerAddress', 'jobAddress'];
+      }
     } else if (currentStep === 2) {
       fieldsToValidate = [
         'jobType',
@@ -323,29 +317,49 @@ export default function CreateJobPage() {
 
   const onSubmit = async (data: CreateJobFormData) => {
     try {
-      if (
-        data.customer === 'undefined' ||
-        data.employee === 'undefined'
-      ) {
-        console.error(
-          '[createJob] Invalid form state: customer or employee is literal "undefined"',
-          { customer: data.customer, employee: data.employee },
-        );
-        toast.error(
-          'Invalid form state. Please re-select the customer/employee and try again.',
-        );
-        return;
+      let customerId: string;
+
+      if (data.customerMode === 'new') {
+        const newCustomerPayload: Record<string, unknown> = {
+          firstName: data.newCustomerFirstName,
+          lastName: data.newCustomerLastName,
+          phoneNumber: data.newCustomerPhoneNumber,
+          countryCode: data.newCustomerCountryCode,
+          email: data.newCustomerEmail || undefined,
+          address: data.customerAddress || '',
+        };
+        if (data.customerLatitude && data.customerLongitude) {
+          newCustomerPayload.location = {
+            type: 'Point' as const,
+            coordinates: [data.customerLongitude, data.customerLatitude] as [number, number],
+          };
+          newCustomerPayload.latitude = data.customerLatitude;
+          newCustomerPayload.longitude = data.customerLongitude;
+        }
+        const createdCustomer = await createCustomer(newCustomerPayload).unwrap();
+        customerId = createdCustomer.customer._id;
+      } else {
+        if (
+          !data.customer || data.customer === 'undefined'
+        ) {
+          console.error(
+            '[createJob] Invalid form state: customer is literal "undefined"',
+            { customer: data.customer },
+          );
+          toast.error(
+            'Invalid form state. Please re-select the customer and try again.',
+          );
+          return;
+        }
+        customerId = data.customer!;
       }
+
       const employeeId = data.employee;
       const payload: Record<string, unknown> = {
-        customerId: data.customer,
+        customerId,
         ...(!data.sameAsCustomer
           ? {
               address: data.jobAddress,
-              city: data.city || undefined,
-              state: data.state || undefined,
-              country: data.country || undefined,
-              postalCode: data.postalCode || undefined,
               location:
                 data.latitude && data.longitude
                   ? ({
@@ -373,7 +387,6 @@ export default function CreateJobPage() {
       if (employeeId) {
         payload.employeeId = employeeId;
       }
-      // console.debug('[createJob] payload:', payload);
       await createJob(payload).unwrap();
       toast.success('Job created successfully');
       navigate(ROUTES.JOBS);
@@ -381,7 +394,6 @@ export default function CreateJobPage() {
       toast.error(getErrorMessage(err, 'Failed to create job'));
     }
   };
-
   const renderStepContent = () => {
     if (currentStep === 1) {
       return (
@@ -391,25 +403,194 @@ export default function CreateJobPage() {
             <h4 className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
               Customer & Assignment
             </h4>
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+
+            <div className="mb-5 flex items-center gap-4 rounded-xl border border-border bg-background p-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setValue('customerMode', 'existing');
+                  setValue('customer', '');
+                }}
+                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                  formValues.customerMode === 'existing'
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Existing Customer
+              </button>
+              <button
+                type="button"
+                onClick={() => setValue('customerMode', 'new')}
+                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                  formValues.customerMode === 'new'
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                New Customer
+              </button>
+            </div>
+
+            {formValues.customerMode === 'existing' ? (
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Select Customer
+                    <span className="text-primary"> *</span>
+                  </label>
+                  <SearchableSelect
+                    data={customerOptions}
+                    value={formValues.customer || ''}
+                    onChange={(v) => setValue('customer', v)}
+                    placeholder="Choose a customer"
+                    searchPlaceholder="Search customers..."
+                    loading={!customersData}
+                    error={errors.customer?.message}
+                    variant="responsive"
+                    onSearch={setCustomerSearch}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Select Employee
+                  </label>
+                  <SearchableSelect
+                    data={employeeOptions}
+                    value={formValues.employee || ''}
+                    onChange={(v) => setValue('employee', v)}
+                    placeholder="Choose an employee"
+                    searchPlaceholder="Search employees..."
+                    loading={!employeesData}
+                    variant="responsive"
+                    error={errors.employee?.message}
+                    onSearch={setEmployeeSearch}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-5 rounded-xl border border-border bg-background p-5">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  New Customer Details
+                </p>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">
+                      First Name
+                      <span className="text-primary"> *</span>
+                    </label>
+                    <Input
+                      placeholder="Enter first name"
+                      value={formValues.newCustomerFirstName || ''}
+                      onChange={(e) => setValue('newCustomerFirstName', e.target.value)}
+                      className="h-12 rounded-xl border-border bg-background"
+                    />
+                    {errors.newCustomerFirstName && (
+                      <p className="text-sm text-red-500">{errors.newCustomerFirstName.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">
+                      Last Name
+                      <span className="text-primary"> *</span>
+                    </label>
+                    <Input
+                      placeholder="Enter last name"
+                      value={formValues.newCustomerLastName || ''}
+                      onChange={(e) => setValue('newCustomerLastName', e.target.value)}
+                      className="h-12 rounded-xl border-border bg-background"
+                    />
+                    {errors.newCustomerLastName && (
+                      <p className="text-sm text-red-500">{errors.newCustomerLastName.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">
+                      Phone Number
+                      <span className="text-primary"> *</span>
+                    </label>
+                    <PhoneInput
+                      value={formValues.newCustomerPhoneNumber || ''}
+                      onChange={(v) => setValue('newCustomerPhoneNumber', v)}
+                      countryCode={formValues.newCustomerCountryCode || '+64'}
+                      onCountryCodeChange={(code) => setValue('newCustomerCountryCode', code)}
+                      error={errors.newCustomerPhoneNumber?.message}
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">
+                      Email
+                    </label>
+                    <Input
+                      placeholder="Enter email"
+                      value={formValues.newCustomerEmail || ''}
+                      onChange={(e) => setValue('newCustomerEmail', e.target.value)}
+                      className="h-12 rounded-xl border-border bg-background"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {formValues.customerMode === 'new' && (
+            <div className="mt-6 space-y-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Customer Location
+              </p>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
-                  Select Customer
+                  Customer Address
                   <span className="text-primary"> *</span>
                 </label>
-                <SearchableSelect
-                  data={customerOptions}
-                  value={formValues.customer || ''}
-                  onChange={(v) => setValue('customer', v)}
-                  placeholder="Choose a customer"
-                  searchPlaceholder="Search customers..."
-                  loading={!customersData}
-                  error={errors.customer?.message}
-                  variant="responsive"
-                  onSearch={setCustomerSearch}
+                <Controller
+                  name="customerAddress"
+                  control={control}
+                  render={({ field }) => (
+                    <Textarea
+                      placeholder="Enter customer address"
+                      {...field}
+                      className="min-h-[80px] rounded-xl border-border bg-background p-4"
+                    />
+                  )}
                 />
+                {errors.customerAddress && (
+                  <p className="text-sm text-red-500">
+                    {errors.customerAddress.message}
+                  </p>
+                )}
               </div>
-              <div className="space-y-2">
+
+              <LocationModeToggle
+                value={formValues.customerLocationMode || 'map'}
+                onChange={(mode) => setValue('customerLocationMode', mode)}
+              />
+
+              {formValues.customerLocationMode === 'map' ? (
+                <GoogleMapPicker
+                  latitude={formValues.customerLatitude || 0}
+                  longitude={formValues.customerLongitude || 0}
+                  onPick={(lat, lng, address) => {
+                    setValue('customerLatitude', lat);
+                    setValue('customerLongitude', lng);
+                    if (address) setValue('customerAddress', address, { shouldValidate: true, shouldDirty: true });
+                  }}
+                />
+              ) : (
+                <ManualCoordinates
+                  latitude={formValues.customerLatitude || 0}
+                  longitude={formValues.customerLongitude || 0}
+                  onChange={(lat, lng) => {
+                    setValue('customerLatitude', lat);
+                    setValue('customerLongitude', lng);
+                  }}
+                />
+              )}
+            </div>
+            )}
+
+            {formValues.customerMode === 'new' && (
+              <div className="mt-6 space-y-2">
                 <label className="text-sm font-medium text-foreground">
                   Select Employee
                 </label>
@@ -425,10 +606,9 @@ export default function CreateJobPage() {
                   onSearch={setEmployeeSearch}
                 />
               </div>
-            </div>
+            )}
           </div>
 
-          {/* Location Section */}
           <div>
             <h4 className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
               Job Location
@@ -440,7 +620,7 @@ export default function CreateJobPage() {
                   onCheckedChange={(v) =>
                     setValue('sameAsCustomer', v)
                   }
-                  disabled={!selectedCustomer}
+                  disabled={formValues.customerMode === 'existing' && !selectedCustomer}
                   size="default"
                 />
                 <span className="text-sm font-medium text-foreground">
@@ -473,42 +653,6 @@ export default function CreateJobPage() {
                 )}
               </div>
 
-              <AddressInputs
-                countryIso={formValues.countryIso || ''}
-                country={formValues.country || ''}
-                state={formValues.state || ''}
-                city={formValues.city || ''}
-                postalCode={formValues.postalCode || ''}
-                onCountryChange={(name, iso) => {
-                  setValue('country', name, {
-                    shouldValidate: true,
-                  });
-                  setValue('countryIso', iso, {
-                    shouldValidate: true,
-                  });
-                  setValue('state', '', { shouldValidate: true });
-                  setValue('city', '', { shouldValidate: true });
-                }}
-                onStateChange={(name) => {
-                  setValue('state', name, { shouldValidate: true });
-                  setValue('city', '', { shouldValidate: true });
-                }}
-                onCityChange={(name) =>
-                  setValue('city', name, { shouldValidate: true })
-                }
-                onPostalCodeChange={(val) =>
-                  setValue('postalCode', val, {
-                    shouldValidate: true,
-                  })
-                }
-                errors={{
-                  country: errors.country?.message,
-                  state: errors.state?.message,
-                  city: errors.city?.message,
-                  postalCode: errors.postalCode?.message,
-                }}
-              />
-
               <LocationModeToggle
                 value={formValues.locationMode || 'map'}
                 onChange={(mode) => setValue('locationMode', mode)}
@@ -518,9 +662,10 @@ export default function CreateJobPage() {
                 <GoogleMapPicker
                   latitude={formValues.latitude || 0}
                   longitude={formValues.longitude || 0}
-                  onPick={(lat, lng) => {
+                  onPick={(lat, lng, address) => {
                     setValue('latitude', lat);
                     setValue('longitude', lng);
+                    if (address) setValue('jobAddress', address, { shouldValidate: true, shouldDirty: true });
                   }}
                 />
               ) : (
@@ -711,7 +856,9 @@ export default function CreateJobPage() {
 
     // Step 3: Review & Confirm
     const customerName =
-      selectedCustomer?.fullName ?? formValues.customer;
+      formValues.customerMode === 'existing'
+        ? (selectedCustomer?.fullName ?? formValues.customer)
+        : `${formValues.newCustomerFirstName || ''} ${formValues.newCustomerLastName || ''}`.trim() || 'New Customer';
     const employeeName = formValues.employee
       ? (employeeOptions.find((e) => e._id === formValues.employee)
           ?.label ?? formValues.employee)
@@ -734,7 +881,7 @@ export default function CreateJobPage() {
       {
         icon: <User className="h-3 w-3" />,
         label: 'Customer',
-        value: customerName,
+        value: customerName ?? '-',
       },
       ...(employeeName
         ? [
@@ -745,32 +892,30 @@ export default function CreateJobPage() {
             },
           ]
         : []),
+      ...(formValues.customerMode === 'new'
+        ? [
+            {
+              icon: <MapPin className="h-3 w-3" />,
+              label: 'Customer Address',
+              value: formValues.customerAddress || '-',
+            },
+            ...(formValues.customerLatitude && formValues.customerLongitude
+              ? [
+                  {
+                    icon: <Map className="h-3 w-3" />,
+                    label: 'Customer Coordinates',
+                    value: `${formValues.customerLatitude.toFixed(6)}, ${formValues.customerLongitude.toFixed(6)}`,
+                  },
+                ]
+              : []),
+          ]
+        : []),
       ...(!formValues.sameAsCustomer
         ? [
             {
               icon: <MapPin className="h-3 w-3" />,
               label: 'Address',
               value: formValues.jobAddress || '-',
-            },
-            {
-              icon: <Building2 className="h-3 w-3" />,
-              label: 'City',
-              value: formValues.city || '-',
-            },
-            {
-              icon: <Map className="h-3 w-3" />,
-              label: 'State',
-              value: formValues.state || '-',
-            },
-            {
-              icon: <Globe className="h-3 w-3" />,
-              label: 'Country',
-              value: formValues.country || '-',
-            },
-            {
-              icon: <Hash className="h-3 w-3" />,
-              label: 'Postal Code',
-              value: formValues.postalCode || '-',
             },
             ...(formValues.latitude && formValues.longitude
               ? [
@@ -821,7 +966,7 @@ export default function CreateJobPage() {
             {
               icon: <StickyNote className="h-3 w-3" />,
               label: 'Notes',
-              value: formValues.notes,
+              value: formValues.notes ?? '-',
             },
           ]
         : []),
