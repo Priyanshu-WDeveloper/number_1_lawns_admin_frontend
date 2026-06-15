@@ -97,11 +97,16 @@ export default function CustomerManagementPage() {
       ),
     },
     {
-      accessorKey: 'city',
-      header: 'City',
-      sortable: true,
+      accessorKey: 'address',
+      header: 'Address',
       cell: (row: ICustomer) => (
-        <span className="text-[#6b7280]">{row.city || '-'}</span>
+        <span className="text-[#6b7280]" title={row.address}>
+          {row.address
+            ? row.address.length > 10
+              ? `${row.address.slice(0, 10)}...`
+              : row.address
+            : '-'}
+        </span>
       ),
     },
     {
@@ -119,11 +124,11 @@ export default function CustomerManagementPage() {
       header: 'Balance',
       cell: (row: ICustomer) => (
         <span
-            className={
-              (row.balance ?? 0) < 0 ? 'text-red-500' : 'text-primary'
-            }
-          >
-            ${(row.balance ?? 0).toFixed(2)}
+          className={
+            (row.balance ?? 0) < 0 ? 'text-red-500' : 'text-primary'
+          }
+        >
+          ${(row.balance ?? 0).toFixed(2)}
         </span>
       ),
     },
@@ -209,7 +214,7 @@ export default function CustomerManagementPage() {
                 loading={isLoading}
                 title=""
                 description=""
-                searchPlaceholder="Search customers by name, email or phone..."
+                searchPlaceholder="Search customers by name, email, phone or address..."
                 filterField="status"
                 filterOptions={['Active', 'Inactive', 'Expired']}
                 addButtonLabel="Add Customer"

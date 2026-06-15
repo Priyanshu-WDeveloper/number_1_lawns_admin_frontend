@@ -354,6 +354,7 @@ export default function EmployeeViewPage() {
                         </p>
                       </div>
                     </div>
+                    {(employee.city || employee.state || employee.postalCode || employee.country) && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
                         <p className="text-sm text-muted-foreground">
@@ -387,6 +388,9 @@ export default function EmployeeViewPage() {
                           {employee.country || '-'}
                         </p>
                       </div>
+                    </div>
+                    )}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
                         <p className="text-sm text-muted-foreground">
                           Latitude

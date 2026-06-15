@@ -700,6 +700,7 @@ export default function JobViewPage() {
                         </p>
                       </div>
                     </div>
+                    {(customerForAddress.city || customerForAddress.state || customerForAddress.postalCode || customerForAddress.country) && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
                         <p className="text-sm text-muted-foreground">
@@ -734,6 +735,7 @@ export default function JobViewPage() {
                         </p>
                       </div>
                     </div>
+                    )}
                     {customerForAddress.location?.coordinates && (
                       <>
                         <div className="flex items-center gap-3">
@@ -784,6 +786,7 @@ export default function JobViewPage() {
                         </p>
                       </div>
                     </div>
+                    {(resolvedJob.city || resolvedJob.state || resolvedJob.postalCode || resolvedJob.country) && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
                         <p className="text-sm text-muted-foreground">
@@ -818,6 +821,7 @@ export default function JobViewPage() {
                         </p>
                       </div>
                     </div>
+                    )}
                     {resolvedJob.location?.coordinates && (
                       <>
                         <div className="flex items-center gap-3">

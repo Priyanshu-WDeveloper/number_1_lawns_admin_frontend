@@ -118,11 +118,16 @@ export default function EmployeeManagementPage() {
       ),
     },
     {
-      accessorKey: 'city',
-      header: 'City',
-      sortable: true,
+      accessorKey: 'address',
+      header: 'Address',
       cell: (row: IEmployee) => (
-        <span className="text-[#6b7280]">{row.city || '-'}</span>
+        <span className="text-[#6b7280]" title={row.address}>
+          {row.address
+            ? row.address.length > 30
+              ? `${row.address.slice(0, 30)}...`
+              : row.address
+            : '-'}
+        </span>
       ),
     },
 
@@ -285,7 +290,7 @@ export default function EmployeeManagementPage() {
                 columns={employeeColumns}
                 title=""
                 description=""
-                searchPlaceholder="Search employees by name, email or phone..."
+                searchPlaceholder="Search employees by name, email, phone or address..."
                 filterField="status"
                 filterOptions={['Active', 'Inactive']}
                 addButtonLabel="Add Employee"

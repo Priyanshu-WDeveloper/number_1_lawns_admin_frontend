@@ -187,7 +187,9 @@ export default function JobManagementPage() {
       accessorKey: 'address',
       header: 'Address',
       cell: (row: IJob) => (
-        <span className="text-[#6b7280]">{row.address}</span>
+        <span className="text-[#6b7280]" title={row.address || ''}>
+          {row.address ? (row.address.length > 50 ? `${row.address.slice(0, 50)}...` : row.address) : '-'}
+        </span>
       ),
     },
     {

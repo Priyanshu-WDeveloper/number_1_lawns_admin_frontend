@@ -228,16 +228,22 @@ export default function ScheduledJobsPage() {
     {
       accessorKey: 'address',
       header: 'Address',
-      cell: (row: IJob) => (
-        <span className="text-[#6b7280]">
-          {/* {row.address} */}
-          {row.address ||
-            (typeof row.customerId === 'object'
-              ? row.customerId?.address
-              : undefined) ||
-            '-'}
-        </span>
-      ),
+      cell: (row: IJob) => {
+        const addr =
+          row.address ||
+          (typeof row.customerId === 'object'
+            ? row.customerId?.address
+            : undefined) ||
+          '-';
+        return (
+          <span
+            className="text-[#6b7280]"
+            title={addr === '-' ? '' : addr}
+          >
+            {addr.length > 20 ? `${addr.slice(0, 20)}...` : addr}
+          </span>
+        );
+      },
     },
     {
       accessorKey: 'customerId',

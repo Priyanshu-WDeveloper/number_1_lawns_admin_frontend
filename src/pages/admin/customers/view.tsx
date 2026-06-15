@@ -346,47 +346,49 @@ export default function CustomerViewPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        City
-                      </p>
+                  {(customer.city || customer.state || customer.postalCode || customer.country) && (
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          City
+                        </p>
 
-                      <p className="font-medium text-foreground">
-                        {customer.city || '-'}
-                      </p>
+                        <p className="font-medium text-foreground">
+                          {customer.city || '-'}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          State
+                        </p>
+
+                        <p className="font-medium text-foreground">
+                          {customer.state || '-'}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          Postal Code
+                        </p>
+
+                        <p className="font-medium text-foreground">
+                          {customer.postalCode || '-'}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          Country
+                        </p>
+
+                        <p className="font-medium text-foreground">
+                          {customer.country || '-'}
+                        </p>
+                      </div>
                     </div>
-
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        State
-                      </p>
-
-                      <p className="font-medium text-foreground">
-                        {customer.state || '-'}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Postal Code
-                      </p>
-
-                      <p className="font-medium text-foreground">
-                        {customer.postalCode || '-'}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Country
-                      </p>
-
-                      <p className="font-medium text-foreground">
-                        {customer.country || '-'}
-                      </p>
-                    </div>
-                  </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                     <div>

@@ -103,16 +103,18 @@ export default function ManageJobsPage() {
     {
       accessorKey: 'address',
       header: 'Address',
-      cell: (row: IParentJob) => (
-        <span className="text-[#6b7280]">
-          {/* {row.address || row.customerId?.address || '-'} */}
-          {row.address ||
-            (typeof row.customerId === 'object'
-              ? row.customerId?.address
-              : undefined) ||
-            '-'}
-        </span>
-      ),
+      cell: (row: IParentJob) => {
+        const addr = row.address ||
+          (typeof row.customerId === 'object'
+            ? row.customerId?.address
+            : undefined) ||
+          '-';
+        return (
+          <span className="text-[#6b7280]" title={addr === '-' ? '' : addr}>
+            {addr.length > 50 ? `${addr.slice(0, 50)}...` : addr}
+          </span>
+        );
+      },
     },
     {
       accessorKey: 'jobType',
