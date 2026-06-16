@@ -81,6 +81,12 @@ export default function InvoiceViewPage() {
   const isLoading =
     isApiLoading && !invoiceFromState && !invoiceFromStorage;
   const [downloadInvoice] = useLazyDownloadInvoiceQuery();
+
+  const mongoJobId = React.useMemo(() => {
+    const job = invoice?.jobId;
+    if (typeof job === 'object' && job) return job._id ?? '';
+    return job ?? '';
+  }, [invoice?.jobId]);
   // const [getReceipt] = useLazyGetReceiptQuery();
 
   const handleDownload = async () => {
@@ -270,7 +276,7 @@ export default function InvoiceViewPage() {
                   <Download className="h-4 w-4 mr-1" />
                   Download Invoice
                 </Button>
-                {jobId && (
+                {mongoJobId && (
                   <Button
                     size="sm"
                     variant="outline"
@@ -279,8 +285,9 @@ export default function InvoiceViewPage() {
                       navigate(
                         ROUTES.INVOICES_RECEIPT.replace(
                           ':jobId',
-                          jobId,
+                          mongoJobId,
                         ),
+                        { state: { returnJobId: jobId } },
                       )
                     }
                   >

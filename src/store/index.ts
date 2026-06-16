@@ -8,7 +8,12 @@ export const store = configureStore({
     auth: authReducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(api.middleware),
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ['api/executeQuery/fulfilled'],
+        ignoredPaths: ['api.queries'],
+      },
+    }).concat(api.middleware),
   preloadedState: {
     auth: loadFromStorage(),
   },

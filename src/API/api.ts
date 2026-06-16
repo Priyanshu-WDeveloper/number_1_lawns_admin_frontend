@@ -28,6 +28,7 @@ import type {
   ExpensesResponse,
   ExpenseMutationResponse,
 } from '@/types/api.types';
+import type { FinancialReportResponse } from '@/types/finance.types';
 import type { CreateEmployeePayload } from '@/types/employees.types';
 import { setAuth, clearAuth, updateUser } from '@/store/auth-slice';
 import { API_ROUTES, ROUTES } from '@/constants';
@@ -522,7 +523,7 @@ export const api = createApi({
     getInvoices: builder.query<InvoicesResponse, ListQueryParams>({
       query: ({ page = 1, limit = 10, search, status, sort }) => ({
         url: API_ROUTES.INVOICES.LIST,
-        params: { page, limit, search, status, sort },
+        params: { page, limit, search, paymentStatus: status, sort },
       }),
       providesTags: ['Invoices'],
     }),
@@ -538,12 +539,14 @@ export const api = createApi({
         url: API_ROUTES.INVOICES.DOWNLOAD(jobId),
         responseHandler: (response: Response) => response.blob(),
       }),
+      keepUnusedDataFor: 0,
     }),
     getReceipt: builder.query<Blob, string>({
       query: (jobId: string) => ({
         url: API_ROUTES.INVOICES.VIEW_BY_JOB(jobId),
         responseHandler: (response: Response) => response.blob(),
       }),
+      keepUnusedDataFor: 0,
     }),
 
     resendInvoice: builder.mutation<void, string>({
@@ -888,6 +891,12 @@ export const api = createApi({
       }),
       invalidatesTags: ['Expenses'],
     }),
+    getFinancialReport: builder.query<FinancialReportResponse, ListQueryParams>({
+      query: (params) => ({
+        url: API_ROUTES.REPORTS.FINANCIAL,
+        params,
+      }),
+    }),
     toggleExpenseStatus: builder.mutation<IExpense, string>({
       query: (id) => ({
         url: API_ROUTES.EXPENSES.STATUS(id),
@@ -992,4 +1001,6 @@ export const {
   useUpdateExpenseMutation,
   useDeleteExpenseMutation,
   useToggleExpenseStatusMutation,
+
+  useGetFinancialReportQuery,
 } = api;

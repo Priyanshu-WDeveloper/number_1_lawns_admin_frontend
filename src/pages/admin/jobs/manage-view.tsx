@@ -68,7 +68,8 @@ function getCustomerName(customer: IJob['customerId']): string {
 }
 
 function getCustomerEmail(customer: IJob['customerId']): string {
-  if (typeof customer === 'object' && customer) return customer.email || '-';
+  if (typeof customer === 'object' && customer)
+    return customer.email || '-';
   return '-';
 }
 
@@ -292,7 +293,7 @@ export default function JobViewPage() {
           <div className="mx-auto">
             <Button
               variant="ghost"
-              onClick={() => navigate(ROUTES.MANAGE_JOBS)}
+              onClick={() => navigate(-1)}
               className="mb-4 text-muted-foreground hover:text-primary hover:bg-primary/10"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -707,41 +708,44 @@ export default function JobViewPage() {
                         </p>
                       </div>
                     </div>
-                    {(customerForAddress.city || customerForAddress.state || customerForAddress.postalCode || customerForAddress.country) && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          City
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {customerForAddress.city || '-'}
-                        </p>
+                    {(customerForAddress.city ||
+                      customerForAddress.state ||
+                      customerForAddress.postalCode ||
+                      customerForAddress.country) && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            City
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {customerForAddress.city || '-'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            State
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {customerForAddress.state || '-'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            Postal Code
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {customerForAddress.postalCode || '-'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            Country
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {customerForAddress.country || '-'}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          State
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {customerForAddress.state || '-'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Postal Code
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {customerForAddress.postalCode || '-'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Country
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {customerForAddress.country || '-'}
-                        </p>
-                      </div>
-                    </div>
                     )}
                     {customerForAddress.location?.coordinates && (
                       <>
@@ -793,41 +797,44 @@ export default function JobViewPage() {
                         </p>
                       </div>
                     </div>
-                    {(resolvedJob.city || resolvedJob.state || resolvedJob.postalCode || resolvedJob.country) && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          City
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {resolvedJob.city || '-'}
-                        </p>
+                    {(resolvedJob.city ||
+                      resolvedJob.state ||
+                      resolvedJob.postalCode ||
+                      resolvedJob.country) && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            City
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {resolvedJob.city || '-'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            State
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {resolvedJob.state || '-'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            Postal Code
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {resolvedJob.postalCode || '-'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            Country
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {resolvedJob.country || '-'}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          State
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {resolvedJob.state || '-'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Postal Code
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {resolvedJob.postalCode || '-'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Country
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {resolvedJob.country || '-'}
-                        </p>
-                      </div>
-                    </div>
                     )}
                     {resolvedJob.location?.coordinates && (
                       <>

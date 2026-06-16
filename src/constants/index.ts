@@ -31,6 +31,7 @@ export const ROUTES = {
   NOTIFICATIONS: '/notifications',
   TRAINING_CENTER: '/training-center',
   TRAINING_CENTER_VIEW: '/training-center/:id',
+  FINANCE: '/finance',
   EXPENSES: '/expenses',
   EXPENSES_VIEW: '/expenses/:id',
   EXPENSES_EDIT: '/expenses/edit/:id',
@@ -134,6 +135,9 @@ export const API_ROUTES = {
     DELETE: (id: string) => `/expenses/${id}`,
     STATUS: (id: string) => `/expenses/${id}/status`,
     UPLOAD: '/expenses/upload',
+  },
+  REPORTS: {
+    FINANCIAL: '/admins/reports/financial',
   },
   SUPER_ADMINS: {
     ADMINS: {

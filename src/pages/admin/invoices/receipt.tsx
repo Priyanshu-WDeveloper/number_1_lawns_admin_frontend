@@ -1,72 +1,52 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, FileText } from 'lucide-react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
+import { PDFViewer } from '@/components/pdf-viewer';
 import { ROUTES } from '@/constants';
-import toast from 'react-hot-toast';
+import { useLazyDownloadInvoiceQuery } from '@/API/api';
 import { getErrorMessage } from '@/lib/get-error-message';
-import {
-  useGetInvoiceByJobIdQuery,
-  useLazyDownloadInvoiceQuery,
-} from '@/API/api';
+import toast from 'react-hot-toast';
 
 export default function InvoiceReceiptPage() {
   const { jobId } = useParams<{ jobId: string }>();
+  const id = jobId ?? '';
   const navigate = useNavigate();
-
-  const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(jobId ?? '');
-
-  const { data: apiInvoice, isLoading: isApiLoading } =
-    useGetInvoiceByJobIdQuery(jobId!, {
-      skip: !jobId || !isValidObjectId,
-    });
-
+  const location = useLocation();
+  const returnJobId = (location.state as { returnJobId?: string })?.returnJobId ?? id;
   const [downloadInvoice] = useLazyDownloadInvoiceQuery();
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [fileData, setFileData] = useState<ArrayBuffer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadPreview = useCallback(async () => {
-    if (!jobId) return;
-
-    const downloadUrl = apiInvoice?.downloadUrl;
-    if (downloadUrl) {
-      setPreviewUrl(downloadUrl);
-      setIsLoading(false);
-      return;
-    }
-
-    const effectiveJobId = isValidObjectId
-      ? jobId
-      : typeof apiInvoice?.jobId === 'object' && apiInvoice?.jobId?._id;
-    if (!effectiveJobId) return;
-
-    try {
-      const result = await downloadInvoice(effectiveJobId).unwrap();
-      const url = window.URL.createObjectURL(result);
-      setPreviewUrl(url);
-    } catch (err) {
-      setError(getErrorMessage(err, 'Failed to load receipt'));
-      toast.error(getErrorMessage(err, 'Failed to load receipt'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [jobId, apiInvoice, isValidObjectId, downloadInvoice]);
-
   useEffect(() => {
-    if (!isApiLoading) {
-      loadPreview();
-    }
-  }, [isApiLoading, loadPreview]);
+    if (!id) return;
 
-  useEffect(() => {
-    return () => {
-      if (previewUrl?.startsWith('blob:')) {
-        URL.revokeObjectURL(previewUrl);
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const result = await downloadInvoice(id).unwrap();
+        if (cancelled) return;
+        const buffer = await result.arrayBuffer();
+        if (cancelled) return;
+        setFileData(buffer.slice());
+      } catch (err) {
+        if (!cancelled) {
+          const msg = getErrorMessage(err, 'Failed to load receipt');
+          setError(msg);
+          toast.error(msg);
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
-    };
-  }, [previewUrl]);
+    }
+
+    load();
+
+    return () => { cancelled = true; };
+  }, [jobId, downloadInvoice]);
 
   return (
     <AppLayout>
@@ -78,7 +58,7 @@ export default function InvoiceReceiptPage() {
                 variant="ghost"
                 onClick={() =>
                   navigate(
-                    ROUTES.INVOICES_VIEW.replace(':jobId', jobId ?? ''),
+                    ROUTES.INVOICES_VIEW.replace(':jobId', returnJobId),
                   )
                 }
                 className="text-muted-foreground hover:text-primary hover:bg-primary/10"
@@ -89,16 +69,16 @@ export default function InvoiceReceiptPage() {
               <div className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-primary" />
                 <span className="text-sm font-medium text-foreground">
-                  Receipt — {apiInvoice?.invoiceNumber ?? jobId}
+                  Receipt
                 </span>
               </div>
             </div>
 
-            <div className="flex-1 min-h-0 rounded-xl border border-[#ececec] bg-white shadow-sm">
+            <div className="w-full rounded-xl border border-[#ececec] shadow-sm p-4">
               {isLoading && (
                 <div className="flex h-full items-center justify-center">
                   <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                     <p className="text-sm text-muted-foreground">
                       Loading receipt...
                     </p>
@@ -112,12 +92,8 @@ export default function InvoiceReceiptPage() {
                 </div>
               )}
 
-              {!isLoading && !error && previewUrl && (
-                <iframe
-                  src={previewUrl}
-                  className="h-full w-full rounded-xl"
-                  title="Invoice Receipt"
-                />
+              {!isLoading && !error && fileData && (
+                <PDFViewer file={fileData} />
               )}
             </div>
           </div>

@@ -81,6 +81,9 @@ const SubscriptionExpiredPage = React.lazy(
 const TrainingCenterPage = React.lazy(
   () => import('../pages/admin/training-center'),
 );
+const FinancePage = React.lazy(
+  () => import('../pages/admin/finance'),
+);
 const ExpensesPage = React.lazy(
   () => import('../pages/admin/expenses'),
 );
@@ -293,6 +296,14 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <SubscriptionExpiredPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.FINANCE}
+          element={
+            <ProtectedRoute>
+              <FinancePage />
             </ProtectedRoute>
           }
         />

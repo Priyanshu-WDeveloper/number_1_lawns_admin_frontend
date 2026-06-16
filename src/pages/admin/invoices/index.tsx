@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { Download, Eye, MoreVertical, Mail, CreditCard, Loader2 } from 'lucide-react';
+import {
+  Download,
+  Eye,
+  MoreVertical,
+  Mail,
+  CreditCard,
+  Loader2,
+} from 'lucide-react';
 
 import type { ColumnDef } from '@/components/data-table/data-table';
 import DataTable, {
@@ -28,13 +35,24 @@ import {
 import { PaymentStatusDialog } from '@/components/payment-status-dialog';
 import { getErrorMessage } from '@/lib/get-error-message';
 import { useDataTableQueryParams } from '@/hooks/use-data-table-query-params';
+import { useResponsiveLimit } from '@/hooks/use-responsive-limit';
 import type { ListQueryParams } from '@/types/api.types';
 
 export default function InvoiceManagementPage() {
   const navigate = useNavigate();
 
-  const { statusFilter, setStatusFilter, queryParams } = useDataTableQueryParams<ListQueryParams>({
-    defaultLimit: 10,
+  // page, setPage, limit, setLimit,
+  const {
+    setPage,
+    limit,
+    setLimit,
+    search,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
+    queryParams,
+  } = useDataTableQueryParams<ListQueryParams>({
+    defaultLimit: useResponsiveLimit(),
     mapStatusToApi: (status) => status.toLowerCase(),
   });
 
@@ -54,6 +72,15 @@ export default function InvoiceManagementPage() {
   };
 
   const invoices: IInvoice[] = apiInvoices?.invoices ?? [];
+
+  const pagination = apiInvoices
+    ? {
+        page: apiInvoices.page,
+        limit: apiInvoices.limit,
+        total: apiInvoices.total,
+        totalPages: Math.ceil(apiInvoices.total / limit),
+      }
+    : undefined;
 
   const handleDownload = async (
     jobId: string,
@@ -205,11 +232,19 @@ export default function InvoiceManagementPage() {
                 title=""
                 description=""
                 searchPlaceholder="Search invoices by customer or invoice number..."
+                searchValue={search}
+                onSearchChange={setSearch}
                 filterField="status"
                 filterOptions={['Paid', 'Unpaid', 'Cancel']}
                 filterValue={statusFilter}
                 onFilterChange={setStatusFilter}
                 serverSideFiltering
+                pagination={pagination}
+                onPageChange={setPage}
+                onLimitChange={(newLimit) => {
+                  setLimit(newLimit);
+                  setPage(1);
+                }}
               />
             </div>
           </div>
@@ -264,7 +299,9 @@ function InvoiceRowActions({ invoice }: { invoice: IInvoice }) {
       setShowPaymentDialog(false);
     } catch (error) {
       console.error('Failed to update payment status:', error);
-      toast.error(getErrorMessage(error, 'Failed to update payment status'));
+      toast.error(
+        getErrorMessage(error, 'Failed to update payment status'),
+      );
     } finally {
       setIsUpdatingPayment(false);
     }
