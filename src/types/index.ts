@@ -204,6 +204,31 @@ export interface ITraining {
   __v: number;
 }
 
+interface IAddedBy {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  profileImage: string;
+  role: number;
+  fullName: string;
+}
+
+export interface IExpense {
+  _id: string;
+  title: string;
+  description: string;
+  isDeleted: boolean;
+  deletedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+  fileUrl?: string;
+  addedBy?: IAddedBy;
+  addedByType?: 'admin' | 'employee';
+  adminId?: string | IAdminUser;
+}
+
 export interface IInvoice {
   _id?: string;
   invoiceNumber?: string;
@@ -214,6 +239,7 @@ export interface IInvoice {
   receivedAmount?: number;
   balance?: number;
   paymentType?: string;
+  paymentStatus?: string;
   status?: string;
   downloadUrl?: string;
   notes?: string;

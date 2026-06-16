@@ -27,9 +27,13 @@ export const ROUTES = {
   SCHEDULED_JOBS: '/scheduled-jobs',
   INVOICES: '/invoices',
   INVOICES_VIEW: '/invoices/:jobId',
+  INVOICES_RECEIPT: '/invoices/:jobId/receipt',
   NOTIFICATIONS: '/notifications',
   TRAINING_CENTER: '/training-center',
   TRAINING_CENTER_VIEW: '/training-center/:id',
+  EXPENSES: '/expenses',
+  EXPENSES_VIEW: '/expenses/:id',
+  EXPENSES_EDIT: '/expenses/edit/:id',
 
   // Default redirects
   DEFAULT_REDIRECT: '/dashboard',
@@ -96,6 +100,8 @@ export const API_ROUTES = {
     LIST: '/invoices',
     VIEW_BY_JOB: (jobId: string) => `/invoices/${jobId}/view`,
     DOWNLOAD: (jobId: string) => `/invoices/${jobId}/download`,
+    RESEND: (jobId: string) => `/invoices/${jobId}/resend`,
+    PAYMENT_STATUS: (jobId: string) => `/invoices/${jobId}/payment-status`,
   },
   NOTIFICATIONS: {
     LIST: '/notifications',
@@ -119,6 +125,15 @@ export const API_ROUTES = {
     UPDATE: (id: string) => `/trainings/${id}`,
     TOGGLE_STATUS: (id: string) => `/trainings/${id}/toggle-status`,
     DELETE: (id: string) => `/trainings/${id}`,
+  },
+  EXPENSES: {
+    LIST: '/expenses',
+    CREATE: '/expenses',
+    DETAILS: (id: string) => `/expenses/${id}`,
+    UPDATE: (id: string) => `/expenses/${id}`,
+    DELETE: (id: string) => `/expenses/${id}`,
+    STATUS: (id: string) => `/expenses/${id}/status`,
+    UPLOAD: '/expenses/upload',
   },
   SUPER_ADMINS: {
     ADMINS: {

@@ -72,11 +72,20 @@ const InvoiceManagementPage = React.lazy(
 const InvoiceViewPage = React.lazy(
   () => import('../pages/admin/invoices/view'),
 );
+const InvoiceReceiptPage = React.lazy(
+  () => import('../pages/admin/invoices/receipt'),
+);
 const SubscriptionExpiredPage = React.lazy(
   () => import('../pages/admin/subscription-expired'),
 );
 const TrainingCenterPage = React.lazy(
   () => import('../pages/admin/training-center'),
+);
+const ExpensesPage = React.lazy(
+  () => import('../pages/admin/expenses'),
+);
+const ExpenseViewPage = React.lazy(
+  () => import('../pages/admin/expenses/view'),
 );
 const TrainingVideoViewPage = React.lazy(
   () => import('../pages/admin/training-center/view'),
@@ -264,6 +273,14 @@ const AppRoutes = () => {
           }
         />
         <Route
+          path={ROUTES.INVOICES_RECEIPT}
+          element={
+            <ProtectedRoute>
+              <InvoiceReceiptPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path={ROUTES.NOTIFICATIONS}
           element={
             <ProtectedRoute>
@@ -276,6 +293,22 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <SubscriptionExpiredPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.EXPENSES}
+          element={
+            <ProtectedRoute>
+              <ExpensesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.EXPENSES_VIEW}
+          element={
+            <ProtectedRoute>
+              <ExpenseViewPage />
             </ProtectedRoute>
           }
         />

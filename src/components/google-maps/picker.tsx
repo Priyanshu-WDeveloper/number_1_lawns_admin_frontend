@@ -38,8 +38,13 @@ export function GoogleMapPicker({
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSearchRef = useRef(0);
   const searchInFlightRef = useRef(false);
+  const suppressSearchRef = useRef(false);
 
   useEffect(() => {
+    if (suppressSearchRef.current) {
+      suppressSearchRef.current = false;
+      return;
+    }
     if (!searchQuery.trim() || searchQuery.trim().length < 2) {
       if (showResults) setShowResults(false);
       if (searchResults.length > 0) setSearchResults([]);
@@ -77,7 +82,7 @@ export function GoogleMapPicker({
           setIsSearching(false);
           searchInFlightRef.current = false;
         });
-    }, 500);
+    }, 700);
 
     return () => {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
@@ -89,7 +94,7 @@ export function GoogleMapPicker({
       lat: latitude || -41.2865,
       lng: longitude || 174.7762,
     }),
-    [latitude, longitude],
+    [],
   );
 
   const handleSearch = useCallback(async () => {
@@ -127,6 +132,7 @@ export function GoogleMapPicker({
   }, [searchQuery]);
 
   const handleSelectResult = (result: NominatimResult) => {
+    suppressSearchRef.current = true;
     const lat = parseFloat(result.lat);
     const lng = parseFloat(result.lon);
     controllerRef.current?.panTo(lat, lng);
@@ -140,6 +146,17 @@ export function GoogleMapPicker({
     setShowResults(false);
     setSearchError(null);
   };
+
+  const onPickRef = useRef(onPick);
+  onPickRef.current = onPick;
+
+  const handleMapPick = useCallback((lat: number, lng: number, address?: string) => {
+    if (address) {
+      suppressSearchRef.current = true;
+      setSearchQuery(address);
+    }
+    onPickRef.current(lat, lng, address);
+  }, []);
 
   const handleControllerReady = useCallback((controller: MapController) => {
     controllerRef.current = controller;
@@ -157,7 +174,7 @@ export function GoogleMapPicker({
       <MockMapPicker
         latitude={latitude}
         longitude={longitude}
-        onPick={onPick}
+        onPick={handleMapPick}
       />
     );
   }
@@ -238,7 +255,7 @@ export function GoogleMapPicker({
         <MapSection
           latitude={latitude}
           longitude={longitude}
-          onPick={onPick}
+          onPick={handleMapPick}
           onControllerReady={handleControllerReady}
           apiKey={apiKey}
           initialCenter={initialCenter}

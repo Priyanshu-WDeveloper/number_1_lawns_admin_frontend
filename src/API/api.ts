@@ -25,6 +25,8 @@ import type {
   ChildJobsResponse,
   TrainingsParams,
   TrainingsResponse,
+  ExpensesResponse,
+  ExpenseMutationResponse,
 } from '@/types/api.types';
 import type { CreateEmployeePayload } from '@/types/employees.types';
 import { setAuth, clearAuth, updateUser } from '@/store/auth-slice';
@@ -38,6 +40,7 @@ import type {
   IAdminStats,
   IDashboardAnalytics,
   ITraining,
+  IExpense,
 } from '@/types';
 
 const rawBaseQuery = fetchBaseQuery({
@@ -86,6 +89,7 @@ export const api = createApi({
     'Billing',
     'Notifications',
     'Trainings',
+    'Expenses',
   ],
   endpoints: (builder) => ({
     // Auth endpoints
@@ -542,6 +546,26 @@ export const api = createApi({
       }),
     }),
 
+    resendInvoice: builder.mutation<void, string>({
+      query: (jobId: string) => ({
+        url: API_ROUTES.INVOICES.RESEND(jobId),
+        method: 'POST',
+      }),
+      invalidatesTags: ['Invoices'],
+    }),
+
+    updatePaymentStatus: builder.mutation<
+      IInvoice,
+      { jobId: string; paymentStatus: string }
+    >({
+      query: ({ jobId, paymentStatus }) => ({
+        url: API_ROUTES.INVOICES.PAYMENT_STATUS(jobId),
+        method: 'PATCH',
+        body: { paymentStatus },
+      }),
+      invalidatesTags: ['Invoices'],
+    }),
+
     // Notification endpoints
     getNotifications: builder.query<NotificationsResponse, void>({
       query: () => API_ROUTES.NOTIFICATIONS.LIST,
@@ -822,6 +846,58 @@ export const api = createApi({
         { type: 'Trainings', id },
       ],
     }),
+
+    // Expense endpoints
+    getExpenses: builder.query<ExpensesResponse, ListQueryParams>({
+      query: (params) => ({
+        url: API_ROUTES.EXPENSES.LIST,
+        params,
+      }),
+      providesTags: ['Expenses'],
+    }),
+    getExpenseById: builder.query<IExpense, string>({
+      query: (id) => API_ROUTES.EXPENSES.DETAILS(id),
+      providesTags: (_result, _error, id) => [{ type: 'Expenses', id }],
+    }),
+    createExpense: builder.mutation<ExpenseMutationResponse, Partial<IExpense>>({
+      query: (body) => ({
+        url: API_ROUTES.EXPENSES.CREATE,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Expenses'],
+    }),
+    updateExpense: builder.mutation<
+      ExpenseMutationResponse,
+      { id: string } & Partial<IExpense>
+    >({
+      query: ({ id, ...body }) => ({
+        url: API_ROUTES.EXPENSES.UPDATE(id),
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [
+        'Expenses',
+        { type: 'Expenses', id },
+      ],
+    }),
+    deleteExpense: builder.mutation<void, string>({
+      query: (id) => ({
+        url: API_ROUTES.EXPENSES.DELETE(id),
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Expenses'],
+    }),
+    toggleExpenseStatus: builder.mutation<IExpense, string>({
+      query: (id) => ({
+        url: API_ROUTES.EXPENSES.STATUS(id),
+        method: 'PATCH',
+      }),
+      invalidatesTags: (_result, _error, id) => [
+        'Expenses',
+        { type: 'Expenses', id },
+      ],
+    }),
   }),
 });
 
@@ -873,13 +949,16 @@ export const {
   useGetReceiptQuery,
   useLazyGetReceiptQuery,
 
-  useGetNotificationsQuery,
-  useMarkNotificationReadMutation,
-  useMarkAllNotificationsReadMutation,
-  useDeleteNotificationMutation,
-  useDeleteAllNotificationsMutation,
+   useGetNotificationsQuery,
+   useMarkNotificationReadMutation,
+   useMarkAllNotificationsReadMutation,
+   useDeleteNotificationMutation,
+   useDeleteAllNotificationsMutation,
 
-  useGetAdminUsersQuery,
+   useResendInvoiceMutation,
+   useUpdatePaymentStatusMutation,
+
+   useGetAdminUsersQuery,
   useGetAdminUserByIdQuery,
   useCreateAdminUserMutation,
   useUpdateAdminUserMutation,
@@ -906,4 +985,11 @@ export const {
   useUpdateTrainingMutation,
   useDeleteTrainingMutation,
   useToggleTrainingStatusMutation,
+
+  useGetExpensesQuery,
+  useGetExpenseByIdQuery,
+  useCreateExpenseMutation,
+  useUpdateExpenseMutation,
+  useDeleteExpenseMutation,
+  useToggleExpenseStatusMutation,
 } = api;

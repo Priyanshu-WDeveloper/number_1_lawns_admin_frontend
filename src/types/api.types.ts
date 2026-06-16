@@ -1,4 +1,4 @@
-import type { ICustomer, IJob, IInvoice, IEmployee, IParentJob, ITraining } from '.';
+import type { ICustomer, IJob, IInvoice, IEmployee, IParentJob, ITraining, IExpense } from '.';
 import type { IAdmins } from './admins.types';
 
 export type GetAdminsParams = {
@@ -143,5 +143,18 @@ export interface TrainingsResponse {
   page: number;
   limit: number;
   totalPages: number;
+}
+
+export interface ExpensesResponse {
+  expenses: IExpense[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface ExpenseMutationResponse {
+  message: string;
+  expense: IExpense;
 }
 

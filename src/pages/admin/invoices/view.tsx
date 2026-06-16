@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   useParams,
   useNavigate,
@@ -7,24 +7,34 @@ import {
 import {
   ArrowLeft,
   Download,
-  ExternalLink,
   FileText,
   DollarSign,
   User,
   Calendar,
   CreditCard,
+  MoreVertical,
+  Mail,
+  Loader2,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { ROUTES } from '@/constants';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/lib/get-error-message';
 import {
   useGetInvoiceByJobIdQuery,
   useLazyDownloadInvoiceQuery,
-  // useLazyGetReceiptQuery,
+  useResendInvoiceMutation,
+  useUpdatePaymentStatusMutation,
 } from '@/API/api';
 import type { IInvoice, IJob, IPopulatedCustomer } from '@/types';
+import { PaymentStatusDialog } from '@/components/payment-status-dialog';
 
 function getJobDisplayId(jobId: IInvoice['jobId']): string {
   if (typeof jobId === 'object' && jobId) {
@@ -68,7 +78,6 @@ export default function InvoiceViewPage() {
 
   const invoice =
     invoiceFromState ?? invoiceFromStorage ?? apiInvoice;
-  const downloadUrl = apiInvoice?.downloadUrl ?? invoice?.downloadUrl;
   const isLoading =
     isApiLoading && !invoiceFromState && !invoiceFromStorage;
   const [downloadInvoice] = useLazyDownloadInvoiceQuery();
@@ -100,25 +109,6 @@ export default function InvoiceViewPage() {
     }
   };
 
-  const handleViewReceipt = async () => {
-    if (downloadUrl) {
-      window.open(downloadUrl, '_blank');
-      return;
-    }
-    const effectiveJobId = isValidObjectId
-      ? jobId
-      : typeof invoice?.jobId === 'object' && invoice?.jobId?._id;
-    if (!effectiveJobId) return;
-    try {
-      const result = await downloadInvoice(effectiveJobId).unwrap();
-      const url = window.URL.createObjectURL(result);
-      window.open(url, '_blank');
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      toast.error(getErrorMessage(err, 'Failed to load receipt'));
-    }
-  };
-
   const formatDate = (dateString?: string) => {
     if (!dateString) return '—';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -128,6 +118,56 @@ export default function InvoiceViewPage() {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  const [isResending, setIsResending] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
+
+  const [resendInvoice] = useResendInvoiceMutation();
+  const [updatePaymentStatus] = useUpdatePaymentStatusMutation();
+
+  const getMongoJobId = (): string => {
+    const job = invoice?.jobId;
+    if (typeof job === 'object' && job) return job._id ?? '';
+    return job ?? '';
+  };
+
+  const handleResend = async () => {
+    const jobId = getMongoJobId();
+    if (!jobId) {
+      toast.error('Job ID not available');
+      return;
+    }
+    setIsResending(true);
+    try {
+      await resendInvoice(jobId).unwrap();
+      toast.success('Invoice resend initiated successfully');
+    } catch (error) {
+      console.error('Failed to resend invoice:', error);
+      toast.error('Failed to resend invoice');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const handleUpdatePaymentStatus = async (paymentStatus: string) => {
+    const jobId = getMongoJobId();
+    if (!jobId) {
+      toast.error('Job ID not available');
+      return;
+    }
+    setIsUpdatingPayment(true);
+    try {
+      await updatePaymentStatus({ jobId, paymentStatus }).unwrap();
+      toast.success('Payment status updated successfully');
+      setShowPaymentDialog(false);
+    } catch (error) {
+      console.error('Failed to update payment status:', error);
+      toast.error('Failed to update payment status');
+    } finally {
+      setIsUpdatingPayment(false);
+    }
   };
 
   if (isLoading) {
@@ -182,8 +222,8 @@ export default function InvoiceViewPage() {
                     /> */}
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="mt-2">
+                <div className="flex items-start gap-1">
+                  <div className="mt-2 text-right">
                     <span className="text-lg font-semibold text-primary">
                       ${(invoice.amount ?? 0).toFixed(2)}
                     </span>
@@ -191,6 +231,32 @@ export default function InvoiceViewPage() {
                       Total
                     </p>
                   </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="flex size-10 items-center justify-center rounded-xl text-muted-foreground hover:bg-secondary">
+                      <MoreVertical className="h-4 w-4" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52 rounded-2xl">
+                      <DropdownMenuItem
+                        onClick={handleResend}
+                        disabled={isResending}
+                        className="cursor-pointer"
+                      >
+                        {isResending ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        ) : (
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        Resend Invoice
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setShowPaymentDialog(true)}
+                        className="cursor-pointer"
+                      >
+                        <CreditCard className="h-4 w-4 text-muted-foreground" />
+                        Update Payment Status
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
 
@@ -209,14 +275,21 @@ export default function InvoiceViewPage() {
                     size="sm"
                     variant="outline"
                     className="rounded-xl h-9"
-                    onClick={handleViewReceipt}
+                    onClick={() =>
+                      navigate(
+                        ROUTES.INVOICES_RECEIPT.replace(
+                          ':jobId',
+                          jobId,
+                        ),
+                      )
+                    }
                   >
-                    <ExternalLink className="h-4 w-4 mr-1" />
+                    <FileText className="h-4 w-4 mr-1" />
                     View Receipt
                   </Button>
                 )}
+                </div>
               </div>
-            </div>
 
             {/* Cards Grid */}
             <div className="grid gap-6 md:grid-cols-2">
@@ -354,6 +427,20 @@ export default function InvoiceViewPage() {
                       </p>
                     </div>
                   </div>
+                  <div className="flex items-center gap-3">
+                    <CreditCard className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Payment Status
+                      </p>
+                      <p className="text-foreground font-medium">
+                        {(() => {
+                          const s = invoice.paymentStatus ?? 'unpaid';
+                          return s.charAt(0).toUpperCase() + s.slice(1);
+                        })()}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -418,6 +505,16 @@ export default function InvoiceViewPage() {
           </div>
         </div>
       </div>
+
+      {showPaymentDialog && (
+        <PaymentStatusDialog
+          onClose={() => setShowPaymentDialog(false)}
+          onUpdate={handleUpdatePaymentStatus}
+          isLoading={isUpdatingPayment}
+        />
+      )}
     </AppLayout>
   );
 }
+
+

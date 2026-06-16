@@ -26,4 +26,8 @@ export const STATUS_CONFIG: Record<string, Record<string, { color: string; label
     inactive: { color: '#ef4444', label: 'Inactive' },
     expired: { color: '#f59e0b', label: 'Expired' },
   },
+  expense: {
+    active: { color: '#22c55e', label: 'Active' },
+    inactive: { color: '#ef4444', label: 'Inactive' },
+  },
 } as const;
