@@ -37,6 +37,7 @@ import { useDataTableQueryParams } from '@/hooks/use-data-table-query-params';
 import type { ListQueryParams } from '@/types/api.types';
 import { formatDate } from '@/lib/format-date';
 import { getErrorMessage } from '@/lib/get-error-message';
+import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
 function getExpenseErrorMessage(error: unknown): string {
   if (error && typeof error === 'object' && 'data' in error) {
