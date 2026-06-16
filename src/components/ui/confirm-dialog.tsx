@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react'; // Import Loader2 for loading state
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -23,6 +24,7 @@ type ConfirmDialogProps = {
     | 'secondary'
     | 'ghost'
     | 'link';
+  loading?: boolean; // Added loading prop
 };
 
 export function ConfirmDialog({
@@ -34,6 +36,7 @@ export function ConfirmDialog({
   cancelText = 'Cancel',
   onConfirm,
   variant = 'destructive',
+  loading = false, // Default value for loading
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -43,31 +46,16 @@ export function ConfirmDialog({
           sm:max-w-md
           rounded-3xl
           border-0
+          bg-white dark:bg-zinc-950
           p-0
           overflow-hidden
           shadow-2xl
-          bg-white dark:bg-zinc-950
         "
       >
-        {/* Top Gradient Section */}
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 via-orange-500/5 to-transparent" />
 
           <div className="relative flex flex-col items-center px-6 pt-8 sm:px-8">
-            {/* Icon */}
-            {/* <div
-              className="
-                flex items-center justify-center
-                size-16 sm:size-18
-                rounded-2xl
-                bg-red-500/10
-                border border-red-500/20
-                shadow-sm
-              "
-            >
-              <AlertTriangle className="size-8 text-red-500" />
-            </div> */}
-
             <DialogHeader className="mt-5 text-center space-y-3">
               <DialogTitle
                 className="
@@ -95,7 +83,6 @@ export function ConfirmDialog({
           </div>
         </div>
 
-        {/* Actions */}
         <DialogFooter
           className="
             flex-col-reverse sm:flex-row
@@ -121,6 +108,7 @@ export function ConfirmDialog({
               hover:bg-zinc-100
               dark:hover:bg-zinc-800
             "
+            disabled={loading} // Disable cancel button when loading
           >
             {cancelText}
           </Button>
@@ -128,6 +116,7 @@ export function ConfirmDialog({
           <Button
             variant={variant}
             onClick={onConfirm}
+            disabled={loading} // Disable confirm button when loading
             className="
               h-12
               w-full
@@ -141,7 +130,14 @@ export function ConfirmDialog({
               active:scale-[0.98]
             "
           >
-            {confirmText}
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Removing...
+              </>
+            ) : (
+              confirmText
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

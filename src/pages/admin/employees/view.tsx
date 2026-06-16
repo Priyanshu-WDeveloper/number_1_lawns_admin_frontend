@@ -316,20 +316,28 @@ export default function EmployeeViewPage() {
                   </div> */}
                     <div>
                       <p className="text-sm text-muted-foreground">
-                        Created At
+                        Wallet
+                      </p>
+                      <p className="text-foreground font-medium mt-1">
+                        $ {employee.wallet}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Account Created
                       </p>
                       <p className="text-foreground font-medium mt-1">
                         {formatDate(employee.createdAt)}
                       </p>
                     </div>
-                    <div>
+                    {/* <div>
                       <p className="text-sm text-muted-foreground">
                         Last Updated
                       </p>
                       <p className="text-foreground font-medium mt-1">
                         {formatDate(employee.updatedAt)}
                       </p>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
@@ -354,41 +362,44 @@ export default function EmployeeViewPage() {
                         </p>
                       </div>
                     </div>
-                    {(employee.city || employee.state || employee.postalCode || employee.country) && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          City
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {employee.city || '-'}
-                        </p>
+                    {(employee.city ||
+                      employee.state ||
+                      employee.postalCode ||
+                      employee.country) && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            City
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {employee.city || '-'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            State
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {employee.state || '-'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            Postal Code
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {employee.postalCode || '-'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            Country
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {employee.country || '-'}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          State
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {employee.state || '-'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Postal Code
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {employee.postalCode || '-'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Country
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {employee.country || '-'}
-                        </p>
-                      </div>
-                    </div>
                     )}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>

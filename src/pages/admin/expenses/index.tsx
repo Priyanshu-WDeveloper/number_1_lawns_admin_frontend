@@ -36,6 +36,19 @@ import {
 import { useDataTableQueryParams } from '@/hooks/use-data-table-query-params';
 import type { ListQueryParams } from '@/types/api.types';
 import { formatDate } from '@/lib/format-date';
+import { getErrorMessage } from '@/lib/get-error-message';
+
+function getExpenseErrorMessage(error: unknown): string {
+  if (error && typeof error === 'object' && 'data' in error) {
+    const fetchError = error as FetchBaseQueryError & {
+      data?: { message?: string };
+    };
+
+    return fetchError.data?.message || 'Failed to save expense';
+  }
+
+  return 'Failed to save expense';
+}
 
 export default function ExpensesPage() {
   const navigate = useNavigate();
@@ -55,7 +68,8 @@ export default function ExpensesPage() {
 
   const [createExpense] = useCreateExpenseMutation();
   const [updateExpense] = useUpdateExpenseMutation();
-  const [deleteExpense] = useDeleteExpenseMutation();
+  const [deleteExpense, { isLoading: isDeleting }] =
+    useDeleteExpenseMutation();
 
   const [editingExpense, setEditingExpense] = useState<{
     id?: string;
@@ -162,26 +176,40 @@ export default function ExpensesPage() {
       }
 
       if (editingExpense.id) {
-        await updateExpense({
+        const res = await updateExpense({
           id: editingExpense.id,
           title: editingExpense.title,
           description: editingExpense.description,
           fileUrl,
         });
-        toast.success('Expense updated');
+        console.log(res);
+
+        if ((res as any).data.expense) {
+          toast.success('Expense updated');
+        } else {
+          toast.error(getExpenseErrorMessage(res.error));
+        }
       } else {
-        await createExpense({
+        const res = await createExpense({
           title: editingExpense.title,
           description: editingExpense.description,
           fileUrl,
         });
-        toast.success('Expense added');
+        console.log(res);
+
+        if ((res as any).data.expense) {
+          toast.success('Expense added');
+        } else {
+          toast.error(getExpenseErrorMessage(res.error));
+        }
       }
       setIsEditOpen(false);
       setEditingExpense(null);
       setFile(null);
-    } catch {
-      toast.error('Failed to save expense');
+    } catch (err) {
+      // console.error(err);
+      // toast.error(err.message || 'Failed to save expense');
+      toast.error(getErrorMessage(err, 'Failed to save expense'));
     }
   };
 
@@ -675,6 +703,7 @@ export default function ExpensesPage() {
       </Dialog>
 
       <ConfirmDialog
+        loading={isDeleting}
         open={!!removingExpense}
         onOpenChange={(open) => {
           if (!open) setRemovingExpense(null);

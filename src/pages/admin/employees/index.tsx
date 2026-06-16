@@ -130,6 +130,15 @@ export default function EmployeeManagementPage() {
         </span>
       ),
     },
+    {
+      accessorKey: 'wallet',
+      header: 'Wallet',
+      cell: (row: IEmployee) => (
+        <span className="text-[#6b7280]" title={row.wallet}>
+          $ {row.wallet || '-'}
+        </span>
+      ),
+    },
 
     // {
     //   accessorKey: 'balance',
@@ -154,16 +163,16 @@ export default function EmployeeManagementPage() {
         />
       ),
     },
-    {
-      accessorKey: 'createdAt',
-      header: 'Joined',
-      sortable: true,
-      cell: (row: IEmployee) => (
-        <span className="text-[#6b7280]">
-          {formatDate(row.createdAt)}
-        </span>
-      ),
-    },
+    // {
+    //   accessorKey: 'createdAt',
+    //   header: 'Joined',
+    //   sortable: true,
+    //   cell: (row: IEmployee) => (
+    //     <span className="text-[#6b7280]">
+    //       {formatDate(row.createdAt)}
+    //     </span>
+    //   ),
+    // },
     // {
     //   accessorKey: 'validity',
     //   header: 'Validity',

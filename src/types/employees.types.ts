@@ -29,6 +29,7 @@ export interface IEmployee {
   createdAt: string;
   updatedAt: string;
   validity?: string;
+  wallet?: string;
   attachments?: Array<{ key: string; value: string }>;
 }
 export interface EmployeeRow {
