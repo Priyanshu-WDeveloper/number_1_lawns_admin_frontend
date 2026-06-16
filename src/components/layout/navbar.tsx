@@ -1,7 +1,7 @@
-import { Bell, Menu } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Menu } from 'lucide-react';
+// import { useNavigate } from 'react-router-dom';
 import AccountDropdown from '@/components/account-dropdown';
-import { ROUTES } from '@/constants';
+// import { ROUTES } from '@/constants';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -24,7 +24,7 @@ export function Navbar({
   showWelcome = true,
 }: NavbarProps) {
   useGetAdminDetailsQuery();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.auth.user);
 
   const { toggleSidebar } = useSidebar();
@@ -68,14 +68,14 @@ export function Navbar({
       </div>
 
       <div className="flex items-center gap-1">
-        <button
+        {/* <button
           type="button"
           className="relative mr-2 flex h-9 w-9 items-center justify-center"
           onClick={() => navigate(ROUTES.NOTIFICATIONS)}
         >
           <Bell className="h-[18px] w-[18px]  text-[#6b7280]" />
           <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 rounded-full bg-[#166534]" />
-        </button>
+        </button> */}
 
         <AccountDropdown variant="navbar" />
       </div>

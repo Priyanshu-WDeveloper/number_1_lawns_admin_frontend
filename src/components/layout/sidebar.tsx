@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
-import { LogOutIcon, Video, CreditCard, DollarSign } from 'lucide-react';
+import {
+  LogOutIcon,
+  Video,
+  CreditCard,
+  DollarSign,
+} from 'lucide-react';
 
 import Dashboard from '@/assets/dashboard.png';
 import Customer from '@/assets/customer.png';
@@ -58,7 +63,7 @@ const items = [
     url: ROUTES.INVOICES,
   },
   {
-    title: 'Finance',
+    title: 'Financial Report ',
     icon: DollarSign,
     url: ROUTES.FINANCE,
     isLucide: true,
@@ -110,7 +115,6 @@ export function DashboardSidebar() {
             />
             <h2 className="text-2xl font-bold">No. 1 Lawns</h2>
           </div>
-
         </div>
       </SidebarHeader>
 
