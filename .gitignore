@@ -25,3 +25,4 @@ dist-ssr
 .claude
 opencode.json
 .codegraph
+.code
