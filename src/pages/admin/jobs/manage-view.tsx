@@ -142,6 +142,7 @@ export default function JobViewPage() {
     data: job,
     isLoading,
     isError,
+    isUninitialized,
   } = useGetJobByIdQuery(id ?? '', {
     skip: !id,
   });
@@ -217,8 +218,6 @@ export default function JobViewPage() {
   const customerForAddress = (customerData ??
     customer) as ICustomer | null;
 
-  if (!resolvedJob) return null;
-
   const handleConfirmCancel = async () => {
     if (!id) return;
     try {
@@ -246,7 +245,7 @@ export default function JobViewPage() {
   };
 
   const handleViewReceipt = async () => {
-    if (!resolvedJob._id) return;
+    if (!resolvedJob || !resolvedJob._id) return;
     try {
       const token = getToken();
       const res = await fetch(
@@ -266,12 +265,12 @@ export default function JobViewPage() {
     }
   };
 
-  if (isLoading) {
+  if (isUninitialized || isLoading) {
     return (
       <AppLayout>
-        <div className="flex h-full items-center justify-center">
-          <Loader />
-        </div>
+        {/* <div className="flex h-full items-center justify-center"> */}
+        <Loader />
+        {/* </div> */}
       </AppLayout>
     );
   }

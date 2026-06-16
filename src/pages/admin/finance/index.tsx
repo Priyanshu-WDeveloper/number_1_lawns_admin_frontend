@@ -1,17 +1,34 @@
 import { useState } from 'react';
-import { Eye, DollarSign, Wallet, CreditCard, Building2, ArrowRight, Search, Loader2 } from 'lucide-react';
+import {
+  Eye,
+  DollarSign,
+  Wallet,
+  CreditCard,
+  Building2,
+  ArrowRight,
+  Search,
+  Loader2,
+} from 'lucide-react';
 
 import type { ColumnDef } from '@/components/data-table/data-table';
 import DataTable from '@/components/data-table/data-table';
 import { Navbar } from '@/components/layout/navbar';
 import { AppLayout } from '@/components/layout/app-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
 import { useGetFinancialReportQuery } from '@/API/api';
 import { formatDate } from '@/lib/format-date';
 import type { IJob } from '@/types';
-import type { FinancialSummary, PaymentBreakdownItem } from '@/types/finance.types';
+import type {
+  FinancialSummary,
+  PaymentBreakdownItem,
+} from '@/types/finance.types';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/constants';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -81,12 +98,13 @@ export default function FinancePage() {
   const [page, setPage] = useState(1);
   const limit = 10;
 
-  const { data, isLoading, isFetching } = useGetFinancialReportQuery({
-    startDate: queryStartDate,
-    endDate: queryEndDate,
-    page,
-    limit,
-  });
+  const { data, isLoading, isFetching, isUninitialized } =
+    useGetFinancialReportQuery({
+      startDate: queryStartDate,
+      endDate: queryEndDate,
+      page,
+      limit,
+    });
 
   const handleGenerate = () => {
     setQueryStartDate(startDate);
@@ -95,11 +113,17 @@ export default function FinancePage() {
   };
 
   const summary: FinancialSummary | undefined = data?.summary;
-  const breakdown: PaymentBreakdownItem[] = data?.paymentBreakdown ?? [];
+  const breakdown: PaymentBreakdownItem[] =
+    data?.paymentBreakdown ?? [];
   const jobs: IJob[] = data?.jobs ?? [];
 
   const pagination = data
-    ? { page: data.page, limit: data.limit, total: data.total, totalPages: data.totalPages }
+    ? {
+        page: data.page,
+        limit: data.limit,
+        total: data.total,
+        totalPages: data.totalPages,
+      }
     : undefined;
 
   const formatCurrency = (amount: number | undefined) =>
@@ -150,7 +174,9 @@ export default function FinancePage() {
       cell: (row) => (
         <span className="text-[#6b7280]">
           {row.paymentType
-            ? row.paymentType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+            ? row.paymentType
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, (c) => c.toUpperCase())
             : '-'}
         </span>
       ),
@@ -172,7 +198,9 @@ export default function FinancePage() {
           <span
             className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${color}`}
           >
-            {status.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+            {status
+              .replace(/-/g, ' ')
+              .replace(/\b\w/g, (c) => c.toUpperCase())}
           </span>
         );
       },
@@ -181,7 +209,9 @@ export default function FinancePage() {
       accessorKey: 'date',
       header: 'Date',
       cell: (row) => (
-        <span className="text-[#6b7280]">{formatDate(row.jobDate || row.date)}</span>
+        <span className="text-[#6b7280]">
+          {formatDate(row.jobDate || row.date)}
+        </span>
       ),
     },
     {
@@ -192,7 +222,9 @@ export default function FinancePage() {
           <button
             type="button"
             onClick={() =>
-              navigate(ROUTES.JOBS_VIEW_MANAGE.replace(':id', row._id ?? ''))
+              navigate(
+                ROUTES.JOBS_VIEW_MANAGE.replace(':id', row._id ?? ''),
+              )
             }
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-sm font-medium bg-[#f5f5f5] text-[#374151] hover:bg-[#e5e5e5] transition-colors"
           >
@@ -204,7 +236,7 @@ export default function FinancePage() {
     },
   ];
 
-  const loading = isLoading || isFetching;
+  const loading = isUninitialized || isLoading || isFetching;
 
   return (
     <AppLayout>
@@ -219,7 +251,9 @@ export default function FinancePage() {
 
             <Card className="border border-[#e5e7eb] shadow-sm mt-4 mb-6 bg-gray-50/50">
               <CardHeader className="border-b border-[#e5e7eb]/50 pb-0">
-                <CardTitle className="text-base font-semibold">Date Range</CardTitle>
+                <CardTitle className="text-base font-semibold">
+                  Date Range
+                </CardTitle>
               </CardHeader>
               <CardContent className="pt-4">
                 <div className="flex items-end gap-3">
@@ -227,7 +261,11 @@ export default function FinancePage() {
                     <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       From
                     </label>
-                    <DatePicker value={startDate} onChange={setStartDate} placeholder="Start date" />
+                    <DatePicker
+                      value={startDate}
+                      onChange={setStartDate}
+                      placeholder="Start date"
+                    />
                   </div>
                   <div className="flex items-center pb-2.5">
                     <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/60" />
@@ -236,9 +274,17 @@ export default function FinancePage() {
                     <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       To
                     </label>
-                    <DatePicker value={endDate} onChange={setEndDate} placeholder="End date" />
+                    <DatePicker
+                      value={endDate}
+                      onChange={setEndDate}
+                      placeholder="End date"
+                    />
                   </div>
-                  <Button onClick={handleGenerate} disabled={loading} className="ml-auto min-w-[120px]">
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={loading}
+                    className="ml-auto min-w-[120px]"
+                  >
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -247,7 +293,7 @@ export default function FinancePage() {
                     ) : (
                       <>
                         <Search className="mr-2 h-4 w-4" />
-                        Generate
+                        Filter
                       </>
                     )}
                   </Button>
@@ -274,17 +320,20 @@ export default function FinancePage() {
                   />
                   <SummaryCard
                     title="Online Payment"
-                    value={formatCurrency(summary?.totalOnlinePayments)}
+                    value={formatCurrency(
+                      summary?.totalOnlinePayments,
+                    )}
                     icon={CreditCard}
                     color="#3b82f6"
                   />
                   <SummaryCard
                     title="Other Payment"
-                    value={formatCurrency(summary?.totalOtherPayments)}
+                    value={formatCurrency(
+                      summary?.totalOtherPayments,
+                    )}
                     icon={Building2}
                     color="#8b5cf6"
                   />
-
                 </div>
               )}
 
@@ -312,7 +361,10 @@ export default function FinancePage() {
                       </thead>
                       <tbody>
                         {breakdown.map((item, idx) => (
-                          <tr key={idx} className="border-b border-[#e5e7eb] last:border-0">
+                          <tr
+                            key={idx}
+                            className="border-b border-[#e5e7eb] last:border-0"
+                          >
                             <td className="py-3 px-2 text-[#374151]">
                               {item.label}
                             </td>
@@ -333,60 +385,86 @@ export default function FinancePage() {
               {summary && (
                 <Card className="border border-[#e5e7eb] shadow-sm mb-6">
                   <CardHeader className="border-b border-[#e5e7eb]/50 pb-3">
-                    <CardTitle className="text-base font-semibold">Job Overview</CardTitle>
+                    <CardTitle className="text-base font-semibold">
+                      Job Overview
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-5">
                     <div className="flex items-stretch gap-6">
-                      <div className="flex-1 grid grid-cols-2 gap-4">
+                      <div className="flex-1 grid grid-cols-3 gap-4">
                         <div className="rounded-xl p-4 bg-[#22c55e]/5 border border-[#22c55e]/10">
                           <div className="flex items-center gap-2 mb-3">
                             <span className="h-2 w-2 rounded-full bg-[#22c55e]" />
-                            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest">Completed</span>
+                            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest">
+                              Completed
+                            </span>
                           </div>
-                          <div className="text-2xl font-bold text-[#151515]">{summary.completedJobs}</div>
+                          <div className="text-2xl font-bold text-[#151515]">
+                            {summary.completedJobs}
+                          </div>
                           <div className="mt-3 h-1 w-full rounded-full bg-[#22c55e]/10">
                             <div
                               className="h-full rounded-full bg-[#22c55e] transition-all duration-500"
-                              style={{ width: `${summary.totalJobs > 0 ? (summary.completedJobs / summary.totalJobs) * 100 : 0}%` }}
+                              style={{
+                                width: `${summary.totalJobs > 0 ? (summary.completedJobs / summary.totalJobs) * 100 : 0}%`,
+                              }}
                             />
                           </div>
                         </div>
                         <div className="rounded-xl p-4 bg-[#f59e0b]/5 border border-[#f59e0b]/10">
                           <div className="flex items-center gap-2 mb-3">
                             <span className="h-2 w-2 rounded-full bg-[#f59e0b]" />
-                            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest">Pending</span>
+                            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest">
+                              Pending
+                            </span>
                           </div>
-                          <div className="text-2xl font-bold text-[#151515]">{summary.pendingJobs}</div>
+                          <div className="text-2xl font-bold text-[#151515]">
+                            {summary.pendingJobs}
+                          </div>
                           <div className="mt-3 h-1 w-full rounded-full bg-[#f59e0b]/10">
                             <div
                               className="h-full rounded-full bg-[#f59e0b] transition-all duration-500"
-                              style={{ width: `${summary.totalJobs > 0 ? (summary.pendingJobs / summary.totalJobs) * 100 : 0}%` }}
+                              style={{
+                                width: `${summary.totalJobs > 0 ? (summary.pendingJobs / summary.totalJobs) * 100 : 0}%`,
+                              }}
                             />
                           </div>
                         </div>
-                        <div className="rounded-xl p-4 bg-[#3b82f6]/5 border border-[#3b82f6]/10">
+                        {/* <div className="rounded-xl p-4 bg-[#3b82f6]/5 border border-[#3b82f6]/10">
                           <div className="flex items-center gap-2 mb-3">
                             <span className="h-2 w-2 rounded-full bg-[#3b82f6]" />
-                            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest">In Progress</span>
+                            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest">
+                              In Progress
+                            </span>
                           </div>
-                          <div className="text-2xl font-bold text-[#151515]">{summary.inProgressJobs}</div>
+                          <div className="text-2xl font-bold text-[#151515]">
+                            {summary.inProgressJobs}
+                          </div>
                           <div className="mt-3 h-1 w-full rounded-full bg-[#3b82f6]/10">
                             <div
                               className="h-full rounded-full bg-[#3b82f6] transition-all duration-500"
-                              style={{ width: `${summary.totalJobs > 0 ? (summary.inProgressJobs / summary.totalJobs) * 100 : 0}%` }}
+                              style={{
+                                width: `${summary.totalJobs > 0 ? (summary.inProgressJobs / summary.totalJobs) * 100 : 0}%`,
+                              }}
                             />
                           </div>
-                        </div>
+                        </div> */}
                         <div className="rounded-xl p-4 bg-[#ef4444]/5 border border-[#ef4444]/10">
                           <div className="flex items-center gap-2 mb-3">
                             <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
-                            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest">Cancelled</span>
+                            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest">
+                              Cancelled
+                            </span>
                           </div>
-                          <div className="text-2xl font-bold text-[#151515]">{summary.cancelledJobs}</div>
+                          <div className="text-2xl font-bold text-[#151515]">
+                            {summary.cancelledJobs}
+                          </div>
                           <div className="mt-3 h-1 w-full rounded-full bg-[#ef4444]/10">
                             <div
                               className="h-full rounded-full bg-[#ef4444] transition-all duration-500"
-                              style={{ width: `${summary.totalJobs > 0 ? (summary.cancelledJobs / summary.totalJobs) * 100 : 0}%` }}
+                              style={{
+                                width: `${summary.totalJobs > 0 ? (summary.cancelledJobs / summary.totalJobs) * 100 : 0}%`,
+                              }}
                             />
                           </div>
                         </div>

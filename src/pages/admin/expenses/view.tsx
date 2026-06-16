@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -29,6 +30,7 @@ import type { IAdminUser } from '@/types';
 export default function ExpenseViewPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [viewImgError, setViewImgError] = useState(false);
 
   const expenseQueryArgs = id ?? '';
   const queryOptions = {
@@ -154,16 +156,44 @@ export default function ExpenseViewPage() {
                       <h4 className="text-sm font-medium text-muted-foreground mb-2">
                         Attached Document
                       </h4>
-                      <a
-                        href={expense.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-primary hover:underline"
-                      >
-                        <FileText className="h-4 w-4" />
-                        View Attachment
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
+                      {/\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(expense.fileUrl) ? (
+                        viewImgError ? (
+                          <div className="w-full h-64 flex flex-col items-center justify-center rounded-xl border border-[#ececec] bg-[#f5f8fb] gap-2">
+                            <FileText className="h-8 w-8 text-[#7a8699]" />
+                            <p className="text-sm text-[#7a8699]">Failed to load image</p>
+                            <a
+                              href={expense.fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm font-medium text-primary hover:underline"
+                            >
+                              Download
+                            </a>
+                          </div>
+                        ) : (
+                          <img
+                            src={expense.fileUrl}
+                            alt="Attachment"
+                            className="w-full max-h-64 object-contain rounded-xl border border-[#ececec]"
+                            onError={() => setViewImgError(true)}
+                          />
+                        )
+                      ) : /\.(pdf)(\?.*)?$/i.test(expense.fileUrl) ? (
+                        <div className="w-full h-64 rounded-xl border border-[#ececec] overflow-hidden">
+                          <img src="/pdf-logo.svg" alt="PDF" className="w-full max-h-64 object-contain rounded-xl border border-[#ececec]" />
+                        </div>
+                      ) : (
+                        <a
+                          href={expense.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-primary hover:underline"
+                        >
+                          <FileText className="h-4 w-4" />
+                          View Attachment
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
                     </div>
                   )}
                 </div>

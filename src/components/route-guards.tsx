@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { ROLES, ROUTES } from '@/constants';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from '@/store';
@@ -30,12 +30,7 @@ export function PublicRoute({ children }: PublicRouteProps) {
   return <>{children}</>;
 }
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-  redirectTo?: string;
-}
-
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+export function ProtectedRoute() {
   const token = useSelector((state: RootState) => state.auth.token);
   const user = useSelector((state: RootState) => state.auth.user);
   const role = user?.role;
@@ -48,7 +43,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     isUninitialized,
   } = useGetAdminDetailsQuery(undefined, {
     skip: !token || role !== ROLES.ADMIN,
-    refetchOnMountOrArgChange: true,
   });
 
   useEffect(() => {
@@ -119,5 +113,5 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to={ROUTES.DASHBOARD} replace />;
   }
 
-  return <>{children}</>;
+  return <Outlet />;
 }

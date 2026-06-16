@@ -99,7 +99,6 @@ const AppRoutes = () => {
   return (
     <Suspense fallback={<Loader />}>
       <Routes>
-        {/* Public Routes */}
         <Route
           path={ROUTES.LOGIN}
           element={
@@ -118,229 +117,121 @@ const AppRoutes = () => {
           }
         />
 
-        {/* Admin Protected Routes */}
-        <Route
-          path={ROUTES.DASHBOARD}
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.PROFILE}
-          element={
-            <ProtectedRoute>
-              <AdminProfilePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.CHANGE_PASSWORD}
-          element={
-            <ProtectedRoute>
-              <ChangePasswordPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.CUSTOMERS}
-          element={
-            <ProtectedRoute>
-              <CustomerManagementPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.CUSTOMERS_CREATE}
-          element={
-            <ProtectedRoute>
-              <CreateCustomerPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.CUSTOMERS_VIEW}
-          element={
-            <ProtectedRoute>
-              <CustomerViewPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.CUSTOMERS_EDIT}
-          element={
-            <ProtectedRoute>
-              <CustomerEditPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.EMPLOYEES}
-          element={
-            <ProtectedRoute>
-              <EmployeeManagementPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.EMPLOYEES_CREATE}
-          element={
-            <ProtectedRoute>
-              <CreateEmployeePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.EMPLOYEES_VIEW}
-          element={
-            <ProtectedRoute>
-              <EmployeeViewPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.EMPLOYEES_EDIT}
-          element={
-            <ProtectedRoute>
-              <EmployeeEditPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.JOBS}
-          element={<Navigate to={ROUTES.MANAGE_JOBS} replace />}
-        />
-        <Route
-          path={ROUTES.MANAGE_JOBS}
-          element={
-            <ProtectedRoute>
-              <ManageJobsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.SCHEDULED_JOBS}
-          element={
-            <ProtectedRoute>
-              <ScheduledJobsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.JOBS_CREATE}
-          element={
-            <ProtectedRoute>
-              <CreateJobPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.JOBS_VIEW}
-          element={
-            <ProtectedRoute>
-              <JobViewPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.JOBS_VIEW_MANAGE}
-          element={
-            <ProtectedRoute>
-              <JobManageViewPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.JOBS_EDIT}
-          element={
-            <ProtectedRoute>
-              <JobEditPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.INVOICES}
-          element={
-            <ProtectedRoute>
-              <InvoiceManagementPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.INVOICES_VIEW}
-          element={
-            <ProtectedRoute>
-              <InvoiceViewPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.INVOICES_RECEIPT}
-          element={
-            <ProtectedRoute>
-              <InvoiceReceiptPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.NOTIFICATIONS}
-          element={
-            <ProtectedRoute>
-              <NotificationsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.SUBSCRIPTION_EXPIRED}
-          element={
-            <ProtectedRoute>
-              <SubscriptionExpiredPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.FINANCE}
-          element={
-            <ProtectedRoute>
-              <FinancePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.EXPENSES}
-          element={
-            <ProtectedRoute>
-              <ExpensesPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.EXPENSES_VIEW}
-          element={
-            <ProtectedRoute>
-              <ExpenseViewPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.TRAINING_CENTER}
-          element={
-            <ProtectedRoute>
-              <TrainingCenterPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.TRAINING_CENTER_VIEW}
-          element={
-            <ProtectedRoute>
-              <TrainingVideoViewPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route element={<ProtectedRoute />}>
+          <Route
+            path={ROUTES.DASHBOARD}
+            element={<DashboardPage />}
+          />
+          <Route
+            path={ROUTES.PROFILE}
+            element={<AdminProfilePage />}
+          />
+          <Route
+            path={ROUTES.CHANGE_PASSWORD}
+            element={<ChangePasswordPage />}
+          />
+          <Route
+            path={ROUTES.CUSTOMERS}
+            element={<CustomerManagementPage />}
+          />
+          <Route
+            path={ROUTES.CUSTOMERS_CREATE}
+            element={<CreateCustomerPage />}
+          />
+          <Route
+            path={ROUTES.CUSTOMERS_VIEW}
+            element={<CustomerViewPage />}
+          />
+          <Route
+            path={ROUTES.CUSTOMERS_EDIT}
+            element={<CustomerEditPage />}
+          />
+          <Route
+            path={ROUTES.EMPLOYEES}
+            element={<EmployeeManagementPage />}
+          />
+          <Route
+            path={ROUTES.EMPLOYEES_CREATE}
+            element={<CreateEmployeePage />}
+          />
+          <Route
+            path={ROUTES.EMPLOYEES_VIEW}
+            element={<EmployeeViewPage />}
+          />
+          <Route
+            path={ROUTES.EMPLOYEES_EDIT}
+            element={<EmployeeEditPage />}
+          />
+          <Route
+            path={ROUTES.JOBS}
+            element={<Navigate to={ROUTES.MANAGE_JOBS} replace />}
+          />
+          <Route
+            path={ROUTES.MANAGE_JOBS}
+            element={<ManageJobsPage />}
+          />
+          <Route
+            path={ROUTES.SCHEDULED_JOBS}
+            element={<ScheduledJobsPage />}
+          />
+          <Route
+            path={ROUTES.JOBS_CREATE}
+            element={<CreateJobPage />}
+          />
+          <Route
+            path={ROUTES.JOBS_VIEW}
+            element={<JobViewPage />}
+          />
+          <Route
+            path={ROUTES.JOBS_VIEW_MANAGE}
+            element={<JobManageViewPage />}
+          />
+          <Route
+            path={ROUTES.JOBS_EDIT}
+            element={<JobEditPage />}
+          />
+          <Route
+            path={ROUTES.INVOICES}
+            element={<InvoiceManagementPage />}
+          />
+          <Route
+            path={ROUTES.INVOICES_VIEW}
+            element={<InvoiceViewPage />}
+          />
+          <Route
+            path={ROUTES.INVOICES_RECEIPT}
+            element={<InvoiceReceiptPage />}
+          />
+          <Route
+            path={ROUTES.NOTIFICATIONS}
+            element={<NotificationsPage />}
+          />
+          <Route
+            path={ROUTES.SUBSCRIPTION_EXPIRED}
+            element={<SubscriptionExpiredPage />}
+          />
+          <Route
+            path={ROUTES.FINANCE}
+            element={<FinancePage />}
+          />
+          <Route
+            path={ROUTES.EXPENSES}
+            element={<ExpensesPage />}
+          />
+          <Route
+            path={ROUTES.EXPENSES_VIEW}
+            element={<ExpenseViewPage />}
+          />
+          <Route
+            path={ROUTES.TRAINING_CENTER}
+            element={<TrainingCenterPage />}
+          />
+          <Route
+            path={ROUTES.TRAINING_CENTER_VIEW}
+            element={<TrainingVideoViewPage />}
+          />
+        </Route>
 
-        {/* Root and Catch-all */}
         <Route
           path="/"
           element={<Navigate to={ROUTES.DASHBOARD} replace />}
