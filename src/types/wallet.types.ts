@@ -103,3 +103,13 @@ export interface WalletHistoryQueryParams {
   page?: number;
   limit?: number;
 }
+
+export interface IAdminWalletHistoryResponse {
+  message: string;
+  history: IWalletHistoryEntry[];
+}
+
+export interface AdminWalletHistoryQueryParams {
+  startDate: string;
+  endDate: string;
+}

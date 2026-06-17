@@ -38,6 +38,8 @@ export const ROUTES = {
   EXPENSES_EDIT: '/expenses/edit/:id',
 
   // Default redirects
+  ADMIN_WALLET: '/admin-wallet',
+
   DEFAULT_REDIRECT: '/dashboard',
 } as const;
 
@@ -120,6 +122,7 @@ export const API_ROUTES = {
     DASHBOARD_ANALYTICS: '/admins/dashboard-analytics',
     CHANGE_PASSWORD: '/admins/change-password',
     WALLET_HISTORY: '/admins/wallet/history',
+    WALLET_MY_HISTORY: '/admins/wallet/my-history',
     WALLET_SETTLEMENT: '/admins/wallet/settlement',
   },
   TRAININGS: {

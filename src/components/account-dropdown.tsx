@@ -4,6 +4,7 @@ import {
   CreditCard,
   LogOut,
   User,
+  Wallet,
 } from 'lucide-react';
 
 import {
@@ -201,6 +202,14 @@ export default function AccountDropdown({
           >
             <User className="h-4 w-4 text-slate-700" />
             Profile
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onClick={() => navigate(ROUTES.ADMIN_WALLET)}
+            className="flex cursor-pointer items-center gap-3 px-4 py-3 text-sm"
+          >
+            <Wallet className="h-4 w-4 text-slate-700" />
+            Wallet
           </DropdownMenuItem>
 
           <DropdownMenuItem

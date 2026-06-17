@@ -32,9 +32,11 @@ import type { FinancialReportResponse } from '@/types/finance.types';
 import type { CreateEmployeePayload } from '@/types/employees.types';
 import type {
   IWalletHistoryResponse,
+  IAdminWalletHistoryResponse,
   ISettlementPayload,
   ISettlementResponse,
   WalletHistoryQueryParams,
+  AdminWalletHistoryQueryParams,
 } from '@/types/wallet.types';
 import { setAuth, clearAuth, updateUser } from '@/store/auth-slice';
 import { API_ROUTES, ROUTES } from '@/constants';
@@ -922,6 +924,13 @@ export const api = createApi({
       }),
       providesTags: ['Wallet'],
     }),
+    getAdminWalletHistory: builder.query<IAdminWalletHistoryResponse, AdminWalletHistoryQueryParams>({
+      query: ({ startDate, endDate }) => ({
+        url: API_ROUTES.ADMINS.WALLET_MY_HISTORY,
+        params: { startDate, endDate },
+      }),
+      providesTags: ['Wallet'],
+    }),
     settleWallet: builder.mutation<ISettlementResponse, ISettlementPayload>({
       query: (body) => ({
         url: API_ROUTES.ADMINS.WALLET_SETTLEMENT,
@@ -1027,5 +1036,6 @@ export const {
 
   useGetFinancialReportQuery,
   useGetWalletHistoryQuery,
+  useGetAdminWalletHistoryQuery,
   useSettleWalletMutation,
 } = api;
