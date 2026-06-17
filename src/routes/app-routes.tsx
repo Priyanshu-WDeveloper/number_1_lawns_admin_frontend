@@ -93,6 +93,9 @@ const ExpenseViewPage = React.lazy(
 const TrainingVideoViewPage = React.lazy(
   () => import('../pages/admin/training-center/view'),
 );
+const EmployeeWalletPage = React.lazy(
+  () => import('../pages/admin/employees/wallet'),
+);
 const NotFoundPage = React.lazy(() => import('../pages/not-found'));
 
 const AppRoutes = () => {
@@ -161,6 +164,10 @@ const AppRoutes = () => {
           <Route
             path={ROUTES.EMPLOYEES_EDIT}
             element={<EmployeeEditPage />}
+          />
+          <Route
+            path={ROUTES.EMPLOYEES_WALLET}
+            element={<EmployeeWalletPage />}
           />
           <Route
             path={ROUTES.JOBS}

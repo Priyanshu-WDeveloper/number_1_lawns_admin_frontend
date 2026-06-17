@@ -30,6 +30,12 @@ import type {
 } from '@/types/api.types';
 import type { FinancialReportResponse } from '@/types/finance.types';
 import type { CreateEmployeePayload } from '@/types/employees.types';
+import type {
+  IWalletHistoryResponse,
+  ISettlementPayload,
+  ISettlementResponse,
+  WalletHistoryQueryParams,
+} from '@/types/wallet.types';
 import { setAuth, clearAuth, updateUser } from '@/store/auth-slice';
 import { API_ROUTES, ROUTES } from '@/constants';
 import type {
@@ -91,6 +97,7 @@ export const api = createApi({
     'Notifications',
     'Trainings',
     'Expenses',
+    'Wallet',
   ],
   endpoints: (builder) => ({
     // Auth endpoints
@@ -907,6 +914,22 @@ export const api = createApi({
         { type: 'Expenses', id },
       ],
     }),
+
+    getWalletHistory: builder.query<IWalletHistoryResponse, WalletHistoryQueryParams>({
+      query: ({ engineerId, page = 1, limit = 10 }) => ({
+        url: API_ROUTES.ADMINS.WALLET_HISTORY,
+        params: { engineerId, page, limit },
+      }),
+      providesTags: ['Wallet'],
+    }),
+    settleWallet: builder.mutation<ISettlementResponse, ISettlementPayload>({
+      query: (body) => ({
+        url: API_ROUTES.ADMINS.WALLET_SETTLEMENT,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Wallet', 'Employees'],
+    }),
   }),
 });
 
@@ -1003,4 +1026,6 @@ export const {
   useToggleExpenseStatusMutation,
 
   useGetFinancialReportQuery,
+  useGetWalletHistoryQuery,
+  useSettleWalletMutation,
 } = api;

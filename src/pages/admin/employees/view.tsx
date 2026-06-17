@@ -16,6 +16,7 @@ import {
   PowerOff,
   Power,
   ExternalLink,
+  Wallet,
   FileText,
   Download,
   // User,
@@ -183,14 +184,23 @@ export default function EmployeeViewPage() {
                       </DropdownMenuItem>
 
                       <DropdownMenuSeparator />
-                      {/* 
+
                       <DropdownMenuItem
-                        onClick={handleDelete}
-                        className="cursor-pointer text-red-500 focus:text-red-500"
+                        onClick={() =>
+                          navigate(
+                            ROUTES.EMPLOYEES_WALLET.replace(
+                              ':id',
+                              employee._id,
+                            ),
+                          )
+                        }
+                        className="cursor-pointer"
                       >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete Employee
-                      </DropdownMenuItem> */}
+                        <Wallet className="mr-2 h-4 w-4 text-primary" />
+                        Wallet
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
                       {employee.status === 'active' ? (
                         <DropdownMenuItem
                           className="text-red-500 focus:text-red-500"

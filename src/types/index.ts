@@ -1,5 +1,12 @@
 export type { ICustomer } from './customers.types';
 export type { IEmployee } from './employees.types';
+export type {
+  IWalletHistoryEntry,
+  IWalletHistoryResponse,
+  ISettlementPayload,
+  ISettlementResponse,
+  WalletHistoryQueryParams,
+} from './wallet.types';
 
 export interface IAdminUser {
   _id: string;

@@ -5,6 +5,7 @@ import {
   Pencil,
   Power,
   PowerOff,
+  Wallet,
 } from 'lucide-react';
 
 import type { ColumnDef } from '@/components/data-table/data-table';
@@ -262,6 +263,14 @@ export default function EmployeeManagementPage() {
               >
                 <Key className="mr-2 h-4 w-4" />
                 Reset Password
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  navigate(ROUTES.EMPLOYEES_WALLET.replace(':id', row._id))
+                }
+              >
+                <Wallet className="mr-2 h-4 w-4 text-primary" />
+                Wallet
               </DropdownMenuItem>
               {row.validity && (
                 <DropdownMenuItem

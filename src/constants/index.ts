@@ -18,6 +18,7 @@ export const ROUTES = {
   EMPLOYEES_CREATE: '/employees/create',
   EMPLOYEES_VIEW: '/employees/:id',
   EMPLOYEES_EDIT: '/employees/edit/:id',
+  EMPLOYEES_WALLET: '/employees/wallet/:id',
   JOBS: '/jobs',
   JOBS_CREATE: '/jobs/create',
   JOBS_VIEW: '/jobs/:id',
@@ -118,6 +119,8 @@ export const API_ROUTES = {
     PROFILE: '/admins/profile',
     DASHBOARD_ANALYTICS: '/admins/dashboard-analytics',
     CHANGE_PASSWORD: '/admins/change-password',
+    WALLET_HISTORY: '/admins/wallet/history',
+    WALLET_SETTLEMENT: '/admins/wallet/settlement',
   },
   TRAININGS: {
     LIST: '/trainings',
