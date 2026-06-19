@@ -923,6 +923,9 @@ export default function JobViewPage() {
         customerPhone={customer?.phoneNumber}
         customerEmail={customer?.email}
         customerImage={customer?.profileImage}
+        initialAddress={resolvedJob.address || customer?.address}
+        jobTitle={resolvedJob.title}
+        jobPrice={resolvedJob.price}
       />
 
       <Dialog

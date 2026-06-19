@@ -454,16 +454,9 @@ export const api = createApi({
         receivePrice?: number;
         items?: OrderItemInput[];
         completedDate?: string;
-        // title?: string;
-        address?: string;
-        jobType?: string;
-        price?: number;
-        notes?: string;
-        description?: string;
-        preferredTiming?: string;
-        paymentType?: string;
         jobDate?: string;
-        frequency?: { value: number; unit: string };
+        jobType?: string;
+        paymentType?: string;
       }
     >({
       query: ({ items, ...rest }) => ({

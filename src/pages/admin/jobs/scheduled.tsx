@@ -178,6 +178,8 @@ export default function ScheduledJobsPage() {
       paymentType?: string;
       jobDate?: string;
       frequency?: { value: number; unit: string };
+      customerId?: string;
+      // customerId?: { address?: string };
     },
   ) => {
     try {
@@ -188,7 +190,7 @@ export default function ScheduledJobsPage() {
         completedDate: new Date().toISOString(),
       };
 
-      // if (jobData?.title) payload.title = jobData.title;
+      if (jobData?.title) payload.title = jobData.title;
       if (jobData?.address) payload.address = jobData.address;
       if (jobData?.jobType) payload.jobType = jobData.jobType;
       if (jobData?.price !== undefined) payload.price = jobData.price;
@@ -203,14 +205,8 @@ export default function ScheduledJobsPage() {
       if (jobData?.frequency) payload.frequency = jobData.frequency;
       // if (items?.title) payload.title = items.title;
 
-      const res = await completeJob(payload).unwrap();
-      console.log(
-        '\n===================== 🟢 res =====================',
-      );
-      console.log(res);
-      console.log(
-        '=================================================\n',
-      );
+      await completeJob(payload).unwrap();
+
       toast.success('Job completed successfully');
       setConfirmAction(null);
     } catch (err) {
@@ -430,7 +426,7 @@ export default function ScheduledJobsPage() {
                     customerEmail: c?.email,
                     customerImage: c?.profileImage,
                     title: row.title,
-                    address: row.address,
+                    address: row.address || c?.address,
                     country: row.country,
                     jobType: row.jobType,
                     price: row.price,
@@ -576,8 +572,7 @@ export default function ScheduledJobsPage() {
           </div>
         </div>
       </div>
-
-      <CompleteJobDialog
+      {/* <CompleteJobDialog
         open={confirmAction?.type === 'complete'}
         onOpenChange={(open) => {
           if (!open) setConfirmAction(null);
@@ -617,6 +612,54 @@ export default function ScheduledJobsPage() {
         customerPhone={confirmAction?.customerPhone}
         customerEmail={confirmAction?.customerEmail}
         customerImage={confirmAction?.customerImage}
+      /> */}
+
+      <CompleteJobDialog
+        open={confirmAction?.type === 'complete'}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+        // onConfirm={async ({ receivePrice, items }) => {
+        //   ...
+        // }}
+        onConfirm={async ({ receivePrice, items }) => {
+          if (confirmAction) {
+            const jobData: any = {
+              address: confirmAction.address,
+              city: confirmAction.city,
+              state: confirmAction.state,
+              country: confirmAction.country,
+              postalCode: confirmAction.postalCode,
+              jobType: confirmAction.jobType,
+              price: confirmAction.price,
+              notes: confirmAction.notes,
+              description: confirmAction.description,
+              preferredTiming: confirmAction.preferredTiming,
+              paymentType: confirmAction.paymentType,
+              jobDate: confirmAction.jobDate,
+              frequency: confirmAction.frequency,
+            };
+
+            if (confirmAction.title)
+              jobData.title = confirmAction.title;
+
+            await handleComplete(
+              confirmAction.jobId,
+              receivePrice,
+              items,
+              jobData,
+            );
+          }
+        }}
+        paymentType={confirmAction?.paymentType}
+        jobDisplayId={confirmAction?.jobDisplayId}
+        customerName={confirmAction?.customerName}
+        customerPhone={confirmAction?.customerPhone}
+        customerEmail={confirmAction?.customerEmail}
+        customerImage={confirmAction?.customerImage}
+        initialAddress={confirmAction?.address}
+        jobTitle={confirmAction?.title}
+        jobPrice={confirmAction?.price}
       />
       <Dialog
         open={assignDialogOpen}
@@ -664,7 +707,6 @@ export default function ScheduledJobsPage() {
           setConfirmAction(null);
         }}
       />
-
       <Dialog
         open={confirmAction?.type === 'jobDateChange'}
         onOpenChange={(open) => {

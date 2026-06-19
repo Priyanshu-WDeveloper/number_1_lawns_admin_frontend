@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2, Mail, Phone, Plus, Trash2 } from 'lucide-react';
 import {
   Dialog,
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import type { OrderItemInput } from '@/types';
+import toast from 'react-hot-toast';
 
 interface CompleteJobDialogProps {
   open: boolean;
@@ -25,6 +26,8 @@ interface CompleteJobDialogProps {
   customerEmail?: string;
   customerImage?: string;
   initialAddress?: string;
+  jobTitle?: string;
+  jobPrice?: number;
 }
 
 const emptyItem: OrderItemInput = {
@@ -45,6 +48,8 @@ export function CompleteJobDialog({
   customerEmail,
   customerImage,
   initialAddress,
+  jobTitle,
+  jobPrice,
 }: CompleteJobDialogProps) {
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
@@ -58,6 +63,35 @@ export function CompleteJobDialog({
     (sum, item) => sum + item.unitPrice * item.quantity,
     0,
   );
+
+  useEffect(() => {
+    if (!open) return;
+
+    const price = Number(jobPrice ?? 0);
+
+    setAmount(paymentType === 'cash' ? String(price) : '');
+
+    setItems([
+      {
+        title: jobTitle ?? '',
+        quantity: 1,
+        address: initialAddress ?? '',
+        unitPrice: price,
+      },
+    ]);
+
+    setEditing({
+      ...emptyItem,
+      address: initialAddress ?? '',
+    });
+
+    console.log({
+      jobTitle,
+      jobPrice,
+      initialAddress,
+      price,
+    });
+  }, [open, paymentType, jobTitle, jobPrice, initialAddress]);
 
   const addItem = () => {
     if (!editing.title || !editing.unitPrice) return;
@@ -73,6 +107,10 @@ export function CompleteJobDialog({
   };
 
   const handleConfirm = async () => {
+    if (items.length === 0) {
+      toast.error('Please add at least one item');
+      return;
+    }
     setLoading(true);
     try {
       await onConfirm({
