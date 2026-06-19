@@ -49,7 +49,9 @@ export function CompleteJobDialog({
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<OrderItemInput[]>([]);
-  const [editing, setEditing] = useState<OrderItemInput>({ ...emptyItem });
+  const [editing, setEditing] = useState<OrderItemInput>({
+    ...emptyItem,
+  });
 
   const isCash = paymentType === 'cash';
   const grandTotal = items.reduce(
@@ -137,7 +139,9 @@ export function CompleteJobDialog({
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                  onWheel={(e) =>
+                    (e.target as HTMLInputElement).blur()
+                  }
                   disabled={loading}
                   className="pl-7 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield] h-12 rounded-xl border-amber-300 bg-white"
                 />
@@ -153,7 +157,9 @@ export function CompleteJobDialog({
               <Button
                 type="button"
                 onClick={addItem}
-                disabled={!editing.title || !editing.unitPrice || loading}
+                disabled={
+                  !editing.title || !editing.unitPrice || loading
+                }
                 size="sm"
                 className="h-8 gap-1 rounded-xl bg-green-600 hover:bg-green-700 text-white text-xs"
               >
@@ -189,7 +195,9 @@ export function CompleteJobDialog({
                         unitPrice: Number(e.target.value),
                       })
                     }
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                    onWheel={(e) =>
+                      (e.target as HTMLInputElement).blur()
+                    }
                     disabled={loading}
                     className="pl-6 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield] h-10 rounded-xl text-sm"
                   />
@@ -206,7 +214,9 @@ export function CompleteJobDialog({
                       quantity: Number(e.target.value),
                     })
                   }
-                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                  onWheel={(e) =>
+                    (e.target as HTMLInputElement).blur()
+                  }
                   disabled={loading}
                   className="[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield] h-10 rounded-xl text-sm"
                 />
@@ -226,6 +236,9 @@ export function CompleteJobDialog({
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-zinc-50 border-b border-zinc-200">
+                      <th className="text-left px-3 py-2.5 font-medium text-zinc-600">
+                        Address
+                      </th>
                       <th className="text-left px-3 py-2.5 font-medium text-zinc-600">
                         Item
                       </th>
@@ -248,6 +261,9 @@ export function CompleteJobDialog({
                         className="border-b border-zinc-100 last:border-0"
                       >
                         <td className="px-3 py-2.5 text-zinc-900">
+                          {item.address}
+                        </td>
+                        <td className="px-3 py-2.5 text-zinc-900">
                           {item.title}
                         </td>
                         <td className="px-3 py-2.5 text-right text-zinc-700">
@@ -257,7 +273,10 @@ export function CompleteJobDialog({
                           {item.quantity}
                         </td>
                         <td className="px-3 py-2.5 text-right font-medium text-zinc-900">
-                          ${(item.unitPrice * item.quantity).toFixed(2)}
+                          $
+                          {(item.unitPrice * item.quantity).toFixed(
+                            2,
+                          )}
                         </td>
                         <td className="px-2 py-2.5">
                           <button

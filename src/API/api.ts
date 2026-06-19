@@ -454,7 +454,7 @@ export const api = createApi({
         receivePrice?: number;
         items?: OrderItemInput[];
         completedDate?: string;
-        title?: string;
+        // title?: string;
         address?: string;
         jobType?: string;
         price?: number;
@@ -469,7 +469,7 @@ export const api = createApi({
       query: ({ items, ...rest }) => ({
         url: API_ROUTES.JOBS.COMPLETE,
         method: 'POST',
-        body: { ...rest, items, dataForInvoices: items },
+        body: { ...rest, dataForInvoices: items },
       }),
       invalidatesTags: (_result, _error, { jobId }) => [
         'Jobs',

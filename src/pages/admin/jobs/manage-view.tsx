@@ -20,6 +20,7 @@ import {
   FileText,
   Calendar,
   Eye,
+  ClipboardList,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -309,7 +310,8 @@ export default function JobViewPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <h1 className="text-2xl font-bold text-foreground">
-                      Job
+                      Job{' '}
+                      {`${resolvedJob?.title ? `(${resolvedJob.title})` : ''}`}
                     </h1>
 
                     {/* <StatusBadge
@@ -657,15 +659,26 @@ export default function JobViewPage() {
               )}
 
               {/* Notes Card */}
-              {resolvedJob.notes && (
+              {(resolvedJob.notes || resolvedJob.title) && (
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec] md:col-span-2">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
                       <FileText className="h-4 w-4 text-primary" />
                     </div>
                     <h3 className="text-lg font-semibold text-foreground">
-                      Notes
+                      Title & Notes
                     </h3>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <ClipboardList className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Title
+                      </p>
+                      <p className="text-foreground font-medium">
+                        {resolvedJob.title}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <FileText className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />

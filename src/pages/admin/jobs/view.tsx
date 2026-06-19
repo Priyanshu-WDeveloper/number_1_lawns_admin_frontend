@@ -20,6 +20,7 @@ import {
   MoreVertical,
   FileText,
   Calendar,
+  ClipboardList,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -71,7 +72,8 @@ function getCustomerName(customer: IJob['customerId']): string {
 }
 
 function getCustomerEmail(customer: IJob['customerId']): string {
-  if (typeof customer === 'object' && customer) return customer.email || '-';
+  if (typeof customer === 'object' && customer)
+    return customer.email || '-';
   return '-';
 }
 
@@ -261,7 +263,8 @@ export default function JobViewPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <h1 className="text-2xl font-bold text-foreground">
-                      Job
+                      Job{' '}
+                      {`${resolvedJob?.title ? `(${resolvedJob.title})` : ''}`}
                     </h1>
 
                     <StatusBadge
@@ -649,15 +652,26 @@ export default function JobViewPage() {
               )}
 
               {/* Notes Card */}
-              {resolvedJob.notes && (
+              {(resolvedJob.notes || resolvedJob.title) && (
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-[#ececec] md:col-span-2">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
                       <FileText className="h-4 w-4 text-primary" />
                     </div>
                     <h3 className="text-lg font-semibold text-foreground">
-                      Notes
+                      Title and Notes
                     </h3>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <ClipboardList className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Title
+                      </p>
+                      <p className="text-foreground font-medium">
+                        {resolvedJob.title}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <FileText className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
@@ -700,41 +714,44 @@ export default function JobViewPage() {
                         </p>
                       </div>
                     </div>
-                    {(customerForAddress.city || customerForAddress.state || customerForAddress.postalCode || customerForAddress.country) && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          City
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {customerForAddress.city || '-'}
-                        </p>
+                    {(customerForAddress.city ||
+                      customerForAddress.state ||
+                      customerForAddress.postalCode ||
+                      customerForAddress.country) && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            City
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {customerForAddress.city || '-'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            State
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {customerForAddress.state || '-'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            Postal Code
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {customerForAddress.postalCode || '-'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            Country
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {customerForAddress.country || '-'}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          State
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {customerForAddress.state || '-'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Postal Code
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {customerForAddress.postalCode || '-'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Country
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {customerForAddress.country || '-'}
-                        </p>
-                      </div>
-                    </div>
                     )}
                     {customerForAddress.location?.coordinates && (
                       <>
@@ -786,41 +803,44 @@ export default function JobViewPage() {
                         </p>
                       </div>
                     </div>
-                    {(resolvedJob.city || resolvedJob.state || resolvedJob.postalCode || resolvedJob.country) && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          City
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {resolvedJob.city || '-'}
-                        </p>
+                    {(resolvedJob.city ||
+                      resolvedJob.state ||
+                      resolvedJob.postalCode ||
+                      resolvedJob.country) && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            City
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {resolvedJob.city || '-'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            State
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {resolvedJob.state || '-'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            Postal Code
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {resolvedJob.postalCode || '-'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            Country
+                          </p>
+                          <p className="text-foreground font-medium">
+                            {resolvedJob.country || '-'}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          State
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {resolvedJob.state || '-'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Postal Code
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {resolvedJob.postalCode || '-'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Country
-                        </p>
-                        <p className="text-foreground font-medium">
-                          {resolvedJob.country || '-'}
-                        </p>
-                      </div>
-                    </div>
                     )}
                     {resolvedJob.location?.coordinates && (
                       <>
@@ -856,10 +876,7 @@ export default function JobViewPage() {
       <CompleteJobDialog
         open={completeDialogOpen}
         onOpenChange={setCompleteDialogOpen}
-        onConfirm={async ({
-          receivePrice,
-          items,
-        }) => {
+        onConfirm={async ({ receivePrice, items }) => {
           if (!id) return;
           const payload: any = {
             jobId: id,
@@ -867,25 +884,35 @@ export default function JobViewPage() {
             items,
             completedDate: new Date().toISOString(),
           };
-          
+
           const jobData: any = {};
           if (resolvedJob.title) jobData.title = resolvedJob.title;
-          if (resolvedJob.address) jobData.address = resolvedJob.address;
+          if (resolvedJob.address)
+            jobData.address = resolvedJob.address;
           if (resolvedJob.city) jobData.city = resolvedJob.city;
           if (resolvedJob.state) jobData.state = resolvedJob.state;
-          if (resolvedJob.country) jobData.country = resolvedJob.country;
-          if (resolvedJob.postalCode) jobData.postalCode = resolvedJob.postalCode;
-          if (resolvedJob.jobType) jobData.jobType = resolvedJob.jobType;
-          if (resolvedJob.price !== undefined) jobData.price = resolvedJob.price;
+          if (resolvedJob.country)
+            jobData.country = resolvedJob.country;
+          if (resolvedJob.postalCode)
+            jobData.postalCode = resolvedJob.postalCode;
+          if (resolvedJob.jobType)
+            jobData.jobType = resolvedJob.jobType;
+          if (resolvedJob.price !== undefined)
+            jobData.price = resolvedJob.price;
           if (resolvedJob.notes) jobData.notes = resolvedJob.notes;
-          if (resolvedJob.description) jobData.description = resolvedJob.description;
-          if (resolvedJob.preferredTiming) jobData.preferredTiming = resolvedJob.preferredTiming;
-          if (resolvedJob.paymentType) jobData.paymentType = resolvedJob.paymentType;
-          if (resolvedJob.jobDate) jobData.jobDate = resolvedJob.jobDate;
-          if (resolvedJob.frequency) jobData.frequency = resolvedJob.frequency;
-          
+          if (resolvedJob.description)
+            jobData.description = resolvedJob.description;
+          if (resolvedJob.preferredTiming)
+            jobData.preferredTiming = resolvedJob.preferredTiming;
+          if (resolvedJob.paymentType)
+            jobData.paymentType = resolvedJob.paymentType;
+          if (resolvedJob.jobDate)
+            jobData.jobDate = resolvedJob.jobDate;
+          if (resolvedJob.frequency)
+            jobData.frequency = resolvedJob.frequency;
+
           Object.assign(payload, jobData);
-          
+
           await completeJob(payload).unwrap();
           toast.success('Job completed successfully');
           setCompleteDialogOpen(false);

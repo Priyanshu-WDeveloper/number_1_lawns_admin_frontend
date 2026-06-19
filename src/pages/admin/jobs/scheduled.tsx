@@ -188,7 +188,7 @@ export default function ScheduledJobsPage() {
         completedDate: new Date().toISOString(),
       };
 
-      if (jobData?.title) payload.title = jobData.title;
+      // if (jobData?.title) payload.title = jobData.title;
       if (jobData?.address) payload.address = jobData.address;
       if (jobData?.jobType) payload.jobType = jobData.jobType;
       if (jobData?.price !== undefined) payload.price = jobData.price;
@@ -431,10 +431,7 @@ export default function ScheduledJobsPage() {
                     customerImage: c?.profileImage,
                     title: row.title,
                     address: row.address,
-                    city: row.city,
-                    state: row.state,
                     country: row.country,
-                    postalCode: row.postalCode,
                     jobType: row.jobType,
                     price: row.price,
                     notes: row.notes,
