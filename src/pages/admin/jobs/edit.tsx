@@ -60,6 +60,7 @@ const editJobSchema = z
     locationMode: z.enum(['map', 'manual']),
     sameAsCustomer: z.boolean(),
     jobType: z.string().min(1, 'Job type is required'),
+    title: z.string().optional(),
     jobDate: z.string().min(1, 'Job date is required'),
     frequencyValue: z.number().optional(),
     frequencyUnit: z.string().optional(),
@@ -183,6 +184,7 @@ export default function EditJobPage() {
           ),
           locationMode: 'map',
           jobType: jobData.jobType ?? '',
+          title: jobData.title ?? '',
           jobDate: jobData.jobDate
             ? jobData.jobDate.split('T')[0]
             : jobData.date
@@ -257,6 +259,7 @@ export default function EditJobPage() {
             }
           : {}),
         jobType: data.jobType,
+        title: data.title || undefined,
         jobDate: new Date(data.jobDate).toISOString(),
         paymentType: data.paymentType,
         price: data.price || undefined,
@@ -544,9 +547,20 @@ export default function EditJobPage() {
               Pricing
             </h4>
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium text-foreground">
+                  Title
+                </label>
+                <Input
+                  value={formValues.title || ''}
+                  onChange={(e) => setValue('title', e.target.value)}
+                  placeholder="Enter job title"
+                  className="h-12 rounded-xl border-border bg-background"
+                />
+              </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
-                  Payment Type
+                  Select Customer
                   <span className="text-primary"> *</span>
                 </label>
                 <Select

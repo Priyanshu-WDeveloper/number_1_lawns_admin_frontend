@@ -856,9 +856,37 @@ export default function JobViewPage() {
       <CompleteJobDialog
         open={completeDialogOpen}
         onOpenChange={setCompleteDialogOpen}
-        onConfirm={async (receivePrice) => {
+        onConfirm={async ({
+          receivePrice,
+          items,
+        }) => {
           if (!id) return;
-          await completeJob({ jobId: id, receivePrice }).unwrap();
+          const payload: any = {
+            jobId: id,
+            receivePrice,
+            items,
+            completedDate: new Date().toISOString(),
+          };
+          
+          const jobData: any = {};
+          if (resolvedJob.title) jobData.title = resolvedJob.title;
+          if (resolvedJob.address) jobData.address = resolvedJob.address;
+          if (resolvedJob.city) jobData.city = resolvedJob.city;
+          if (resolvedJob.state) jobData.state = resolvedJob.state;
+          if (resolvedJob.country) jobData.country = resolvedJob.country;
+          if (resolvedJob.postalCode) jobData.postalCode = resolvedJob.postalCode;
+          if (resolvedJob.jobType) jobData.jobType = resolvedJob.jobType;
+          if (resolvedJob.price !== undefined) jobData.price = resolvedJob.price;
+          if (resolvedJob.notes) jobData.notes = resolvedJob.notes;
+          if (resolvedJob.description) jobData.description = resolvedJob.description;
+          if (resolvedJob.preferredTiming) jobData.preferredTiming = resolvedJob.preferredTiming;
+          if (resolvedJob.paymentType) jobData.paymentType = resolvedJob.paymentType;
+          if (resolvedJob.jobDate) jobData.jobDate = resolvedJob.jobDate;
+          if (resolvedJob.frequency) jobData.frequency = resolvedJob.frequency;
+          
+          Object.assign(payload, jobData);
+          
+          await completeJob(payload).unwrap();
           toast.success('Job completed successfully');
           setCompleteDialogOpen(false);
         }}

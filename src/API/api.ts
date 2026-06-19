@@ -51,6 +51,7 @@ import type {
   IDashboardAnalytics,
   ITraining,
   IExpense,
+  OrderItemInput,
 } from '@/types';
 
 const rawBaseQuery: BaseQueryFn<
@@ -59,9 +60,7 @@ const rawBaseQuery: BaseQueryFn<
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
   const baseUrl = getBaseUrl();
-  console.log('\n===================== 🟢 url =====================');
-  console.log(baseUrl);
-  console.log('=================================================\n');
+
   const baseQuery = fetchBaseQuery({
     baseUrl,
     prepareHeaders: (headers) => {
@@ -450,12 +449,27 @@ export const api = createApi({
     }),
     completeJob: builder.mutation<
       void,
-      { jobId: string; receivePrice?: number }
+      {
+        jobId: string;
+        receivePrice?: number;
+        items?: OrderItemInput[];
+        completedDate?: string;
+        title?: string;
+        address?: string;
+        jobType?: string;
+        price?: number;
+        notes?: string;
+        description?: string;
+        preferredTiming?: string;
+        paymentType?: string;
+        jobDate?: string;
+        frequency?: { value: number; unit: string };
+      }
     >({
-      query: ({ jobId, receivePrice }) => ({
+      query: ({ items, ...rest }) => ({
         url: API_ROUTES.JOBS.COMPLETE,
         method: 'POST',
-        body: { jobId, receivePrice },
+        body: { ...rest, items, dataForInvoices: items },
       }),
       invalidatesTags: (_result, _error, { jobId }) => [
         'Jobs',

@@ -99,6 +99,7 @@ export interface IJob {
     coordinates: [number, number];
   };
   jobType: string;
+  title?: string;
   status?: string;
   price?: number;
   receivePrice?: number;
@@ -253,4 +254,11 @@ export interface IInvoice {
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface OrderItemInput {
+  title: string;
+  unitPrice: number;
+  quantity: number;
+  address: string;
 }

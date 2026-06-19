@@ -44,7 +44,7 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Button } from '@/components/ui/button';
 import { useDataTableQueryParams } from '@/hooks/use-data-table-query-params';
 import { useResponsiveLimit } from '@/hooks/use-responsive-limit';
-import type { IJob } from '@/types';
+import type { IJob, OrderItemInput } from '@/types';
 import type { ListQueryParams } from '@/types/api.types';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
@@ -107,6 +107,19 @@ export default function ScheduledJobsPage() {
     customerPhone?: string;
     customerEmail?: string;
     customerImage?: string;
+    title?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    postalCode?: string;
+    jobType?: string;
+    price?: number;
+    notes?: string;
+    description?: string;
+    preferredTiming?: string;
+    jobDate?: string;
+    frequency?: { value: number; unit: string };
   } | null>(null);
 
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
@@ -149,9 +162,55 @@ export default function ScheduledJobsPage() {
   const handleComplete = async (
     id: string,
     receivePrice?: number,
+    items?: OrderItemInput[],
+    jobData?: {
+      title?: string;
+      address?: string;
+      city?: string;
+      state?: string;
+      country?: string;
+      postalCode?: string;
+      jobType?: string;
+      price?: number;
+      notes?: string;
+      description?: string;
+      preferredTiming?: string;
+      paymentType?: string;
+      jobDate?: string;
+      frequency?: { value: number; unit: string };
+    },
   ) => {
     try {
-      await completeJob({ jobId: id, receivePrice }).unwrap();
+      const payload: any = {
+        jobId: id,
+        receivePrice,
+        items,
+        completedDate: new Date().toISOString(),
+      };
+
+      if (jobData?.title) payload.title = jobData.title;
+      if (jobData?.address) payload.address = jobData.address;
+      if (jobData?.jobType) payload.jobType = jobData.jobType;
+      if (jobData?.price !== undefined) payload.price = jobData.price;
+      // if (jobData?.notes) payload.notes = jobData.notes;
+      if (jobData?.description)
+        payload.description = jobData.description;
+      if (jobData?.preferredTiming)
+        payload.preferredTiming = jobData.preferredTiming;
+      if (jobData?.paymentType)
+        payload.paymentType = jobData.paymentType;
+      if (jobData?.jobDate) payload.jobDate = jobData.jobDate;
+      if (jobData?.frequency) payload.frequency = jobData.frequency;
+      // if (items?.title) payload.title = items.title;
+
+      const res = await completeJob(payload).unwrap();
+      console.log(
+        '\n===================== 🟢 res =====================',
+      );
+      console.log(res);
+      console.log(
+        '=================================================\n',
+      );
       toast.success('Job completed successfully');
       setConfirmAction(null);
     } catch (err) {
@@ -240,7 +299,7 @@ export default function ScheduledJobsPage() {
             className="text-[#6b7280]"
             title={addr === '-' ? '' : addr}
           >
-            {addr.length > 20 ? `${addr.slice(0, 20)}...` : addr}
+            {addr.length > 15 ? `${addr.slice(0, 15)}...` : addr}
           </span>
         );
       },
@@ -370,6 +429,19 @@ export default function ScheduledJobsPage() {
                     customerPhone: c?.phoneNumber,
                     customerEmail: c?.email,
                     customerImage: c?.profileImage,
+                    title: row.title,
+                    address: row.address,
+                    city: row.city,
+                    state: row.state,
+                    country: row.country,
+                    postalCode: row.postalCode,
+                    jobType: row.jobType,
+                    price: row.price,
+                    notes: row.notes,
+                    description: row.description,
+                    preferredTiming: row.preferredTiming,
+                    jobDate: row.jobDate,
+                    frequency: row.frequency,
                   });
                 }}
                 className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
@@ -513,9 +585,34 @@ export default function ScheduledJobsPage() {
         onOpenChange={(open) => {
           if (!open) setConfirmAction(null);
         }}
-        onConfirm={async (receivePrice) => {
-          if (confirmAction)
-            await handleComplete(confirmAction.jobId, receivePrice);
+        onConfirm={async ({ receivePrice, items }) => {
+          if (confirmAction) {
+            const jobData: any = {
+              address: confirmAction.address,
+              city: confirmAction.city,
+              state: confirmAction.state,
+              country: confirmAction.country,
+              postalCode: confirmAction.postalCode,
+              jobType: confirmAction.jobType,
+              price: confirmAction.price,
+              notes: confirmAction.notes,
+              description: confirmAction.description,
+              preferredTiming: confirmAction.preferredTiming,
+              paymentType: confirmAction.paymentType,
+              jobDate: confirmAction.jobDate,
+              frequency: confirmAction.frequency,
+            };
+
+            if (confirmAction.title)
+              jobData.title = confirmAction.title;
+
+            await handleComplete(
+              confirmAction.jobId,
+              receivePrice,
+              items,
+              jobData,
+            );
+          }
         }}
         paymentType={confirmAction?.paymentType}
         jobDisplayId={confirmAction?.jobDisplayId}

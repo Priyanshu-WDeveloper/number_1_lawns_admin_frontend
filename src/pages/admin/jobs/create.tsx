@@ -69,6 +69,7 @@ const createJobSchema = z
     longitude: z.number().optional(),
     locationMode: z.enum(['map', 'manual']),
     jobType: z.string().min(1, 'Job type is required'),
+    title: z.string().optional(),
     jobDate: z.string().min(1, 'Job date is required'),
     frequencyValue: z.number().optional(),
     frequencyUnit: z.string().optional(),
@@ -140,6 +141,7 @@ const initialFormData: CreateJobFormData = {
   longitude: undefined,
   locationMode: 'map',
   jobType: '',
+  title: '',
   frequencyValue: 1,
   frequencyUnit: 'week',
   price: 0,
@@ -373,6 +375,7 @@ export default function CreateJobPage() {
             }
           : {}),
         jobType: data.jobType,
+        title: data.title || undefined,
         jobDate: new Date(data.jobDate).toISOString(),
         paymentType: data.paymentType,
         price: data.price || undefined,
@@ -433,8 +436,19 @@ export default function CreateJobPage() {
             </div>
 
             {formValues.customerMode === 'existing' ? (
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <div className="space-y-2">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium text-foreground">
+                  Title
+                </label>
+                <Input
+                  value={formValues.title || ''}
+                  onChange={(e) => setValue('title', e.target.value)}
+                  placeholder="Enter job title"
+                  className="h-12 rounded-xl border-border bg-background"
+                />
+              </div>
+              <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
                     Select Customer
                     <span className="text-primary"> *</span>
@@ -473,6 +487,17 @@ export default function CreateJobPage() {
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   New Customer Details
                 </p>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Title
+                  </label>
+                  <Input
+                    value={formValues.title || ''}
+                    onChange={(e) => setValue('title', e.target.value)}
+                    placeholder="Enter job title"
+                    className="h-12 rounded-xl border-border bg-background"
+                  />
+                </div>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">
