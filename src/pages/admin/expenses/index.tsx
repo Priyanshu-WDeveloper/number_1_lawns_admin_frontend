@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { resolveFileUrl } from '@/lib/media';
 import {
   Pencil,
   Trash2,
+  Eye,
   Type,
   FileText,
   CreditCard,
@@ -173,7 +175,7 @@ export default function ExpensesPage() {
         const formData = new FormData();
         formData.append('file', file);
         const res = await uploadDocument(formData).unwrap();
-        fileUrl = (res as any).file.url;
+        fileUrl = (res as any).fileUrl;
       }
 
       if (editingExpense.id) {
@@ -288,7 +290,7 @@ export default function ExpensesPage() {
                 expenses.map((expense) => (
                   <div
                     key={expense._id}
-                    className="bg-white rounded-2xl p-5 border border-[#edf2f7] transition-all duration-[250ms] hover:-translate-y-1"
+                    className="bg-white rounded-2xl p-5 border border-[#edf2f7] transition-all duration-[250ms] hover:-translate-y-1 hover:shadow-md"
                     style={{
                       boxShadow:
                         '0 1px 3px rgba(0,0,0,.04), 0 10px 30px rgba(0,0,0,.03)',
@@ -319,19 +321,38 @@ export default function ExpensesPage() {
                           <div className="flex flex-col gap-1.5 shrink-0">
                             <button
                               type="button"
-                              onClick={() => openEdit(expense)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(
+                                  ROUTES.EXPENSES_VIEW.replace(
+                                    ':id',
+                                    expense._id,
+                                  ),
+                                );
+                              }}
+                              className="h-8 w-8 rounded-[10px] bg-[#e8f5e9] text-[#16610E] flex items-center justify-center hover:bg-[#c8e6c9] transition-colors"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEdit(expense);
+                              }}
                               className="h-8 w-8 rounded-[10px] bg-[#fff7e8] text-[#f59e0b] flex items-center justify-center hover:bg-[#ffefd0] transition-colors"
                             >
                               <Pencil className="h-3.5 w-3.5" />
                             </button>
                             <button
                               type="button"
-                              onClick={() =>
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setRemovingExpense({
                                   id: expense._id,
                                   title: expense.title,
-                                })
-                              }
+                                });
+                              }}
                               className="h-8 w-8 rounded-[10px] bg-[#fff1f1] text-[#ef4444] flex items-center justify-center hover:bg-[#ffe0e0] transition-colors"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -341,7 +362,7 @@ export default function ExpensesPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 mt-[18px] pt-4 border-t border-[#f2f4f8] text-xs text-[#7d8796]">
+                    <div className="flex items-center gap-3  mr-10 pt-4 border-t border-[#f2f4f8] text-xs text-[#7d8796]">
                       <Calendar className="h-3.5 w-3.5" />
                       <span>{formatDate(expense.createdAt)}</span>
                       <span>|</span>
@@ -503,7 +524,9 @@ export default function ExpensesPage() {
                             Failed to load image
                           </p>
                           <a
-                            href={editingExpense.fileUrl}
+                            href={resolveFileUrl(
+                              editingExpense.fileUrl,
+                            )}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-sm font-medium text-primary hover:underline"
@@ -513,7 +536,7 @@ export default function ExpensesPage() {
                         </div>
                       ) : (
                         <img
-                          src={editingExpense.fileUrl}
+                          src={resolveFileUrl(editingExpense.fileUrl)}
                           alt="Attachment"
                           className="size-full w-full h-48  object-cover rounded-xl border border-[#DDE5EC]"
                           onError={() => setDialogImgError(true)}
@@ -567,7 +590,7 @@ export default function ExpensesPage() {
                       Current attachment
                     </span>
                     <a
-                      href={editingExpense.fileUrl}
+                      href={resolveFileUrl(editingExpense.fileUrl)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm font-medium text-[#2E7D32] hover:underline"
@@ -720,10 +743,11 @@ export default function ExpensesPage() {
 
 function CardThumbnail({ fileUrl }: { fileUrl?: string }) {
   const [imgError, setImgError] = useState(false);
+  const resolvedUrl = fileUrl ? resolveFileUrl(fileUrl) : '';
 
   if (!fileUrl) return null;
 
-  if (/\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(fileUrl)) {
+  if (/\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(resolvedUrl)) {
     if (imgError) {
       return (
         <div className="w-[84px] h-[84px] rounded-[20px] bg-[#f5f8fb] flex items-center justify-center shrink-0">
@@ -734,7 +758,7 @@ function CardThumbnail({ fileUrl }: { fileUrl?: string }) {
     return (
       <div className="w-[84px] h-[84px] rounded-[20px] shrink-0 overflow-hidden">
         <img
-          src={fileUrl}
+          src={resolvedUrl}
           alt=""
           className="w-full h-full object-cover"
           onError={() => setImgError(true)}
@@ -743,7 +767,7 @@ function CardThumbnail({ fileUrl }: { fileUrl?: string }) {
     );
   }
 
-  if (/\.(pdf)(\?.*)?$/i.test(fileUrl)) {
+  if (/\.(pdf)(\?.*)?$/i.test(resolvedUrl)) {
     return (
       <div className="w-[84px] h-[84px] rounded-[20px] shrink-0 overflow-hidden">
         <img

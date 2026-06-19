@@ -54,6 +54,7 @@ import {
 } from '@/API/api';
 import { getErrorMessage } from '@/lib/get-error-message';
 import { formatDate } from '@/lib/format-date';
+import { getBaseUrl } from '@/lib/config';
 import { getToken } from '@/lib/auth';
 import type { IJob, ICustomer } from '@/types';
 
@@ -249,7 +250,7 @@ export default function JobViewPage() {
     try {
       const token = getToken();
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/jobs/${resolvedJob._id}/receipt`,
+        `${getBaseUrl()}/jobs/${resolvedJob._id}/receipt`,
         {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         },

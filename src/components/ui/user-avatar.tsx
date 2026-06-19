@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { User } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { resolveFileUrl } from '@/lib/media';
 
 interface UserAvatarProps {
   image?: string;
@@ -25,7 +26,7 @@ export function UserAvatar({ image, name, size = 'md', className }: UserAvatarPr
   return (
       <Avatar className={`${sizeClasses}${className ? ` ${className}` : ''}`}>
       {image && !imgError ? (
-        <AvatarImage src={image} alt={name} onError={() => setImgError(true)} />
+        <AvatarImage src={resolveFileUrl(image ?? '')} alt={name} onError={() => setImgError(true)} />
       ) : null}
       {(!image || imgError) && (
         <AvatarFallback className={fallbackClasses}>

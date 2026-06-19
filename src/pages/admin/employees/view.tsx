@@ -24,6 +24,7 @@ import {
 import toast from 'react-hot-toast';
 
 import { getErrorMessage } from '@/lib/get-error-message';
+import { resolveFileUrl } from '@/lib/media';
 
 import {
   DropdownMenu,
@@ -491,14 +492,14 @@ export default function EmployeeViewPage() {
                     {isImageUrl(selectedDoc.value) ? (
                       <div className="flex items-center justify-center">
                         <img
-                          src={selectedDoc.value}
+                          src={resolveFileUrl(selectedDoc.value)}
                           alt={selectedDoc.key}
                           className="max-h-[65vh] w-full object-contain rounded-lg"
                         />
                       </div>
                     ) : isPdfUrl(selectedDoc.value) ? (
                       <iframe
-                        src={selectedDoc.value}
+                        src={resolveFileUrl(selectedDoc.value)}
                         className="w-full h-[65vh] rounded-lg border border-border"
                         title={selectedDoc.key}
                       />
@@ -512,7 +513,7 @@ export default function EmployeeViewPage() {
                           This file type cannot be previewed
                         </p>
                         <a
-                          href={selectedDoc.value}
+                          href={resolveFileUrl(selectedDoc.value)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"

@@ -39,6 +39,7 @@ import { GoogleMapPicker } from '@/components/google-maps/picker';
 import { ManualCoordinates } from '@/components/forms/manual-coordinates';
 import { PhoneInput } from '@/components/forms/phone-input';
 import { validatePhone } from '@/lib/phone-validation';
+import { resolveFileUrl } from '@/lib/media';
 
 const createEmployeeSchema = z
   .object({
@@ -216,8 +217,8 @@ export default function CreateEmployeePage() {
         uploads.push(
           uploadDocument(fd)
             .unwrap()
-            .then((res: { file: { url: string } }) => {
-              profileImageUrl = res.file.url;
+            .then((res: { fileUrl: string; file: { url: string } }) => {
+              profileImageUrl = res.fileUrl;
             }),
         );
       }
@@ -232,8 +233,8 @@ export default function CreateEmployeePage() {
           uploads.push(
             uploadDocument(fd)
               .unwrap()
-              .then((res: { file: { url: string } }) => {
-                results.push({ key: name, value: res.file.url });
+              .then((res: { fileUrl: string; file: { url: string } }) => {
+                results.push({ key: name, value: res.fileUrl });
               }),
           );
         }
@@ -310,7 +311,7 @@ export default function CreateEmployeePage() {
                 {profileImage && !profileImageError ? (
                   <div className="relative h-24 w-24">
                     <img
-                      src={profileImage}
+                      src={resolveFileUrl(profileImage)}
                       alt="Profile preview"
                       onError={() => setProfileImageError(true)}
                       className="h-24 w-24 rounded-full object-cover border-2 border-border"

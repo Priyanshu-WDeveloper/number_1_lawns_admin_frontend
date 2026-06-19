@@ -46,6 +46,7 @@ import { LocationModeToggle } from '@/components/forms/location-mode-toggle';
 import { GoogleMapPicker } from '@/components/google-maps/picker';
 import { ManualCoordinates } from '@/components/forms/manual-coordinates';
 import { validatePhone } from '@/lib/phone-validation';
+import { resolveFileUrl } from '@/lib/media';
 
 const updateEmployeeSchema = z
   .object({
@@ -269,8 +270,8 @@ export default function EditEmployeePage() {
         uploads.push(
           uploadDocument(fd)
             .unwrap()
-            .then((res: { file: { url: string } }) => {
-              profileImageUrl = res.file.url;
+            .then((res: { fileUrl: string; file: { url: string } }) => {
+              profileImageUrl = res.fileUrl;
             }),
         );
       }
@@ -285,8 +286,8 @@ export default function EditEmployeePage() {
           uploads.push(
             uploadDocument(fd)
               .unwrap()
-              .then((res: { file: { url: string } }) => {
-                attachments!.push({ key: name, value: res.file.url });
+              .then((res: { fileUrl: string; file: { url: string } }) => {
+                attachments!.push({ key: name, value: res.fileUrl });
               }),
           );
         }
@@ -360,7 +361,7 @@ export default function EditEmployeePage() {
                 {profileImage && !profileImageError ? (
                   <div className="relative h-24 w-24">
                     <img
-                      src={profileImage}
+                      src={resolveFileUrl(profileImage)}
                       alt="Profile preview"
                       onError={() => setProfileImageError(true)}
                       className="h-24 w-24 rounded-full object-cover border-2 border-border"
@@ -594,7 +595,7 @@ export default function EditEmployeePage() {
                       <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-white">
                         {isImage && !existingImgErrors.has(i) ? (
                           <img
-                            src={att.value}
+                            src={resolveFileUrl(att.value)}
                             alt={att.key}
                             onError={() =>
                               setExistingImgErrors((prev) =>
@@ -653,7 +654,7 @@ export default function EditEmployeePage() {
                             <button
                               type="button"
                               onClick={() =>
-                                setPreviewImageUrl(att.value)
+                                setPreviewImageUrl(resolveFileUrl(att.value))
                               }
                               className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-1.5 text-xs text-muted-foreground hover:bg-[#f3f4f6]"
                             >
@@ -662,7 +663,7 @@ export default function EditEmployeePage() {
                             </button>
                           ) : (
                             <a
-                              href={att.value}
+                              href={resolveFileUrl(att.value)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-1.5 text-xs text-muted-foreground hover:bg-[#f3f4f6]"

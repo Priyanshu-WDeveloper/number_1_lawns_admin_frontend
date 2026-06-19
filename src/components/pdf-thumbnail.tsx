@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { FileText } from 'lucide-react';
+import { resolveFileUrl } from '@/lib/media';
 
 GlobalWorkerOptions.workerSrc = workerUrl;
 
@@ -33,7 +34,7 @@ export function PdfThumbnail({ fileUrl, className }: PdfThumbnailProps) {
 
     async function load() {
       try {
-        const res = await fetch(fileUrl);
+        const res = await fetch(resolveFileUrl(fileUrl));
         if (!res.ok) throw new Error('Failed to fetch PDF');
         const buffer = await res.arrayBuffer();
 

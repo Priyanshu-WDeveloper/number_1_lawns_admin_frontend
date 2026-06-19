@@ -4,6 +4,7 @@ import {
   useNavigate,
   useLocation,
 } from 'react-router-dom';
+import { resolveFileUrl } from '@/lib/media';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import z from 'zod';
@@ -234,7 +235,7 @@ export default function CustomerEditPage() {
         const fd = new FormData();
         fd.append('file', profileImageFileRef.current);
         const res = await uploadDocument(fd).unwrap();
-        profileImageUrl = res.file.url;
+        profileImageUrl = res.fileUrl;
       }
 
       await updateCustomer({
@@ -292,7 +293,7 @@ export default function CustomerEditPage() {
                 {profileImage && !profileImageError ? (
                   <div className="relative h-24 w-24">
                     <img
-                      src={profileImage}
+                      src={resolveFileUrl(profileImage)}
                       alt="Profile preview"
                       onError={() => setProfileImageError(true)}
                       className="h-24 w-24 rounded-full object-cover border-2 border-border"

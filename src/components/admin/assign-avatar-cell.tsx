@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { User } from 'lucide-react';
+import { resolveFileUrl } from '@/lib/media';
 
 interface AvatarCellProps {
   customId?: string;
@@ -44,7 +45,7 @@ export function AssignAvatarCell({
     <div className="flex items-start gap-3">
       {profileImage && !imgError ? (
         <img
-          src={profileImage}
+          src={resolveFileUrl(profileImage)}
           alt={name}
           onError={() => setImgError(true)}
           className={`${avatarSize} rounded-full object-cover flex-shrink-0`}

@@ -90,6 +90,9 @@ const ExpensesPage = React.lazy(
 const ExpenseViewPage = React.lazy(
   () => import('../pages/admin/expenses/view'),
 );
+const ExpenseReceiptPage = React.lazy(
+  () => import('../pages/admin/expenses/receipt'),
+);
 const TrainingVideoViewPage = React.lazy(
   () => import('../pages/admin/training-center/view'),
 );
@@ -235,6 +238,10 @@ const AppRoutes = () => {
           <Route
             path={ROUTES.EXPENSES_VIEW}
             element={<ExpenseViewPage />}
+          />
+          <Route
+            path={ROUTES.EXPENSES_RECEIPT}
+            element={<ExpenseReceiptPage />}
           />
           <Route
             path={ROUTES.TRAINING_CENTER}

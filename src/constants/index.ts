@@ -36,6 +36,7 @@ export const ROUTES = {
   EXPENSES: '/expenses',
   EXPENSES_VIEW: '/expenses/:id',
   EXPENSES_EDIT: '/expenses/edit/:id',
+  EXPENSES_RECEIPT: '/expenses/:id/receipt',
 
   // Default redirects
   ADMIN_WALLET: '/admin-wallet',

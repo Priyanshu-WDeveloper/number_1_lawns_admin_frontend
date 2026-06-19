@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setAuth } from '@/store/auth-slice';
 import { ROUTES } from '@/constants';
+import { getBaseUrl } from '@/lib/config';
 import Loader from '@/components/loader';
 
 const ImpersonateHandler = () => {
@@ -20,7 +21,7 @@ const ImpersonateHandler = () => {
     const exchange = async () => {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/admins/impersonate`,
+          `${getBaseUrl()}/admins/impersonate`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

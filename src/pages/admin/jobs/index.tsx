@@ -32,6 +32,7 @@ import { StatusBadge } from '@/components/data-table/status-badge';
 import { STATUS_CONFIG } from '@/constants/status-config';
 import { formatDate } from '@/lib/format-date';
 import { getErrorMessage } from '@/lib/get-error-message';
+import { getBaseUrl } from '@/lib/config';
 import { getToken } from '@/lib/auth';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useDataTableQueryParams } from '@/hooks/use-data-table-query-params';
@@ -265,7 +266,7 @@ export default function JobManagementPage() {
                 try {
                   const token = getToken();
                   const res = await fetch(
-                    `${import.meta.env.VITE_API_URL}/jobs/${row._id}/receipt`,
+                    `${getBaseUrl()}/jobs/${row._id}/receipt`,
                     {
                       headers: token
                         ? { Authorization: `Bearer ${token}` }

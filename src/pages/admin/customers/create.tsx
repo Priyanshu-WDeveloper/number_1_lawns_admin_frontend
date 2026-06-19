@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { resolveFileUrl } from '@/lib/media';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import z from 'zod';
@@ -187,7 +188,7 @@ export default function CreateCustomerPage() {
         const formData = new FormData();
         formData.append('file', profileImageFileRef.current);
         const res = await uploadDocument(formData).unwrap();
-        profileImageUrl = res.url;
+        profileImageUrl = res.fileUrl;
       }
 
       await createCustomer({
@@ -267,7 +268,7 @@ export default function CreateCustomerPage() {
                 {profileImage && !profileImageError ? (
                   <div className="relative h-24 w-24">
                     <img
-                      src={profileImage}
+                      src={resolveFileUrl(profileImage)}
                       alt="Profile preview"
                       onError={() => setProfileImageError(true)}
                       className="h-24 w-24 rounded-full object-cover border-2 border-border"

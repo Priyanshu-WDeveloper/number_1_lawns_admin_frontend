@@ -5,6 +5,7 @@ import {
   type FetchArgs,
   type FetchBaseQueryError,
 } from '@reduxjs/toolkit/query/react';
+import { getBaseUrl } from '@/lib/config';
 import { getDeviceToken, getDeviceType } from '@/lib/device';
 import { getToken, localLogout } from '@/lib/auth';
 import type {
@@ -52,18 +53,29 @@ import type {
   IExpense,
 } from '@/types';
 
-const rawBaseQuery = fetchBaseQuery({
-  baseUrl: import.meta.env.VITE_API_URL,
-  prepareHeaders: (headers) => {
-    const token = getToken();
+const rawBaseQuery: BaseQueryFn<
+  string | FetchArgs,
+  unknown,
+  FetchBaseQueryError
+> = async (args, api, extraOptions) => {
+  const baseUrl = getBaseUrl();
+  console.log('\n===================== 🟢 url =====================');
+  console.log(baseUrl);
+  console.log('=================================================\n');
+  const baseQuery = fetchBaseQuery({
+    baseUrl,
+    prepareHeaders: (headers) => {
+      const token = getToken();
 
-    if (token) {
-      headers.set('authorization', `Bearer ${token}`);
-    }
+      if (token) {
+        headers.set('authorization', `Bearer ${token}`);
+      }
 
-    return headers;
-  },
-});
+      return headers;
+    },
+  });
+  return baseQuery(args, api, extraOptions);
+};
 
 const baseQueryWithAuth: BaseQueryFn<
   string | FetchArgs,
@@ -114,7 +126,10 @@ export const api = createApi({
           deviceToken: getDeviceToken(),
         },
       }),
-      async onQueryStarted({ rememberMe }, { queryFulfilled, dispatch }) {
+      async onQueryStarted(
+        { rememberMe },
+        { queryFulfilled, dispatch },
+      ) {
         try {
           const { data } = await queryFulfilled;
           if (data?.user) {
@@ -142,7 +157,10 @@ export const api = createApi({
           deviceToken: getDeviceToken(),
         },
       }),
-      async onQueryStarted({ rememberMe }, { queryFulfilled, dispatch }) {
+      async onQueryStarted(
+        { rememberMe },
+        { queryFulfilled, dispatch },
+      ) {
         try {
           const { data } = await queryFulfilled;
           if (data?.user) {
@@ -178,6 +196,32 @@ export const api = createApi({
           dispatch(api.util.resetApiState());
         }
       },
+    }),
+
+    subscribeNotification: builder.mutation<
+      void,
+      {
+        token: string;
+      }
+    >({
+      query: (body) => ({
+        url: '/notifications/subscribe',
+        method: 'POST',
+        body,
+      }),
+    }),
+
+    unsubscribeNotification: builder.mutation<
+      void,
+      {
+        token: string;
+      }
+    >({
+      query: (body) => ({
+        url: '/notifications/unsubscribe',
+        method: 'POST',
+        body,
+      }),
     }),
 
     // Customer endpoints
@@ -869,9 +913,14 @@ export const api = createApi({
     }),
     getExpenseById: builder.query<IExpense, string>({
       query: (id) => API_ROUTES.EXPENSES.DETAILS(id),
-      providesTags: (_result, _error, id) => [{ type: 'Expenses', id }],
+      providesTags: (_result, _error, id) => [
+        { type: 'Expenses', id },
+      ],
     }),
-    createExpense: builder.mutation<ExpenseMutationResponse, Partial<IExpense>>({
+    createExpense: builder.mutation<
+      ExpenseMutationResponse,
+      Partial<IExpense>
+    >({
       query: (body) => ({
         url: API_ROUTES.EXPENSES.CREATE,
         method: 'POST',
@@ -900,7 +949,10 @@ export const api = createApi({
       }),
       invalidatesTags: ['Expenses'],
     }),
-    getFinancialReport: builder.query<FinancialReportResponse, ListQueryParams>({
+    getFinancialReport: builder.query<
+      FinancialReportResponse,
+      ListQueryParams
+    >({
       query: (params) => ({
         url: API_ROUTES.REPORTS.FINANCIAL,
         params,
@@ -917,21 +969,30 @@ export const api = createApi({
       ],
     }),
 
-    getWalletHistory: builder.query<IWalletHistoryResponse, WalletHistoryQueryParams>({
+    getWalletHistory: builder.query<
+      IWalletHistoryResponse,
+      WalletHistoryQueryParams
+    >({
       query: ({ engineerId, page = 1, limit = 10 }) => ({
         url: API_ROUTES.ADMINS.WALLET_HISTORY,
         params: { engineerId, page, limit },
       }),
       providesTags: ['Wallet'],
     }),
-    getAdminWalletHistory: builder.query<IAdminWalletHistoryResponse, AdminWalletHistoryQueryParams>({
+    getAdminWalletHistory: builder.query<
+      IAdminWalletHistoryResponse,
+      AdminWalletHistoryQueryParams
+    >({
       query: ({ startDate, endDate }) => ({
         url: API_ROUTES.ADMINS.WALLET_MY_HISTORY,
         params: { startDate, endDate },
       }),
       providesTags: ['Wallet'],
     }),
-    settleWallet: builder.mutation<ISettlementResponse, ISettlementPayload>({
+    settleWallet: builder.mutation<
+      ISettlementResponse,
+      ISettlementPayload
+    >({
       query: (body) => ({
         url: API_ROUTES.ADMINS.WALLET_SETTLEMENT,
         method: 'POST',
@@ -946,6 +1007,9 @@ export const {
   useLoginMutation,
   useSuperLoginMutation,
   useLogoutMutation,
+
+  useSubscribeNotificationMutation,
+  useUnsubscribeNotificationMutation,
 
   useGetCustomersQuery,
   useGetCustomerByIdQuery,
@@ -990,16 +1054,16 @@ export const {
   useGetReceiptQuery,
   useLazyGetReceiptQuery,
 
-   useGetNotificationsQuery,
-   useMarkNotificationReadMutation,
-   useMarkAllNotificationsReadMutation,
-   useDeleteNotificationMutation,
-   useDeleteAllNotificationsMutation,
+  useGetNotificationsQuery,
+  useMarkNotificationReadMutation,
+  useMarkAllNotificationsReadMutation,
+  useDeleteNotificationMutation,
+  useDeleteAllNotificationsMutation,
 
-   useResendInvoiceMutation,
-   useUpdatePaymentStatusMutation,
+  useResendInvoiceMutation,
+  useUpdatePaymentStatusMutation,
 
-   useGetAdminUsersQuery,
+  useGetAdminUsersQuery,
   useGetAdminUserByIdQuery,
   useCreateAdminUserMutation,
   useUpdateAdminUserMutation,

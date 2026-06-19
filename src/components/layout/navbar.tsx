@@ -76,7 +76,29 @@ export function Navbar({
           <Bell className="h-[18px] w-[18px]  text-[#6b7280]" />
           <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 rounded-full bg-[#166534]" />
         </button> */}
+        {/* import {getFCMToken} from '@/firebase/messaging'; */}
+        {/* <button
+          onClick={async () => {
+            try {
+              const permission =
+                await Notification.requestPermission();
 
+              console.log('Permission:', permission);
+
+              if (permission !== 'granted') {
+                return;
+              }
+
+              const token = await getFCMToken();
+
+              console.log('FCM Token:', token);
+            } catch (error) {
+              console.error(error);
+            }
+          }}
+        >
+          Test Notifications
+        </button> */}
         <AccountDropdown variant="navbar" />
       </div>
     </div>

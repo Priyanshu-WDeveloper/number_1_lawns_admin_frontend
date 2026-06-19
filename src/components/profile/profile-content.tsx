@@ -87,9 +87,10 @@ export default function ProfileContent({
         const fd = new FormData();
         fd.append('file', profileImageFileRef.current);
         const res = (await uploadDocument(fd).unwrap()) as {
+          fileUrl: string;
           file: { url: string };
         };
-        payload = { ...payload, profileImage: res.file.url };
+        payload = { ...payload, profileImage: res.fileUrl };
       }
 
       const res = await updateProfile(payload).unwrap();

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { User } from 'lucide-react';
+import { resolveFileUrl } from '@/lib/media';
 
 interface AvatarCellProps {
   name: string;
@@ -29,7 +30,7 @@ export function AvatarCell({
     <div className="flex items-center gap-3">
       {profileImage && !imgError ? (
         <img
-          src={profileImage}
+          src={resolveFileUrl(profileImage)}
           alt={name}
           onError={() => setImgError(true)}
           className={`${sizeClasses} rounded-full object-cover`}
