@@ -5,6 +5,7 @@ import { setAuth } from '@/store/auth-slice';
 import { ROUTES } from '@/constants';
 import { getBaseUrl } from '@/lib/config';
 import Loader from '@/components/loader';
+import toast from 'react-hot-toast';
 
 const ImpersonateHandler = () => {
   const [searchParams] = useSearchParams();
@@ -38,15 +39,16 @@ const ImpersonateHandler = () => {
                 email: data.user.email,
                 role: data.user.role,
                 validity: data.user.validity,
+                profileImage: data.user.profileImage,
               },
-              token: data.accessToken,
+              token: data.token,
             }),
           );
           navigate(ROUTES.DASHBOARD, { replace: true });
           return;
         }
-      } catch {
-        /* fall through */
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Impersonation failed');
       }
 
       navigate(ROUTES.LOGIN, { replace: true });
